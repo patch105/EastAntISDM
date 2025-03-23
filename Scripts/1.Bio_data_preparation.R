@@ -18,7 +18,7 @@
 
 library(purrr)
 
-packages <- c("here", "sf", "terra", "dplyr", "data.table", "tidyr", "bdc", "viridis", "ggplot2", "tidyterra")
+packages <- c("here", "sf", "terra", "dplyr", "data.table", "tidyr", "bdc", "viridis", "ggplot2", "tidyterra", "stringr")
 
 walk(packages, require, character.only = T)
 
@@ -46,9 +46,8 @@ ACBRS <- st_read(here("Data/Environmental_predictors/ACBRs_v2_2016.shp"), crs = 
 ACBRS_SPVE <- vect(ACBRS)
 
 
-# Also trim ice-free land to just NORTH East Antarctica
+# Also trim ice-free land to just East Antarctica
 ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
-
 
 
 
@@ -118,7 +117,7 @@ Ant_bio_SPVE <- vect(Ant_bio)
 # Remove records not on ice-free land ----------------------------------------
 
 # Filter out records that do not intersect with ice-free areas (100m)
-Ant_biodf.icefree <- terra::extract(ice_free_union, Ant_bio_SPVE)
+Ant_biodf.icefree <- terra::extract(ice_free, Ant_bio_SPVE)
 
 Ant_biodf.icefree <- Ant_biodf.icefree[!is.na(Ant_biodf.icefree$rock_union1), ]
 
@@ -181,12 +180,10 @@ gc()
 
 
 # Load the ice-free areas (100m version and 1km version)
-ice_free_union <- rast(here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"))
-
-ice_free_upsamp <- rast(here("Data/Environmental_predictors/ice_free_upsamp_1km.tif"))
+ice_free <- rast(here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"))
 
 # Filter out records that do not intersect with ice-free areas (100m)
-GBIF.icefree <- terra::extract(ice_free_union, GBIF_SPVE)
+GBIF.icefree <- terra::extract(ice_free, GBIF_SPVE)
 
 GBIF.icefree <- GBIF.icefree[!is.na(GBIF.icefree$rock_union1), ]
 
@@ -524,7 +521,7 @@ ICEFREE_east_ant.df <- ICEFREE_east_ant.df %>%
   mutate(vegtype = ifelse(class == "Bryopsida", "Moss", "Lichen"))
 
 
-# Tidy for joining the  datasets ------------------------------------------
+# Tidy and join the datasets ------------------------------------------
 
 GBIF_east_ant.sf <- st_as_sf(GBIF_east_ant.df, 
                              coords = c("x", "y"), 
@@ -544,64 +541,166 @@ count(veg.east.ant.sf, vegtype)
 veg.east.ant <- vect(rbind(GBIF_east_ant.sf, ICEFREE_east_ant.sf))
 
 
-# Plot records across East Antarctica -------------------------------------
+# Save the PO records -----------------------------------------------------
 
-# Load the Antarctic coastline for plotting
-coast <- st_read(here("Data/Environmental_predictors/add_coastline_high_res_polygon_v7_10.shp"), crs = 3031)
+st_write(veg.east.ant.sf, here("Data/Biological_records", "PO_Veg_East_Ant.shp"))
 
-# Plot distribution of presence-only lichen records across East Antarctica
-a <- ggplot() +
-  geom_sf(data = coast, color = "black", size = 0.05) +
-  geom_tile(data = as.data.frame(ice_free.EastAnt, xy = T)) +
-  geom_sf(data = veg.east.ant.sf, aes(color = vegtype)) +
-  coord_sf(
-    xlim = c(ext(ice_free.EastAnt)$xmin, ext(ice_free.EastAnt)$xmax), 
-    ylim = c(ext(ice_free.EastAnt)$ymin, ext(ice_free.EastAnt)$ymax)) +
-  # scale_fill_manual(name = "", 
-  #                   labels = element_blank(),
-  #                   values = c("white", "grey92","grey92", "grey92")) +
-  theme_bw() + 
-  theme(legend.title = element_blank(),
-        legend.key = element_blank(),
-        legend.background = element_blank())
 
-# Now just in Vestfold Hills
-b <- ggplot() +
-  geom_sf(data = coast, color = "black", size = 0.05) +
-  geom_sf(data = ice_free, fill = "grey80", size = 0.05) +
-  geom_sf(data = bio_east_ant_sf, aes(color = class)) +
-  coord_sf(
-    xlim = c(st_bbox(bio_vestfold_sf)$xmin, st_bbox(bio_vestfold_sf)$xmax), 
-    ylim = c(st_bbox(bio_vestfold_sf)$ymin, st_bbox(bio_vestfold_sf)$ymax)) +
-  scale_fill_manual(name = "", 
-                    labels = element_blank(),
-                    values = c("white", "grey92","grey92", "grey92")) +
-  theme_bw() +
-  theme(legend.title = element_blank(),
-        legend.key = element_blank(),
-        legend.background = element_blank())
+#####################################################################
+############ Presence-absence survey - Vestfold Hills #############
+####################################################################
 
-# And in Bunger Hills
-c <- ggplot() +
-  geom_sf(data = coast, color = "black", size = 0.05) +
-  geom_sf(data = ice_free, fill = "grey80", size = 0.05) +
-  geom_sf(data = bio_east_ant_sf, aes(color = class)) +
-  coord_sf(
-    xlim = c(st_bbox(bio_bunger_sf)$xmin, st_bbox(bio_bunger_sf)$xmax), 
-    ylim = c(st_bbox(bio_bunger_sf)$ymin, st_bbox(bio_bunger_sf)$ymax)) +
-  scale_fill_manual(name = "", 
-                    labels = element_blank(),
-                    values = c("white", "grey92","grey92", "grey92")) +
-  theme_bw() +
-  theme(legend.title = element_blank(),
-        legend.key = element_blank(),
-        legend.background = element_blank())
+# Presence-absence data from Travers et al. (2024) doi:10.26179/wrss-ta40
 
-PO_plot <- ggarrange(a , 
-                     ggarrange(b, c, nrow = 2, labels = c("(b)", "(c)")),
-                     labels = c("(a)", ""), ncol = 2, 
-                     common.legend = T)
+vestfold <- read.csv(here("Data/Biological_records/Travers_Vestfold_PA_Survey.csv"))
 
-# ggsave(plot = PO , filename = here("output/Locs_of_PO_data_East_Ant_plot.png"), w = 21.5, h = 21.2, units = "cm", dpi = 800, device = "png" )
+vestfold_sf <- st_as_sf(vestfold,
+                       coords = c("x", "y"),
+                       crs = 4326) # WGS 84 geographic coordinates
+
+vestfold_sf <- st_transform(vestfold_sf, 3031) #project to WGS_1984 Antarctic Polar Stereographic
+
+st_write(vestfold_sf, here("Data/Biological_records", "PA_Veg_vestfold.shp"))
+
+
+vestfold_df <- vestfold_sf %>% 
+  st_coordinates() %>%
+  as.data.frame() %>% 
+  bind_cols(st_drop_geometry(vestfold_sf)) %>% 
+  rename(x = X, y = Y) 
+
+count(vestfold_df, surface_moss)
+count(vestfold_df, surface_lichen)
+
+#####################################################################
+############ Presence-absence survey - Bunger Hills 23 #############
+####################################################################
+
+# Unpublished records from a 2023/24 field season
+
+bunger23 <- read.csv(file.path(getwd(), "Data/Biological_records/Bunger_2023_Data.csv"), strip.white = T)
+
+# Remove observations taken opportunistically, not at designated stratified sites
+bunger23 <- bunger23 %>% filter(record_type != "Opportunistic obs. not at site")
+
+bunger23 <- bunger23 %>% mutate(surface_moss = NA, 
+                                surface_lichen = NA)
+
+
+bunger23 <- bunger23 %>% 
+  filter(PlotCentreGPSLocation1 != "") %>% # Remove subplots
+  mutate(surface_moss = ifelse(!is.na(MossSpp_common) & MossSpp_common != "", 1, 0)) %>% 
+  mutate(surface_lichen = ifelse(!is.na(LichenSpp_common) & LichenSpp_common != "", 1, 0)) %>% 
+  rename(lat = plot_lat_dec1, lon = plot_lon_dec1) %>% 
+  dplyr::select(site_id, lat, lon, surface_moss, surface_lichen)
+
+
+bunger23_sf <- st_as_sf(bunger23,
+                        coords = c("lon", "lat"),
+                        crs = 4326) # WGS 84 geographic coordinates
+
+bunger23_sf <- st_transform(bunger23_sf, 3031) #project to WGS_1984 Antarctic Polar Stereographic
+
+st_write(bunger23_sf, here("Data/Biological_records", "PA_Veg_bunger23.shp"))
+
+bunger23_df <- bunger23_sf %>% 
+  st_coordinates() %>%
+  as.data.frame() %>% 
+  bind_cols(st_drop_geometry(bunger23_sf)) %>% 
+  rename(x = X, y = Y) 
+
+
+#####################################################################
+############ Presence-absence survey - Bunger Hills Leishman #########
+####################################################################
+
+leishman <- read.csv("Data/Biological_records/leishman_data.csv")
+
+leishman$easting <- as.character(leishman$easting)
+leishman$northing_new <- as.character(leishman$northing_new)
+
+leishman <- leishman %>% mutate(easting_final = paste0("5", easting, "00"))
+leishman <- leishman %>% mutate(northing_final = paste0("26", northing_new, "00"))
+
+leishman$easting_final <- as.numeric(leishman$easting_final)
+leishman$northing_final <- as.numeric(leishman$northing_final)
+
+leishman_sf <- st_as_sf(leishman,
+                        coords = c("easting_final", "northing_final"),
+                        crs = 32747) # UTM Zone 47S
+
+# Project to WGS 84 Antarctic Polar Stereographic
+leishman_sf <- st_transform(leishman_sf, 3031)
+
+st_write(leishman_sf, here("Data/Biological_records", "PA_Veg_bunger_leishman.shp"))
+
+leishman_df <- leishman_sf %>%
+  st_coordinates() %>%
+  as.data.frame() %>%
+  bind_cols(st_drop_geometry(leishman_sf)) %>%
+  rename(x = X, y = Y)
+
+
+
+# 
+# # Plot records across East Antarctica -------------------------------------
+# 
+# # Load the Antarctic coastline for plotting
+# coast <- st_read(here("Data/Environmental_predictors/add_coastline_high_res_polygon_v7_10.shp"), crs = 3031)
+# 
+# # Plot distribution of presence-only lichen records across East Antarctica
+# a <- ggplot() +
+#   geom_sf(data = coast, color = "black", size = 0.05) +
+#   geom_tile(data = as.data.frame(ice_free.EastAnt, xy = T)) +
+#   geom_sf(data = veg.east.ant.sf, aes(color = vegtype)) +
+#   coord_sf(
+#     xlim = c(ext(ice_free.EastAnt)$xmin, ext(ice_free.EastAnt)$xmax), 
+#     ylim = c(ext(ice_free.EastAnt)$ymin, ext(ice_free.EastAnt)$ymax)) +
+#   # scale_fill_manual(name = "", 
+#   #                   labels = element_blank(),
+#   #                   values = c("white", "grey92","grey92", "grey92")) +
+#   theme_bw() + 
+#   theme(legend.title = element_blank(),
+#         legend.key = element_blank(),
+#         legend.background = element_blank())
+# 
+# # Now just in Vestfold Hills
+# b <- ggplot() +
+#   geom_sf(data = coast, color = "black", size = 0.05) +
+#   geom_sf(data = ice_free, fill = "grey80", size = 0.05) +
+#   geom_sf(data = bio_east_ant_sf, aes(color = class)) +
+#   coord_sf(
+#     xlim = c(st_bbox(bio_vestfold_sf)$xmin, st_bbox(bio_vestfold_sf)$xmax), 
+#     ylim = c(st_bbox(bio_vestfold_sf)$ymin, st_bbox(bio_vestfold_sf)$ymax)) +
+#   scale_fill_manual(name = "", 
+#                     labels = element_blank(),
+#                     values = c("white", "grey92","grey92", "grey92")) +
+#   theme_bw() +
+#   theme(legend.title = element_blank(),
+#         legend.key = element_blank(),
+#         legend.background = element_blank())
+# 
+# # And in Bunger Hills
+# c <- ggplot() +
+#   geom_sf(data = coast, color = "black", size = 0.05) +
+#   geom_sf(data = ice_free, fill = "grey80", size = 0.05) +
+#   geom_sf(data = bio_east_ant_sf, aes(color = class)) +
+#   coord_sf(
+#     xlim = c(st_bbox(bio_bunger_sf)$xmin, st_bbox(bio_bunger_sf)$xmax), 
+#     ylim = c(st_bbox(bio_bunger_sf)$ymin, st_bbox(bio_bunger_sf)$ymax)) +
+#   scale_fill_manual(name = "", 
+#                     labels = element_blank(),
+#                     values = c("white", "grey92","grey92", "grey92")) +
+#   theme_bw() +
+#   theme(legend.title = element_blank(),
+#         legend.key = element_blank(),
+#         legend.background = element_blank())
+# 
+# PO_plot <- ggarrange(a , 
+#                      ggarrange(b, c, nrow = 2, labels = c("(b)", "(c)")),
+#                      labels = c("(a)", ""), ncol = 2, 
+#                      common.legend = T)
+# 
+# # ggsave(plot = PO , filename = here("output/Locs_of_PO_data_East_Ant_plot.png"), w = 21.5, h = 21.2, units = "cm", dpi = 800, device = "png" )
 
 
