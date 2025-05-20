@@ -3,7 +3,7 @@
 ########## 1. Biological Data Preparation ##########
 #####################################################
 
-# This code cleans the Biodiversity of Ice-Free Antarctica Database (Terauds et al., 2025)and the GBIF data and combines them for subsequent analysis.
+# This code cleans the Biodiversity of Ice-Free Antarctica Database (Terauds et al., 2025) and the GBIF data and combines them for subsequent analysis.
 
 # Steps for the GBIF approach are summarised as follows:
 #   1. Download GBIF data online by selecting all occurrences with Antarctic as the continent
@@ -39,7 +39,8 @@ here::here()
 # writeRaster(ice_free_union, here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"), overwrite = T)
 
 # Load the ice-free areas
-ice_free <- rast(here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"))
+# ice_free <- rast(here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"))
+ice_free <- rast(here("Data/Environmental_predictors/ice_free_upsamp_1km.tif"))
 
 # Load the Antarctic Conservation Biogeographic Regions, filter to East Antarctica
 ACBRS <- st_read(here("Data/Environmental_predictors/ACBRs_v2_2016.shp"), crs = 3031) %>% filter(ACBR_Name == "East Antarctica")
@@ -550,7 +551,7 @@ st_write(veg.east.ant.sf, here("Data/Biological_records", "PO_Veg_East_Ant.shp")
 ############ Presence-absence survey - Vestfold Hills #############
 ####################################################################
 
-# Presence-absence data from Travers et al. (2024) doi:10.26179/wrss-ta40
+# Presence-absence data from Travers et al. (2024) http://dx.doi.org/doi:10.26179/wrss-ta40
 
 vestfold <- read.csv(here("Data/Biological_records/Travers_Vestfold_PA_Survey.csv"))
 
