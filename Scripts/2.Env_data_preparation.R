@@ -62,6 +62,28 @@ ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
 
 
 
+# Make bounding boxes of Vestfold Hills & Bunger Hills --------------------
+
+Vestfold <- vect(here("Data/Biological_records", "PA_Veg_vestfold.shp")) 
+Bunger <- vect(here("Data/Biological_records", "PA_Veg_bunger23.shp"))
+
+# Convert extent to polygon
+vestfold_box <- as.polygons(ext(Vestfold))
+bunger_box <- as.polygons(ext(Bunger))
+
+# Ensure the CRS is set
+crs(vestfold_box) <- crs(Vestfold)
+crs(bunger_box) <- crs(Bunger)
+
+# Buffer the bounding boxes by 100m
+vestfold_buff <- buffer(vestfold_box, width = 20000)
+bunger_buff <- buffer(bunger_box, width = 20000)
+
+# Save
+writeVector(vestfold_buff, here("Data/Environmental_predictors/vestfold_boundary.shp"), overwrite = T)
+writeVector(bunger_buff, here("Data/Environmental_predictors/bunger_boundary.shp"), overwrite = T)
+
+
 # Load the 100 m topographic variables ------------------------------------
 
 # Source: https://data.pgc.umn.edu/elev/dem/setsm/REMA/mosaic/latest/100m/
@@ -235,5 +257,50 @@ ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
 # 
 
 
+####################
+# Inspect covariate distributions and transform ---------------------------
+####################
 
+# For the gamba data, the accessibility and the DEM were squareroot transformed to reduce skewness of their distributions, which will also lead to reducing
+# the influence in the analysis of very high values. This is to reduce the leverage of these
+# observations and to try and obtain the most amount of reliable information from these data.
+
+
+# Square root or cube root transformation
+
+TWI <- rast(here("Data/Environmental_predictors/topographic_wetness_index_EAST_ANTARCTICA.tif"))
+slope <- rast(here("Data/Environmental_predictors/slope_EAST_ANTARCTICA.tif"))
+northness <- rast(here("Data/Environmental_predictors/northness_EAST_ANTARCTICA.tif"))
+names(northness) <- "northness"
+
+dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
+names(dist_vertebrates) <- "dist_vertebrates"
+
+dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_EAST_ANTARCTICA.tif"))
+names(dist_seasonal_water) <- "dist_seasonal_water"
+
+# Bias covariate
+dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_EAST_ANTARCTICA.tif"))
+names(dist_station) <- "dist_station"
+
+# Stack covariates
+covs <- c(TWI, slope, northness, dist_vertebrates, dist_seasonal_water, dist_station)
+
+# Plot histograms
+hist(covs, na.rm = T, col = "lightblue")
+hist(log(covs), na.rm = T, col = "lightblue")
+hist(sqrt(covs), na.rm = T, col = "lightblue")
+
+covs_cube <- sign(covs) * abs(covs)^(1/3)
+hist(covs_cube, na.rm = T, col = "lightblue")
+
+# Apply some transformations
+sqrt_slope <- sqrt(slope)
+log_dist_seasonal_water <- log(dist_seasonal_water+1)
+log_dist_station <- log(dist_station+1)
+
+
+####################
+# Test for correlation of covariates --------------------------------------
+####################
 
