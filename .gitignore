@@ -54,3 +54,7 @@ Output/
 Outputs/
 
 EastAntISDM_Mapping.qgz
+
+Scripts/Small_example_for_Scott.R
+Scripts/Small_example_for_Scott_bias.R
+Scripts/Small_example_for_Scott_w_comments.R
