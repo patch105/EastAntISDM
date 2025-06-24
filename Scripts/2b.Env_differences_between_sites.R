@@ -182,7 +182,7 @@ cov_names <- names(EastAnt)
 
 for(i in seq_along(cov_names)) {
   
-  xmax <- quantile(all_moss[, i], 0.95, na.rm = TRUE)
+  xmax <- quantile(all_moss[, i], 0.97, na.rm = TRUE)
   
   plot <- ggplot(all_moss, aes(x = .data[[names(all_moss)[[i]]]], y = Region, fill = Region)) +
     geom_density_ridges(scale = 4, alpha = 0.8) +
@@ -202,6 +202,42 @@ for(i in seq_along(cov_names)) {
          width = 8, height = 4, dpi = 300, units = "in")
   
 }
+
+# MULTI-PANEL PLOTS FOR ALL COVARIATES (to update later) ----------------------
+
+plot_list <- list()
+
+for (i in seq_along(cov_names)) {
+  
+  var_name <- names(all_moss)[[i]]
+  xmax <- quantile(all_moss[[i]], 0.97, na.rm = TRUE)
+  
+  p <- ggplot(all_moss, aes(x = .data[[var_name]], y = Region, fill = Region)) +
+    geom_density_ridges(scale = 4, alpha = 0.8) +
+    scale_y_discrete(expand = c(0, 0)) +
+    scale_x_continuous(expand = c(0, 0)) +
+    coord_cartesian(xlim = c(NA, xmax)) +
+    scale_fill_manual(values = c(
+      "Bunger Hills" = "orchid3",
+      "PO Moss" = "palegreen3",
+      "PA Vestfold" = "palegreen"
+    )) +
+    theme_classic() +
+    labs(x = var_name, y = NULL,
+         title = paste0("Distribution of ", var_name, " Across Moss PO & PA data vs. Bunger Hills"))
+  
+  plot_list[[i]] <- p
+}
+
+# Arrange all plots into a multi-panel figure
+combined_plot <- ggarrange(plotlist = plot_list,
+                           ncol = 2, nrow = ceiling(length(plot_list) / 2),
+                           common.legend = TRUE, legend = "bottom")
+
+# Save combined plot
+ggsave(here("Outputs/Figures", "Combined_Distribution_Plots.png"),
+       plot = combined_plot,
+       width = 12, height = 6 + 3 * ceiling(length(plot_list) / 2), dpi = 300)
 
 ###########################################################
 # Extrapolation (between PO / PA DATA & BUNGER) -------------------------------------
@@ -223,6 +259,9 @@ training_PO_moss <- PO_moss_df %>%
 training_PA_Vestfold <- PA_Vestfold_df %>%
   mutate(Presence = 1) %>% 
   select(-Region)
+
+training_integrated_lichen <- rbind(training_PO_lichen, training_PA_Vestfold)
+training_integrated_moss <- rbind(training_PO_moss, training_PA_Vestfold)
 
 ## NOTE - TAKES A WHILE
 shape_extrap_PO_lichen <- extra_eval(training_data = training_PO_lichen,
@@ -246,6 +285,26 @@ shape_extrap_PA_Vestfold <- extra_eval(training_data = training_PA_Vestfold,
                                        univar_comb = T,
                                        n_cores = 3)
 
+shape_extrap_PA_Vestfold <- extra_eval(training_data = training_PA_Vestfold,
+                                       pr_ab = "Presence",
+                                       projection_data = projection,
+                                       metric = "mahalanobis",
+                                       univar_comb = T,
+                                       n_cores = 3)
+
+shape_extrap_integrated_lichen <- extra_eval(training_data = training_integrated_lichen,
+                                             pr_ab = "Presence",
+                                             projection_data = projection,
+                                             metric = "mahalanobis",
+                                             univar_comb = T,
+                                             n_cores = 3)
+
+shape_extrap_integrated_moss <- extra_eval(training_data = training_integrated_moss,
+                                           pr_ab = "Presence",
+                                           projection_data = projection,
+                                           metric = "mahalanobis",
+                                           univar_comb = T,
+                                           n_cores = 3)
 
 # Summarising Extrapolation per data type --------------------------------
 
@@ -272,10 +331,27 @@ shape_extrap_PA_Vestfold_summary <- data.frame(data_type = "PA Vestfold",
                                                proportion_combinatorial = sum(shape_extrap_PA_Vestfold$univar_comb == 2)/ length(shape_extrap_PA_Vestfold$univar_comb))
                                                
 
+shape_extrap_integrated_lichen_summary <- data.frame(data_type = "Integrated Lichen", 
+                                               mean = mean(shape_extrap_integrated_lichen$extrapolation, na.rm = TRUE),
+                                               median = median(shape_extrap_integrated_lichen$extrapolation, na.rm = TRUE),
+                                               min = min(shape_extrap_integrated_lichen$extrapolation, na.rm = TRUE),
+                                               max = max(shape_extrap_integrated_lichen$extrapolation, na.rm = TRUE),
+                                               proportion_combinatorial = sum(shape_extrap_integrated_lichen$univar_comb == 2)/ length(shape_extrap_integrated_lichen$univar_comb))
+
+
+shape_extrap_integrated_moss_summary <- data.frame(data_type = "Integrated Moss",
+                                               mean = mean(shape_extrap_integrated_moss$extrapolation, na.rm = TRUE),
+                                               median = median(shape_extrap_integrated_moss$extrapolation, na.rm = TRUE),
+                                               min = min(shape_extrap_integrated_moss$extrapolation, na.rm = TRUE),
+                                               max = max(shape_extrap_integrated_moss$extrapolation, na.rm = TRUE),
+                                               proportion_combinatorial = sum(shape_extrap_integrated_moss$univar_comb == 2)/ length(shape_extrap_integrated_moss$univar_comb))
+
 
 extrap_summary <- rbind(shape_extrap_PO_lichen_summary, 
                         shape_extrap_PO_moss_summary, 
-                        shape_extrap_PA_Vestfold_summary)
+                        shape_extrap_PA_Vestfold_summary,
+                        shape_extrap_integrated_lichen_summary,
+                        shape_extrap_integrated_moss_summary)
 
 
 # Plot the extrapolation across Bunger Hills
@@ -432,5 +508,51 @@ ggarrange(P1, P2, ncol = 2, nrow = 1, common.legend = FALSE, legend = "bottom")
 
 
 # Key variable driving extrapolation --------------------------------------
+
+ggplot(shape_extrap_PO_lichen, aes(x = twi, y = extrapolation)) +
+  geom_point(size = 2, alpha = 0.7) +
+  theme_bw() +
+  theme(legend.ticks = element_blank()) 
+
+ggplot(shape_extrap_PO_lichen, aes(x = slope, y = extrapolation)) +
+  geom_point(size = 2, alpha = 0.7) +
+  theme_bw() +
+  theme(legend.ticks = element_blank()) 
+
+ggplot(shape_extrap_PO_lichen, aes(x = northness, y = extrapolation)) +
+  geom_point(size = 2, alpha = 0.7) +
+  theme_bw() +
+  theme(legend.ticks = element_blank()) 
+
+ggplot(shape_extrap_PO_lichen, aes(x = dist_vertebrates, y = extrapolation)) +
+  geom_point(size = 2, alpha = 0.7) +
+  theme_bw() +
+  theme(legend.ticks = element_blank()) 
+
+ggplot(shape_extrap_PO_lichen, aes(x = dist_seasonal_water, y = extrapolation)) +
+  geom_point(size = 2, alpha = 0.7) +
+  theme_bw() +
+  theme(legend.ticks = element_blank()) 
+
+ggplot(shape_extrap_PO_lichen, aes(x = summer_temp, y = extrapolation)) +
+  geom_point(size = 2, alpha = 0.7) +
+  theme_bw() +
+  theme(legend.ticks = element_blank()) 
+
+ggplot(shape_extrap_PO_lichen, aes(x = wind, y = extrapolation)) +
+  geom_point(size = 2, alpha = 0.7) +
+  theme_bw() +
+  theme(legend.ticks = element_blank()) 
+
+hist(shape_extrap_PO_lichen$extrapolation, breaks = 50, main = "Extrapolation - PO Lichen records to Bunger Hills", xlab = "Extrapolation")
+
+hist(shape_extrap_PO_moss$extrapolation, breaks = 50, main = "Extrapolation - PO Moss records to Bunger Hills", xlab = "Extrapolation")
+
+hist(shape_extrap_PA_Vestfold$extrapolation, breaks = 50, main = "Extrapolation - PA Vestfold records to Bunger Hills", xlab = "Extrapolation")
+
+##########################################
+# TO DO: ENVIRONMENTAL COVERAGE - FUTURE ENVIRONMENTS ---------------------
+##########################################
+
 
 
