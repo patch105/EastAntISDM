@@ -1,0 +1,2 @@
+"","lrate","ntrees","best.trees","cv.deviance","null.deviance","cv.discrimination","train.discrimination"
+"1",0.001,50,10000,0.296894447562038,1.15014194801535,0.98188,0.9909
