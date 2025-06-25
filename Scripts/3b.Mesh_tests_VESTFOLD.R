@@ -159,38 +159,20 @@ PA_bunger23 <- PA_bunger23 %>% mutate(area = 1)
 
 # Load the covariates -----------------------------------------------------
 
-TWI <- rast(here("Data/Environmental_predictors/topographic_wetness_index_EAST_ANTARCTICA.tif"))
-slope <- rast(here("Data/Environmental_predictors/slope_EAST_ANTARCTICA.tif"))
-northness <- rast(here("Data/Environmental_predictors/northness_EAST_ANTARCTICA.tif"))
-names(northness) <- "northness"
-
-dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
-names(dist_vertebrates) <- "dist_vertebrates"
-
-dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_EAST_ANTARCTICA.tif"))
-names(dist_seasonal_water) <- "dist_seasonal_water"
-
 # Bias covariate
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_EAST_ANTARCTICA.tif"))
 names(dist_station) <- "dist_station"
-
-# Apply some transformations
-sqrt_slope <- sqrt(slope)
-names(sqrt_slope) <- "sqrt_slope"
-
-log_dist_seasonal_water <- log(dist_seasonal_water+1)
-names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
 
 log_dist_station <- log(dist_station+1)
 names(log_dist_station) <- "log_dist_station"
 
 # Stack covariates
-covs <- c(TWI, sqrt_slope, northness, dist_vertebrates, log_dist_seasonal_water, log_dist_station)
+covs <- log_dist_station
 
 # Make sure that if any predictors are NA, all become NA
 
-# Here we're just exploiting the fact that sum will by default return NA when any layer has an NA
-covs <- terra::mask(covs, sum(covs))
+# # Here we're just exploiting the fact that sum will by default return NA when any layer has an NA
+# covs <- terra::mask(covs, sum(covs))
 
 # CROP COVARIATES TO THE VESTFOLD BOUNDARY
 covs <- crop(covs, ext(vestfold_boundary))
@@ -217,7 +199,7 @@ dep.range <- 10000 # 10km Set the range based on biology
 PO.sf <- crop(vect(PO.sf), ext(vestfold_boundary)) %>% 
   st_as_sf()
 
-mesh.range.10km.cutoff.50 <- fmesher::fm_mesh_2d_inla(loc = st_coordinates(PO.sf),
+mesh.range.10km.cutoff.502 <- fmesher::fm_mesh_2d_inla(loc = st_coordinates(PO.sf),
                                                       boundary = boundary,
                                                       max.edge = c(0.2, 0.5)*dep.range,
                                                       cutoff = 50,
@@ -256,11 +238,14 @@ ggsave(plot = p3, filename = here("Outputs/Figures/mesh_range_10km_cutoff_50_ALL
 # 2. MODEL FITTING --------------------------------------------------------
 
 # Priors
+
 my.control <- list(coord.names = c("x", "y"),
-                   prior.mean = 0,
-                   int.sd = 1000, # Intercept standard deviation
-                   other.sd = 10, # Covariate effect standard deviation
-                   addRandom = FALSE) # No random effect
+                       prior.mean = 0,
+                       int.sd = 1000, # Intercept standard deviation
+                       other.sd = 10, # Covariate effect standard deviation
+                       prior.range = c(1, 0.1), # Prior chance 10% that parameter falls below range of 1m
+                       prior.space.sigma = c(5, 0.1), # Prior chance 10% that parameter falls above SD of 5
+                       addRandom = FALSE) # Without random effect
 
 my.control.GRF <- list(coord.names = c("x", "y"),
                        prior.mean = 0,
@@ -271,19 +256,14 @@ my.control.GRF <- list(coord.names = c("x", "y"),
                        addRandom = TRUE) # With random effect
 
 
-
 # Presence-Absence Model Fitting ------------------------------------------
-
-# PA_vestfold <- PA_vestfold[sample(1:nrow(PA_vestfold),nrow(PO.sf), replace=FALSE),]
-
-#Intercept only
 
 m.PA.GRF <- isdm(observationList = list(PAdat = PA_vestfold),
                     covars = covs,
                     mesh = mesh.range.10km.cutoff.50,
                     responseNames = c(PA = "presence"),
                     sampleAreaNames = c(PA = "area"),
-                    distributionFormula = ~0 + sqrt_slope, # Linear w covs
+                    distributionFormula = ~0 + log_dist_station, # Linear w covs
                     biasFormula = NULL, #Intercept only
                     artefactFormulas = list(PA = ~1), # Intercept only
                     control = my.control.GRF)
@@ -297,10 +277,143 @@ m.PA.no.GRF <- isdm(observationList = list(PAdat = PA_vestfold),
                  mesh = mesh.range.10km.cutoff.50,
                  responseNames = c(PA = "presence"),
                  sampleAreaNames = c(PA = "area"),
-                 distributionFormula = ~0 + sqrt_slope, # Linear w covs
+                 distributionFormula = ~0 + log_dist_station, # Linear w covs
                  biasFormula = NULL, #Intercept only
                  artefactFormulas = list(PA = ~1), # Intercept only
                  control = my.control)
+
+
+# Print the coefficient
+summary(m.PA.GRF)
+
+summary(m.PA.no.GRF)
+
+
+# Predict & plot the GRF ----------------------------------------------------
+
+# Prediction shouldn't include an intercept
+m.PA.GRF$preds.GRF <- predict(m.PA.GRF,
+                             covars = covs,
+                             S = 500,
+                             intercept.terms = NULL,
+                             type = "link",
+                             includeRandom = T,
+                             includeFixed = F)
+
+
+plot(m.PA.GRF$preds.GRF$field[[1]], nc = 3)
+plot(vect(PA_vestfold.sf), add = T)
+
+# Predict & plot the log intensity ----------------------------------------
+
+m.PA.no.GRF$preds.link <- predict(m.PA.no.GRF, 
+                                  covars = covs,
+                                  S = 500,
+                                  intercept.terms = "PA_Intercept",
+                                  type = "link",
+                                  includeRandom = F,
+                                  includeFixed = T)
+
+
+m.PA.GRF$preds.link <- predict(m.PA.GRF, 
+                               covars = covs,
+                               S = 500,
+                               intercept.terms = "PA_Intercept",
+                               type = "link",
+                               includeRandom = T,
+                               includeFixed = T)
+
+
+plot(m.PA.no.GRF$preds.link$field[[1]], nc = 3)
+plot(m.PA.GRF$preds.link$field[[1]], nc = 3)
+
+
+#####################################
+# Now trying the same for PO data -----------------------------------------
+######################################
+
+m.PO.GRF <- isdm(observationList = list(POdat = PO), 
+                 covars = covs,
+                 mesh = mesh.range.10km.cutoff.50,
+                 responseNames = NULL,
+                 sampleAreaNames = NULL,
+                 distributionFormula = ~0 + log_dist_station, # Linear w covs
+                 biasFormula = ~1,
+                 artefactFormulas = NULL,
+                 control = my.control.GRF)
+
+print(paste0("Time is: ", Sys.time()))
+Print("Fitted m.PA.no.GRF")
+
+
+m.PO.no.GRF <- isdm(observationList = list(POdat = PO), 
+                    covars = covs,
+                    mesh = mesh.range.10km.cutoff.50,
+                    responseNames = NULL,
+                    sampleAreaNames = NULL,
+                    distributionFormula = ~0 + log_dist_station, # Linear w covs
+                    biasFormula = ~1,
+                    artefactFormulas = NULL,
+                    control = my.control)
+
+
+# Print the coefficient
+summary(m.PO.GRF)
+
+summary(m.PO.no.GRF)
+
+
+# Predict & plot the GRF ----------------------------------------------------
+
+# Prediction shouldn't include an intercept
+m.PO.GRF$preds.GRF <- predict(m.PO.GRF,
+                              covars = covs,
+                              S = 500,
+                              intercept.terms = NULL,
+                              type = "link",
+                              includeRandom = T,
+                              includeFixed = F)
+
+
+plot(m.PO.GRF$preds.GRF$field[[1]], nc = 3)
+plot(vect(PO.sf), add = T)
+
+# Predict & plot the log intensity ----------------------------------------
+
+m.PO.no.GRF$preds.link <- predict(m.PO.GRF, 
+                                  covars = covs,
+                                  S = 500,
+                                  intercept.terms = "PO_Intercept",
+                                  type = "link",
+                                  includeRandom = F,
+                                  includeFixed = T)
+
+
+m.PO.GRF$preds.link <- predict(m.PO.GRF, 
+                               covars = covs,
+                               S = 500,
+                               intercept.terms = "PO_Intercept",
+                               type = "intensity",
+                               includeRandom = T,
+                               includeFixed = T)
+
+
+plot(m.PO.no.GRF$preds.link$field[[1]], nc = 3)
+plot(m.PO.GRF$preds.link$field[[1]], nc = 3)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Trying model with smaller sample area (makes it a lot larger the intensity values)
 # PA_vestfold$area <- 1
