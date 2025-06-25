@@ -39,21 +39,38 @@ if(!dir.exists(outpath)) {
   dir.create(outpath, showWarnings = FALSE)
 } 
 
-# Domain setup ------------------------------------------------------------
+# # Domain setup 1 km ------------------------------------------------------------
+# 
+# # Load the ice-free areas
+# # ice_free <- rast(here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"))
+# ice_free <- rast(here("Data/Environmental_predictors/ice_free_upsamp_1km.tif"))
+# 
+# # Load the Antarctic Conservation Biogeographic Regions, filter to East Antarctica
+# ACBRS <- st_read(here("Data/Environmental_predictors/ACBRs_v2_2016.shp"), crs = 3031) %>% filter(ACBR_Name == "East Antarctica")
+# ACBRS_SPVE <- vect(ACBRS)
+# 
+# 
+# # Also trim ice-free land to just East Antarctica
+# ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
+# 
+# ice_free.EastAnt <- ifel(not.na(ice_free.EastAnt), 1, NA)
+# 
+# # Trim to Vestfold:
+# 
+# vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp"))
+# # bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
+# 
+# ice_free.EastAnt <- crop(ice_free.EastAnt, ext(vestfold_boundary))
+
+# Domain setup 100m ------------------------------------------------------------
 
 # Load the ice-free areas
-# ice_free <- rast(here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"))
-ice_free <- rast(here("Data/Environmental_predictors/ice_free_upsamp_1km.tif"))
-
+ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_EastAnt_100m.tif"))
+  
 # Load the Antarctic Conservation Biogeographic Regions, filter to East Antarctica
 ACBRS <- st_read(here("Data/Environmental_predictors/ACBRs_v2_2016.shp"), crs = 3031) %>% filter(ACBR_Name == "East Antarctica")
 ACBRS_SPVE <- vect(ACBRS)
 
-
-# Also trim ice-free land to just East Antarctica
-ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
-
-ice_free.EastAnt <- ifel(not.na(ice_free.EastAnt), 1, NA)
 
 # Trim to Vestfold:
 
@@ -157,21 +174,53 @@ PA_bunger23 <- PA_bunger23 %>% mutate(area = 1)
 # # Add together
 # PA_both <- rbind(PA_vestfold, PA_bunger23)
 
-# Load the covariates -----------------------------------------------------
+# Load the 1km covariates -----------------------------------------------------
 
-TWI <- rast(here("Data/Environmental_predictors/topographic_wetness_index_EAST_ANTARCTICA.tif"))
-slope <- rast(here("Data/Environmental_predictors/slope_EAST_ANTARCTICA.tif"))
-northness <- rast(here("Data/Environmental_predictors/northness_EAST_ANTARCTICA.tif"))
-names(northness) <- "northness"
+# TWI <- rast(here("Data/Environmental_predictors/topographic_wetness_index_EAST_ANTARCTICA.tif"))
+# slope <- rast(here("Data/Environmental_predictors/slope_EAST_ANTARCTICA.tif"))
+# northness <- rast(here("Data/Environmental_predictors/northness_EAST_ANTARCTICA.tif"))
+# names(northness) <- "northness"
+# 
+# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
+# names(dist_vertebrates) <- "dist_vertebrates"
+# 
+# dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_EAST_ANTARCTICA.tif"))
+# names(dist_seasonal_water) <- "dist_seasonal_water"
+# 
+# # Bias covariate
+# dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_EAST_ANTARCTICA.tif"))
+# names(dist_station) <- "dist_station"
+# 
+# # Apply some transformations
+# sqrt_slope <- sqrt(slope)
+# names(sqrt_slope) <- "sqrt_slope"
+# 
+# log_dist_seasonal_water <- log(dist_seasonal_water+1)
+# names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
+# 
+# log_dist_station <- log(dist_station+1)
+# names(log_dist_station) <- "log_dist_station"
 
-dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
-names(dist_vertebrates) <- "dist_vertebrates"
 
-dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_EAST_ANTARCTICA.tif"))
+# Load the 100m covariates -----------------------------------------------------
+
+TWI <- rast(here("Data/Environmental_predictors/TWI_100m_IceFree_EastAnt.tif"))
+names(TWI) <- "TWI"
+
+slope <- rast(here("Data/Environmental_predictors/slope_100m_IceFree_EastAnt.tif"))
+names(slope) <- "slope"
+
+aspect <- rast(here("Data/Environmental_predictors/aspect_100m_IceFree_EastAnt.tif"))
+names(aspect) <- "aspect"
+
+# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
+# names(dist_vertebrates) <- "dist_vertebrates"
+
+dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_100m.tif"))
 names(dist_seasonal_water) <- "dist_seasonal_water"
 
 # Bias covariate
-dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_EAST_ANTARCTICA.tif"))
+dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_100m.tif"))
 names(dist_station) <- "dist_station"
 
 # Apply some transformations
@@ -184,8 +233,9 @@ names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
 log_dist_station <- log(dist_station+1)
 names(log_dist_station) <- "log_dist_station"
 
+
 # Stack covariates
-covs <- c(TWI, sqrt_slope, northness, dist_vertebrates, log_dist_seasonal_water, log_dist_station)
+covs <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water)
 
 # Make sure that if any predictors are NA, all become NA
 
@@ -217,6 +267,14 @@ dep.range <- 10000 # 10km Set the range based on biology
 PO.sf <- crop(vect(PO.sf), ext(vestfold_boundary)) %>% 
   st_as_sf()
 
+
+PO <- PO.sf %>% 
+  st_coordinates() %>%
+  as.data.frame() %>% 
+  bind_cols(st_drop_geometry(PO.sf)) %>% 
+  rename(x = X, y = Y) %>% 
+  select(x, y)
+
 mesh.range.10km.cutoff.50 <- fmesher::fm_mesh_2d_inla(loc = st_coordinates(PO.sf),
                                                       boundary = boundary,
                                                       max.edge = c(0.2, 0.5)*dep.range,
@@ -231,26 +289,26 @@ print("Mesh created")
 # mesh.range.10km.cutoff.50 <- readRDS(file = "mesh.range.10km.cutoff.50.rds")
 
 # Plot the mesh:
-
- p1 <- ggplot() +
-   inlabru::gg(mesh.range.10km.cutoff.50) +
-   # gg(mesh.vrt, color = "red") +
-   geom_sf(data = PO.sf, color = "red")
-
- p2 <- ggplot() +
-   inlabru::gg(mesh.range.10km.cutoff.50) +
-   # gg(mesh.vrt, color = "red") +
-   coord_sf(
-     xlim = c(st_bbox(bunger_boundary)$xmin, st_bbox(bunger_boundary)$xmax),
-     ylim = c(st_bbox(bunger_boundary)$ymin, st_bbox(bunger_boundary)$ymax))
-
- p3 <- ggplot() +
-   inlabru::gg(mesh.range.10km.cutoff.50)
-
- ggsave(plot = p1, filename = here("Outputs/Testing/v2mesh_range_10km_cutoff_50_VESTFOLD.png"), width = 10, height = 10, dpi = 300)
-ggsave(plot = p2, filename = here("Outputs/Figures/mesh_range_10km_cutoff_50_BUNGER.png"), width = 10, height = 10, dpi = 300)
-ggsave(plot = p3, filename = here("Outputs/Figures/mesh_range_10km_cutoff_50_ALL.png"), width = 10, height = 10, dpi = 300)
-
+# 
+#  p1 <- ggplot() +
+#    inlabru::gg(mesh.range.10km.cutoff.50) +
+#    # gg(mesh.vrt, color = "red") +
+#    geom_sf(data = PO.sf, color = "red")
+# 
+#  p2 <- ggplot() +
+#    inlabru::gg(mesh.range.10km.cutoff.50) +
+#    # gg(mesh.vrt, color = "red") +
+#    coord_sf(
+#      xlim = c(st_bbox(bunger_boundary)$xmin, st_bbox(bunger_boundary)$xmax),
+#      ylim = c(st_bbox(bunger_boundary)$ymin, st_bbox(bunger_boundary)$ymax))
+# 
+#  p3 <- ggplot() +
+#    inlabru::gg(mesh.range.10km.cutoff.50)
+# 
+#  ggsave(plot = p1, filename = here("Outputs/Testing/v2mesh_range_10km_cutoff_50_VESTFOLD.png"), width = 10, height = 10, dpi = 300)
+# ggsave(plot = p2, filename = here("Outputs/Figures/mesh_range_10km_cutoff_50_BUNGER.png"), width = 10, height = 10, dpi = 300)
+# ggsave(plot = p3, filename = here("Outputs/Figures/mesh_range_10km_cutoff_50_ALL.png"), width = 10, height = 10, dpi = 300)
+# 
 
 
 # 2. MODEL FITTING --------------------------------------------------------
@@ -274,70 +332,47 @@ my.control.GRF <- list(coord.names = c("x", "y"),
 
 # Presence-Absence Model Fitting ------------------------------------------
 
-# PA_vestfold <- PA_vestfold[sample(1:nrow(PA_vestfold),nrow(PO.sf), replace=FALSE),]
-
-#Intercept only
-
-m.PA.GRF <- isdm(observationList = list(PAdat = PA_vestfold),
-                    covars = covs,
-                    mesh = mesh.range.10km.cutoff.50,
-                    responseNames = c(PA = "presence"),
-                    sampleAreaNames = c(PA = "area"),
-                    distributionFormula = ~0 + sqrt_slope, # Linear w covs
-                    biasFormula = NULL, #Intercept only
-                    artefactFormulas = list(PA = ~1), # Intercept only
-                    control = my.control.GRF)
-
-print(paste0("Time is: ", Sys.time()))
-Print("Fitted m.PA.no.GRF")
-
-
 m.PA.no.GRF <- isdm(observationList = list(PAdat = PA_vestfold),
                  covars = covs,
                  mesh = mesh.range.10km.cutoff.50,
                  responseNames = c(PA = "presence"),
                  sampleAreaNames = c(PA = "area"),
-                 distributionFormula = ~0 + sqrt_slope, # Linear w covs
+                 distributionFormula = ~0 + sqrt_slope + TWI + aspect + log_dist_seasonal_water, # Linear w covs
                  biasFormula = NULL, #Intercept only
                  artefactFormulas = list(PA = ~1), # Intercept only
                  control = my.control)
 
-# Trying model with smaller sample area (makes it a lot larger the intensity values)
-# PA_vestfold$area <- 1
-# m.PA.GRF.1km <- isdm(observationList = list(PAdat = PA_vestfold),
-#                      covars = covs,
-#                      mesh = mesh.range.10km.cutoff.50,
-#                      responseNames = c(PA = "presence"),
-#                      sampleAreaNames = c(PA = "area"),
-#                      distributionFormula = ~0 + sqrt_slope, # Linear w covs
-#                      biasFormula = NULL, #Intercept only
-#                      artefactFormulas = list(PA = ~1), # Intercept only
-#                      control = my.control)
 
+m.PA.no.GRF <- isdm(observationList = list(PAdat = PA_vestfold),
+                    covars = covs,
+                    mesh = mesh.range.10km.cutoff.50,
+                    responseNames = c(PA = "presence"),
+                    sampleAreaNames = c(PA = "area"),
+                    distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), # Linear w covs
+                    biasFormula = NULL, #Intercept only
+                    artefactFormulas = list(PA = ~1), # Intercept only
+                    control = my.control)
+
+
+# Presence-Absence Model Prediction ----------------------------------------
+
+covs$sampAreaPA <- mask(rast(covs[[1]], vals=100), covs[[1]])
 
 m.PA.no.GRF$preds.INT <- predict(m.PA.no.GRF, 
-                                          covars = covs,
-                                          S = 500,
-                                          intercept.terms = "PA_Intercept",
-                                          type = "intensity",
-                                          includeRandom = F,
-                                          includeFixed = T)
-
-m.PA.no.GRF$preds.INT.nohabitat <- predict(m.PA.no.GRF, 
-                                 covars = covarsForInter,
+                                 covars = covs,
+                                 habitatArea="sampAreaPA",
                                  S = 500,
                                  intercept.terms = "PA_Intercept",
-                                 habitatArea = "tmp.habiArea",
                                  type = "intensity",
                                  includeRandom = F,
                                  includeFixed = T)
 
-
 plot(m.PA.no.GRF$preds.INT$field[[1]], nc = 3)
-plot(m.PA.no.GRF$preds.INT.nohabitat$field[[1]], nc = 3)
+
 
 m.PA.no.GRF$preds.link <- predict(m.PA.no.GRF, 
                                  covars = covs,
+                                 habitatArea="sampAreaPA",
                                  S = 500,
                                  intercept.terms = "PA_Intercept",
                                  type = "link",
@@ -346,9 +381,9 @@ m.PA.no.GRF$preds.link <- predict(m.PA.no.GRF,
 
 plot(m.PA.no.GRF$preds.link$field[[1]], nc = 3)
 
-
 m.PA.no.GRF$preds.prob <- predict(m.PA.no.GRF, 
                                   covars = covs,
+                                  habitatArea="sampAreaPA",
                                   S = 500,
                                   intercept.terms = "PA_Intercept",
                                   type = "probability",
@@ -358,6 +393,104 @@ m.PA.no.GRF$preds.prob <- predict(m.PA.no.GRF,
 plot(m.PA.no.GRF$preds.prob$field[[1]], nc = 3)
 
 
+###############
+# PO only model -----------------------------------------------------------
+###############
+
+m.PO.no.GRF <- isdm(observationList = list(POdat = PO), 
+                    covars = covs,
+                    mesh = mesh.range.10km.cutoff.50,
+                    responseNames = NULL,
+                    sampleAreaNames = NULL,
+                    distributionFormula = ~0 + sqrt_slope + TWI + aspect + log_dist_seasonal_water, # Linear w covs
+                    biasFormula = ~1,
+                    artefactFormulas = NULL,
+                    control = my.control)
+
+
+# Make predictions --------------------------------------------------------
+
+
+m.PO.no.GRF$preds.INT <- predict(m.PO.no.GRF, 
+                                 covars = covs,
+                                 S = 500,
+                                 intercept.terms = "PO_Intercept",
+                                 type = "intensity",
+                                 includeRandom = F,
+                                 includeFixed = T)
+
+
+plot(m.PO.no.GRF$preds.INT$field[[1]], nc = 3)
+
+m.PO.no.GRF$preds.prob <- predict(m.PO.no.GRF, 
+                                 covars = covs,
+                                 S = 500,
+                                 intercept.terms = "PO_Intercept",
+                                 type = "probability",
+                                 includeRandom = F,
+                                 includeFixed = T)
+
+
+plot(m.PO.no.GRF$preds.prob$field[[1]], nc = 3)
+
+
+
+# Fit Integrated Model ----------------------------------------------------
+
+m.int.no.GRF <- isdm(observationList = list(POdat = PO,
+                                            PAdat = PA_vestfold),
+                     covars = covs,
+                     mesh = mesh.range.10km.cutoff.50,
+                     responseNames = c(PO = NULL, PA = "presence"),
+                     sampleAreaNames = c(PO = NULL, PA = "area"),
+                     distributionFormula = ~0 + sqrt_slope + TWI + aspect + log_dist_seasonal_water, # Linear w covs
+                     biasFormula = ~1, 
+                     artefactFormulas = list(PA = ~1), # Intercept only
+                     control = my.control) 
+
+m.int.no.GRF <- isdm(observationList = list(POdat = PO,
+                                            PAdat = PA_vestfold),
+                     covars = covs,
+                     mesh = mesh.range.10km.cutoff.50,
+                     responseNames = c(PO = NULL, PA = "presence"),
+                     sampleAreaNames = c(PO = NULL, PA = "area"),
+                     distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), # Linear w covs
+                     biasFormula = ~1, 
+                     artefactFormulas = list(PA = ~1), # Intercept only
+                     control = my.control) 
+
+
+# Model prediction --------------------------------------------------------
+
+m.int.no.GRF$preds.INT <- predict(m.int.no.GRF, 
+                                 covars = covs,
+                                 habitatArea = "sampAreaPA",
+                                 S = 500,
+                                 intercept.terms = "PA_Intercept",
+                                 type = "intensity",
+                                 includeRandom = F,
+                                 includeFixed = T)
+
+
+plot(m.int.no.GRF$preds.INT$field[[1]], nc = 3)
+
+m.int.no.GRF$preds.prob <- predict(m.int.no.GRF, 
+                                  covars = covs,
+                                  habitatArea = "sampAreaPA",
+                                  S = 500,
+                                  intercept.terms = "PA_Intercept",
+                                  type = "probability",
+                                  includeRandom = F,
+                                  includeFixed = T)
+
+
+plot(m.int.no.GRF$preds.prob$field[[1]], nc = 3)
+
+
+
+# Partial dependence plot -------------------------------------------------
+
+# Need a function for this!
 
 # 1) create a raster layer with a constant value for the habitatArea offset, 
 # 2) predict specifying which terms should be included, and 
@@ -397,52 +530,11 @@ polygon( x=c( pred.df$sqrt_slope, rev( pred.df$sqrt_slope)),
 lines( pred.df[,c("sqrt_slope","Median")], type='l', lwd=2)
 
 
-###############
-# PO only model -----------------------------------------------------------
-###############
-
-PO <- PO.sf %>% 
-  st_coordinates() %>%
-  as.data.frame() %>% 
-  bind_cols(st_drop_geometry(PO.sf)) %>% 
-  rename(x = X, y = Y) %>% 
-  select(x, y)
 
 
-m.PO.no.GRF <- isdm(observationList = list(POdat = PO), 
-                    covars = covs,
-                    mesh = mesh.range.10km.cutoff.50,
-                    responseNames = NULL,
-                    sampleAreaNames = NULL,
-                    distributionFormula = ~0 + sqrt_slope, # Linear w covs
-                    biasFormula = ~1,
-                    artefactFormulas = NULL,
-                    control = my.control)
-
-m.PO.no.GRF$preds.INT <- predict(m.PO.no.GRF, 
-                                 covars = covs,
-                                 S = 500,
-                                 intercept.terms = "PO_Intercept",
-                                 type = "intensity",
-                                 includeRandom = F,
-                                 includeFixed = T)
 
 
-plot(m.PO.no.GRF$preds.INT$field[[1]], nc = 3)
 
-m.PO.no.GRF$preds.prob <- predict(m.PO.no.GRF, 
-                                 covars = covs,
-                                 S = 500,
-                                 intercept.terms = "PO_Intercept",
-                                 type = "probability",
-                                 includeRandom = F,
-                                 includeFixed = T)
-
-
-plot(m.PO.no.GRF$preds.prob$field[[1]], nc = 3)
-
-
-# Adding bias field -------------------------------------------------------
 
 
 

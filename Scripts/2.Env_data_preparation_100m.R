@@ -203,3 +203,43 @@ wind <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEAR
 precipitation_rain <- rast(here("Data/Environmental_predictors/Mean_Annual_Precipitation_RAIN_ALL_YEARS.tif"))
 precipitation_snow <- rast(here("Data/Environmental_predictors/Mean_Annual_Precipitation_SNOW_ALL_YEARS.tif"))
 
+
+####################
+# Inspect covariate distributions and transform ---------------------------
+####################
+
+ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_EastAnt_100m.tif"))
+
+TWI <- rast(here("Data/Environmental_predictors/TWI_100m_IceFree_EastAnt.tif"))
+names(TWI) <- "TWI"
+slope <- rast(here("Data/Environmental_predictors/slope_100m_IceFree_EastAnt.tif"))
+names(slope) <- "slope"
+aspect <- rast(here("Data/Environmental_predictors/aspect_100m_IceFree_EastAnt.tif"))
+names(aspect) <- "aspect"
+
+# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
+# names(dist_vertebrates) <- "dist_vertebrates"
+
+dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_100m.tif"))
+names(dist_seasonal_water) <- "dist_seasonal_water"
+
+# Bias covariate
+dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_100m.tif"))
+names(dist_station) <- "dist_station"
+
+# Stack covariates
+covs <- c(TWI, slope, aspect, dist_seasonal_water, dist_station)
+
+# Plot histograms
+hist(covs, na.rm = T, col = "lightblue")
+hist(log(covs), na.rm = T, col = "lightblue")
+hist(sqrt(covs), na.rm = T, col = "lightblue")
+
+covs_cube <- sign(covs) * abs(covs)^(1/3)
+hist(covs_cube, na.rm = T, col = "lightblue")
+
+# Apply some transformations
+sqrt_slope <- sqrt(slope)
+log_dist_seasonal_water <- log(dist_seasonal_water+1)
+log_dist_station <- log(dist_station+1)
+
