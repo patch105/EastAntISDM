@@ -217,8 +217,8 @@ names(slope) <- "slope"
 aspect <- rast(here("Data/Environmental_predictors/aspect_100m_IceFree_EastAnt.tif"))
 names(aspect) <- "aspect"
 
-# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
-# names(dist_vertebrates) <- "dist_vertebrates"
+dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_ICEFREE_100m.tif"))
+names(dist_vertebrates) <- "dist_vertebrates"
 
 dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_100m.tif"))
 names(dist_seasonal_water) <- "dist_seasonal_water"
@@ -228,7 +228,7 @@ dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICE
 names(dist_station) <- "dist_station"
 
 # Stack covariates
-covs <- c(TWI, slope, aspect, dist_seasonal_water, dist_station)
+covs <- c(TWI, slope, aspect, dist_seasonal_water, dist_station, dist_vertebrates)
 
 # Plot histograms
 hist(covs, na.rm = T, col = "lightblue")
@@ -242,4 +242,30 @@ hist(covs_cube, na.rm = T, col = "lightblue")
 sqrt_slope <- sqrt(slope)
 log_dist_seasonal_water <- log(dist_seasonal_water+1)
 log_dist_station <- log(dist_station+1)
+log_dist_vertebrates <- log(dist_vertebrates+1)
+
+
+covs <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water, log_dist_station, log_dist_vertebrates)
+
+####################
+# Check for correlation among predictors ---------------------------------
+####################
+
+library(corrplot)
+
+covs_df <- as.data.frame(covs, xy = F, na.rm = T)
+
+ecospat::ecospat.cor.plot(covs_df)
+
+# Nicer corr plot
+corrplot.mixed(M, order = 'AOE')
+
+usdm::vif(covs)
+
+
+
+
+
+
+
 
