@@ -188,6 +188,15 @@ writeRaster(mean_summer_temp,
             here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_1km.tif"), 
             overwrite = T)
 
+### TEMPORARY: interpolate 1km temp to 100m
+
+summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_1km.tif"))
+summer_temp <- crop(summer_temp, ext(ice_free.EastAnt))
+
+summer_temp <- terra::project(summer_temp, ice_free.EastAnt, method = "near")
+summer_temp <- mask(summer_temp, ice_free.EastAnt, maskvalue = NA)
+writeRaster(summer_temp, here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_100m.tif"), overwrite = T)
+
 
 ###################################################
 ########### Wind speed ##################
