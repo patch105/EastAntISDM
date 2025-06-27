@@ -26,6 +26,11 @@ library(flexsdm, lib.loc=lib_loc)
 # packages <- c("here", "sf", "terra", "dplyr", "data.table", "tidyr", "bdc", "viridis", "ggplot2", "tidyterra", "stringr")
 
 
+# Load some helper functions -----------------------------------------------
+
+source(here("Scripts/Helper_functions_ISDM.R"))
+
+
 # Set group ---------------------------------------------------------------
 
 group <- "Lichen"
@@ -75,7 +80,7 @@ ACBRS_SPVE <- vect(ACBRS)
 # Trim to Vestfold:
 
 vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp"))
-# bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
+bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
 
 ice_free.EastAnt <- crop(ice_free.EastAnt, ext(vestfold_boundary))
 
@@ -213,8 +218,8 @@ names(slope) <- "slope"
 aspect <- rast(here("Data/Environmental_predictors/aspect_100m_IceFree_EastAnt.tif"))
 names(aspect) <- "aspect"
 
-# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
-# names(dist_vertebrates) <- "dist_vertebrates"
+dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_ICEFREE_100m.tif"))
+names(dist_vertebrates) <- "dist_vertebrates"
 
 dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_100m.tif"))
 names(dist_seasonal_water) <- "dist_seasonal_water"
@@ -233,16 +238,22 @@ names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
 log_dist_station <- log(dist_station+1)
 names(log_dist_station) <- "log_dist_station"
 
+log_dist_vertebrates <- log(dist_vertebrates+1)
+names(log_dist_vertebrates) <- "log_dist_vertebrates"
 
-# Stack covariates
-covs <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water)
+# Stack covariates & save version w/o bias cov
+covs_no_bias <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water)
+covs <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water, log_dist_station)
 
 # Make sure that if any predictors are NA, all become NA
 
 # Here we're just exploiting the fact that sum will by default return NA when any layer has an NA
+covs_no_bias <- terra::mask(covs_no_bias, sum(covs_no_bias))
 covs <- terra::mask(covs, sum(covs))
 
+
 # CROP COVARIATES TO THE VESTFOLD BOUNDARY
+covs_no_bias <- crop(covs_no_bias, ext(vestfold_boundary))
 covs <- crop(covs, ext(vestfold_boundary))
 
 # 1. MAKE THE MESH --------------------------------------------------------
@@ -332,202 +343,268 @@ my.control.GRF <- list(coord.names = c("x", "y"),
 
 # Presence-Absence Model Fitting ------------------------------------------
 
-m.PA.no.GRF <- isdm(observationList = list(PAdat = PA_vestfold),
-                 covars = covs,
-                 mesh = mesh.range.10km.cutoff.50,
-                 responseNames = c(PA = "presence"),
-                 sampleAreaNames = c(PA = "area"),
-                 distributionFormula = ~0 + sqrt_slope + TWI + aspect + log_dist_seasonal_water, # Linear w covs
-                 biasFormula = NULL, #Intercept only
-                 artefactFormulas = list(PA = ~1), # Intercept only
-                 control = my.control)
-
-
-m.PA.no.GRF <- isdm(observationList = list(PAdat = PA_vestfold),
+m.PA <- isdm(observationList = list(PAdat = PA_vestfold),
                     covars = covs,
                     mesh = mesh.range.10km.cutoff.50,
                     responseNames = c(PA = "presence"),
                     sampleAreaNames = c(PA = "area"),
-                    distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), # Linear w covs
+                    distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), 
                     biasFormula = NULL, #Intercept only
                     artefactFormulas = list(PA = ~1), # Intercept only
                     control = my.control)
 
 
-# Presence-Absence Model Prediction ----------------------------------------
 
-covs$sampAreaPA <- mask(rast(covs[[1]], vals=100), covs[[1]])
-
-m.PA.no.GRF$preds.INT <- predict(m.PA.no.GRF, 
-                                 covars = covs,
-                                 habitatArea="sampAreaPA",
-                                 S = 500,
-                                 intercept.terms = "PA_Intercept",
-                                 type = "intensity",
-                                 includeRandom = F,
-                                 includeFixed = T)
-
-plot(m.PA.no.GRF$preds.INT$field[[1]], nc = 3)
+# Presence-Only Model Fitting ----------------------------------------------
 
 
-m.PA.no.GRF$preds.link <- predict(m.PA.no.GRF, 
-                                 covars = covs,
-                                 habitatArea="sampAreaPA",
-                                 S = 500,
-                                 intercept.terms = "PA_Intercept",
-                                 type = "link",
-                                 includeRandom = F,
-                                 includeFixed = T)
-
-plot(m.PA.no.GRF$preds.link$field[[1]], nc = 3)
-
-m.PA.no.GRF$preds.prob <- predict(m.PA.no.GRF, 
-                                  covars = covs,
-                                  habitatArea="sampAreaPA",
-                                  S = 500,
-                                  intercept.terms = "PA_Intercept",
-                                  type = "probability",
-                                  includeRandom = F,
-                                  includeFixed = T)
-
-plot(m.PA.no.GRF$preds.prob$field[[1]], nc = 3)
-
-
-###############
-# PO only model -----------------------------------------------------------
-###############
-
-m.PO.no.GRF <- isdm(observationList = list(POdat = PO), 
+m.PO <- isdm(observationList = list(POdat = PO), 
                     covars = covs,
                     mesh = mesh.range.10km.cutoff.50,
                     responseNames = NULL,
                     sampleAreaNames = NULL,
-                    distributionFormula = ~0 + sqrt_slope + TWI + aspect + log_dist_seasonal_water, # Linear w covs
+                    distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), 
                     biasFormula = ~1,
                     artefactFormulas = NULL,
                     control = my.control)
 
+m.PO.bias <- isdm(observationList = list(POdat = PO), 
+                    covars = covs,
+                    mesh = mesh.range.10km.cutoff.50,
+                    responseNames = NULL,
+                    sampleAreaNames = NULL,
+                    distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), 
+                    biasFormula = ~1 + log_dist_station,
+                    artefactFormulas = NULL,
+                    control = my.control)
 
-# Make predictions --------------------------------------------------------
+
+# Integrated Model Fitting ------------------------------------------------
+
+m.int <- isdm(observationList = list(POdat = PO,
+                                     PAdat = PA_vestfold),
+              covars = covs,
+              mesh = mesh.range.10km.cutoff.50,
+              responseNames = c(PO = NULL, PA = "presence"),
+              sampleAreaNames = c(PO = NULL, PA = "area"),
+              distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), 
+              biasFormula = ~1, 
+              artefactFormulas = list(PA = ~1), # Intercept only
+              control = my.control) 
+
+m.int.bias <- isdm(observationList = list(POdat = PO,
+                                          PAdat = PA_vestfold),
+                   covars = covs,
+                   mesh = mesh.range.10km.cutoff.50,
+                   responseNames = c(PO = NULL, PA = "presence"),
+                   sampleAreaNames = c(PO = NULL, PA = "area"),
+                   distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), 
+                   biasFormula = ~1 + log_dist_station, 
+                   artefactFormulas = list(PA = ~1), # Intercept only
+                   control = my.control) 
 
 
-m.PO.no.GRF$preds.INT <- predict(m.PO.no.GRF, 
+
+# Save all models to a list -----------------------------------------------
+
+mod.list <- list(m.PA = m.PA,
+                 m.PO = m.PO,
+                 m.PO.bias = m.PO.bias,
+                 m.int = m.int,
+                 m.int.bias = m.int.bias)
+
+
+# 3. EXTRACT MODEL RESULTS ------------------------------------------------
+
+extrap.scenario.df <- extract_model_results_func(mod.list = mod.list)
+
+write.csv(extrap.scenario.df,
+          paste0(outpath, "/Model_results_table.csv"))
+
+
+
+# 4. PREDICT FROM FITTED  -------------------------------------------------
+
+# Presence-absence models -------------------------------------------------
+
+# Add sampling area for prediction back to Vestfold
+covs$sampAreaPA_Vestfold <- mask(rast(covs[[1]], vals=80), covs[[1]])
+
+# Add sampling area for prediction to Bunger
+covs$sampAreaPA_Bunger <- mask(rast(covs[[1]], vals=1), covs[[1]])
+
+m.PA$preds.INT.Vestfold <- predict(m.PA, 
+                                   covars = covs,
+                                   habitatArea="sampAreaPA_Vestfold",
+                                   S = 500,
+                                   intercept.terms = "PA_Intercept",
+                                   type = "intensity",
+                                   includeRandom = F,
+                                   includeFixed = T)
+
+m.PA$preds.INT.Bunger <- predict(m.PA, 
                                  covars = covs,
-                                 S = 500,
-                                 intercept.terms = "PO_Intercept",
-                                 type = "intensity",
-                                 includeRandom = F,
-                                 includeFixed = T)
-
-
-plot(m.PO.no.GRF$preds.INT$field[[1]], nc = 3)
-
-m.PO.no.GRF$preds.prob <- predict(m.PO.no.GRF, 
-                                 covars = covs,
-                                 S = 500,
-                                 intercept.terms = "PO_Intercept",
-                                 type = "probability",
-                                 includeRandom = F,
-                                 includeFixed = T)
-
-
-plot(m.PO.no.GRF$preds.prob$field[[1]], nc = 3)
-
-
-
-# Fit Integrated Model ----------------------------------------------------
-
-m.int.no.GRF <- isdm(observationList = list(POdat = PO,
-                                            PAdat = PA_vestfold),
-                     covars = covs,
-                     mesh = mesh.range.10km.cutoff.50,
-                     responseNames = c(PO = NULL, PA = "presence"),
-                     sampleAreaNames = c(PO = NULL, PA = "area"),
-                     distributionFormula = ~0 + sqrt_slope + TWI + aspect + log_dist_seasonal_water, # Linear w covs
-                     biasFormula = ~1, 
-                     artefactFormulas = list(PA = ~1), # Intercept only
-                     control = my.control) 
-
-m.int.no.GRF <- isdm(observationList = list(POdat = PO,
-                                            PAdat = PA_vestfold),
-                     covars = covs,
-                     mesh = mesh.range.10km.cutoff.50,
-                     responseNames = c(PO = NULL, PA = "presence"),
-                     sampleAreaNames = c(PO = NULL, PA = "area"),
-                     distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), # Linear w covs
-                     biasFormula = ~1, 
-                     artefactFormulas = list(PA = ~1), # Intercept only
-                     control = my.control) 
-
-
-# Model prediction --------------------------------------------------------
-
-m.int.no.GRF$preds.INT <- predict(m.int.no.GRF, 
-                                 covars = covs,
-                                 habitatArea = "sampAreaPA",
+                                 habitatArea="sampAreaPA_Bunger",
                                  S = 500,
                                  intercept.terms = "PA_Intercept",
                                  type = "intensity",
                                  includeRandom = F,
                                  includeFixed = T)
 
+m.PA$preds.prob.Vestfold <- predict(m.PA, 
+                                    covars = covs,
+                                    habitatArea="sampAreaPA_Vestfold",
+                                    S = 500,
+                                    intercept.terms = "PA_Intercept",
+                                    type = "probability",
+                                    includeRandom = F,
+                                    includeFixed = T)
 
-plot(m.int.no.GRF$preds.INT$field[[1]], nc = 3)
-
-m.int.no.GRF$preds.prob <- predict(m.int.no.GRF, 
+m.PA$preds.prob.Bunger <- predict(m.PA, 
                                   covars = covs,
-                                  habitatArea = "sampAreaPA",
+                                  habitatArea="sampAreaPA_Bunger",
                                   S = 500,
                                   intercept.terms = "PA_Intercept",
                                   type = "probability",
                                   includeRandom = F,
                                   includeFixed = T)
 
+# Presence-only models -------------------------------------------------
 
-plot(m.int.no.GRF$preds.prob$field[[1]], nc = 3)
+m.PO$preds.INT <- predict(m.PO, 
+                          covars = covs,
+                          S = 500,
+                          intercept.terms = "PO_Intercept",
+                          type = "intensity",
+                          includeRandom = F,
+                          includeFixed = T)
+
+m.PO$preds.prob <- predict(m.PO, 
+                           covars = covs,
+                           S = 500,
+                           intercept.terms = "PO_Intercept",
+                           type = "probability",
+                           includeRandom = F,
+                           includeFixed = T)
+
+m.PO.bias$preds.INT <- predict(m.PO.bias, 
+                               covars = covs,
+                               S = 500,
+                               intercept.terms = "PO_Intercept",
+                               type = "intensity",
+                               includeRandom = F,
+                               includeFixed = T)
+
+m.PO.bias$preds.prob <- predict(m.PO.bias, 
+                                covars = covs,
+                                S = 500,
+                                intercept.terms = "PO_Intercept",
+                                type = "probability",
+                                includeRandom = F,
+                                includeFixed = T)
+
+
+# Integrated models -------------------------------------------------------
+
+m.int$preds.INT.Vestfold <- predict(m.int, 
+                                    covars = covs,
+                                    habitatArea = "sampAreaPA_Vestfold",
+                                    S = 500,
+                                    intercept.terms = "PA_Intercept",
+                                    type = "intensity",
+                                    includeRandom = F,
+                                    includeFixed = T)
+
+m.int$preds.INT.Bunger <- predict(m.int, 
+                                  covars = covs,
+                                  habitatArea = "sampAreaPA_Bunger",
+                                  S = 500,
+                                  intercept.terms = "PA_Intercept",
+                                  type = "intensity",
+                                  includeRandom = F,
+                                  includeFixed = T)
+
+m.int$preds.prob.Vestfold <- predict(m.int, 
+                                     covars = covs,
+                                     habitatArea = "sampAreaPA_Vestfold",
+                                     S = 500,
+                                     intercept.terms = "PA_Intercept",
+                                     type = "probability",
+                                     includeRandom = F,
+                                     includeFixed = T)
+
+m.int$preds.prob.Bunger <- predict(m.int, 
+                                   covars = covs,
+                                   habitatArea = "sampAreaPA_Bunger",
+                                   S = 500,
+                                   intercept.terms = "PA_Intercept",
+                                   type = "probability",
+                                   includeRandom = F,
+                                   includeFixed = T)
+
+m.int.bias$preds.INT.Vestfold <- predict(m.int.bias, 
+                                         covars = covs,
+                                         habitatArea = "sampAreaPA_Vestfold",
+                                         S = 500,
+                                         intercept.terms = "PA_Intercept",
+                                         type = "intensity",
+                                         includeRandom = F,
+                                         includeFixed = T)
+
+m.int.bias$preds.INT.Bunger <- predict(m.int.bias, 
+                                       covars = covs,
+                                       habitatArea = "sampAreaPA_Bunger",
+                                       S = 500,
+                                       intercept.terms = "PA_Intercept",
+                                       type = "intensity",
+                                       includeRandom = F,
+                                       includeFixed = T)
+
+m.int.bias$preds.prob.Vestfold <- predict(m.int.bias, 
+                                          covars = covs,
+                                          habitatArea = "sampAreaPA_Vestfold",
+                                          S = 500,
+                                          intercept.terms = "PA_Intercept",
+                                          type = "probability",
+                                          includeRandom = F,
+                                          includeFixed = T)
+
+m.int.bias$preds.prob.Bunger <- predict(m.int.bias, 
+                                        covars = covs,
+                                        habitatArea = "sampAreaPA_Bunger",
+                                        S = 500,
+                                        intercept.terms = "PA_Intercept",
+                                        type = "probability",
+                                        includeRandom = F,
+                                        includeFixed = T)
+
+# Save all models to a list again-----------------------------------------
+
+mod.list <- list(m.PA = m.PA,
+                 m.PO = m.PO,
+                 m.PO.bias = m.PO.bias,
+                 m.int = m.int,
+                 m.int.bias = m.int.bias)
+
+
+# Plotting predictions ----------------------------------------------------
+
+plot_predictions_func(mod.list = mod.list, 
+                      outpath = outpath,
+                      vestfold_boundary - vestfold_boundary,
+                      bunger_boundary = bunger_boundary)
 
 
 
-# Partial dependence plot -------------------------------------------------
+# Partial dependence plots -------------------------------------------------
 
-# Need a function for this!
+# CHECK : do I want to run all models for this?
 
-# 1) create a raster layer with a constant value for the habitatArea offset, 
-# 2) predict specifying which terms should be included, and 
-# 3) plot
+partial_dependence_func(mod.list = mod.list,
+                        covs = covs_no_bias,
+                        outpath = outpath,
+                        ice_free.EastAnt = ice_free.EastAnt)
 
-#adding a temporary cell area layer
-covarsForInter <- c( covs, covs[[1]])
-names( covarsForInter) <- c( names( covs), "tmp.habiArea")
-
-# area is now constant with log(1)=0 contribution
-values( covarsForInter$tmp.habiArea) <- 1
-
-covarsForInter <- covarsForInter[[c("sqrt_slope", "tmp.habiArea")]]
-
-covarsForInter$tmp.habiArea <- mask(covarsForInter$tmp.habiArea, ice_free.EastAnt)
-
-#You could use a much(!) larger value of S.
-interpPreds <- predict( m.PA.no.GRF, 
-                        covars=covarsForInter,
-                        habitatArea="tmp.habiArea", 
-                        S=500,
-                        includeFixed="sqrt_slope", 
-                        includeRandom=FALSE, 
-                        type="link")
-
-#compile covariate and prediction
-pred.df <- as.data.frame( cbind( slope=values( covs$sqrt_slope),
-                                 values( interpPreds$field[[c("Median","Lower","Upper")]])))
-#plot
-pred.df <- pred.df[!is.na( pred.df$sqrt_slope),]
-pred.df <- pred.df[order( pred.df$sqrt_slope),]
-matplot( pred.df[,1], pred.df[,2:4], pch="", xlab="sqrt slope", ylab="Effect",
-         main="Effect plot for sqrt slope")
-polygon( x=c( pred.df$sqrt_slope, rev( pred.df$sqrt_slope)),
-         c(pred.df$Upper, rev(pred.df$Lower)),
-         col=grey(0.95), bor=NA)
-lines( pred.df[,c("sqrt_slope","Median")], type='l', lwd=2)
 
 
 
@@ -558,7 +635,7 @@ plot(m.PA.GRF$preds.GRF$field[[1]])
 
 summary(m.PA.GRF)
 
-plot(m.PA.no.GRF, nFigRow = 2, ask = FALSE)
+plot(m.PA, nFigRow = 2, ask = FALSE)
 
 # Fixed effect 
 m.PA.GRF$preds.INT <- predict(m.PA.GRF, 
@@ -627,7 +704,7 @@ m.PO.GRF <- isdm(observationList = list(POdat = PO),
                     artefactFormulas = NULL,
                     control = my.control.GRF)
 
-m.PO.no.GRF$preds.INT <- predict(m.PO.no.GRF, 
+m.PO$preds.INT <- predict(m.PO, 
                                  covars = covs,
                                  S = 500,
                                  intercept.terms = "PO_Intercept",
@@ -650,7 +727,7 @@ m.int.GRF <- isdm(observationList = list(POdat = PO,
                   artefactFormulas = list(PA = ~1), # Intercept only
                   control = my.control.GRF) 
 
-m.int.no.GRF <- isdm(observationList = list(POdat = PO,
+m.int <- isdm(observationList = list(POdat = PO,
                                          PAdat = PA_vestfold),
                   covars = covs,
                   mesh = mesh.range.10km.cutoff.50,
