@@ -236,8 +236,11 @@ names(dist_seasonal_water) <- "dist_seasonal_water"
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_100m.tif"))
 names(dist_station) <- "dist_station"
 
+summer_temp <- here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_100m.tif")
+names(summer_temp) <- "summer_temp"
+
 # Stack covariates
-covs <- c(TWI, slope, aspect, dist_seasonal_water, dist_station, dist_vertebrates)
+covs <- c(TWI, slope, aspect, dist_seasonal_water, dist_station, dist_vertebrates, summer_temp)
 
 # Plot histograms
 hist(covs, na.rm = T, col = "lightblue")
@@ -254,7 +257,7 @@ log_dist_station <- log(dist_station+1)
 log_dist_vertebrates <- log(dist_vertebrates+1)
 
 
-covs <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water, log_dist_station, log_dist_vertebrates)
+covs <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water, log_dist_station, log_dist_vertebrates, summer_temp)
 
 ####################
 # Check for correlation among predictors ---------------------------------
