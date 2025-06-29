@@ -2,7 +2,7 @@
 # Set up for running on HPC
 
 # Set the library for packages
-# lib_loc <- paste(dirname(getwd()),"/r_lib",sep="")
+# lib_loc <- "/mnt/hpccs01/home/n11222026/ISDM/r_lib"
 
 # Non-HPC version
 lib_loc = .libPaths()
@@ -22,8 +22,6 @@ library(sf) # NOTE SF MUST BE LOADED BEFORE RISDM
 library(RISDM,lib.loc=lib_loc)
 library(fmesher,lib.loc=lib_loc)
 library(flexsdm, lib.loc=lib_loc)
-
-# packages <- c("here", "sf", "terra", "dplyr", "data.table", "tidyr", "bdc", "viridis", "ggplot2", "tidyterra", "stringr")
 
 
 # Load some helper functions -----------------------------------------------
@@ -224,6 +222,9 @@ names(dist_vertebrates) <- "dist_vertebrates"
 dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_100m.tif"))
 names(dist_seasonal_water) <- "dist_seasonal_water"
 
+summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_100m.tif"))
+names(summer_temp) <- "summer_temp"
+
 # Bias covariate
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_100m.tif"))
 names(dist_station) <- "dist_station"
@@ -242,8 +243,8 @@ log_dist_vertebrates <- log(dist_vertebrates+1)
 names(log_dist_vertebrates) <- "log_dist_vertebrates"
 
 # Stack covariates & save version w/o bias cov
-covs_no_bias <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water)
-covs <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water, log_dist_station)
+covs_no_bias <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water, summer_temp)
+covs <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water, summer_temp, log_dist_station)
 
 # Make sure that if any predictors are NA, all become NA
 
@@ -339,6 +340,8 @@ my.control.GRF <- list(coord.names = c("x", "y"),
                        prior.space.sigma = c(5, 0.1), # Prior chance 10% that parameter falls above SD of 5
                        addRandom = TRUE) # With random effect
 
+# Distribution formula
+distributionFormula <- ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2) + poly(summer_temp, 2)
 
 
 # Presence-Absence Model Fitting ------------------------------------------
@@ -348,7 +351,7 @@ m.PA <- isdm(observationList = list(PAdat = PA_vestfold),
                     mesh = mesh.range.10km.cutoff.50,
                     responseNames = c(PA = "presence"),
                     sampleAreaNames = c(PA = "area"),
-                    distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), 
+                    distributionFormula = distributionFormula, 
                     biasFormula = NULL, #Intercept only
                     artefactFormulas = list(PA = ~1), # Intercept only
                     control = my.control)
@@ -363,7 +366,7 @@ m.PO <- isdm(observationList = list(POdat = PO),
                     mesh = mesh.range.10km.cutoff.50,
                     responseNames = NULL,
                     sampleAreaNames = NULL,
-                    distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), 
+                    distributionFormula = distributionFormula, 
                     biasFormula = ~1,
                     artefactFormulas = NULL,
                     control = my.control)
@@ -373,7 +376,7 @@ m.PO.bias <- isdm(observationList = list(POdat = PO),
                     mesh = mesh.range.10km.cutoff.50,
                     responseNames = NULL,
                     sampleAreaNames = NULL,
-                    distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), 
+                    distributionFormula = distributionFormula, 
                     biasFormula = ~1 + log_dist_station,
                     artefactFormulas = NULL,
                     control = my.control)
@@ -387,7 +390,7 @@ m.int <- isdm(observationList = list(POdat = PO,
               mesh = mesh.range.10km.cutoff.50,
               responseNames = c(PO = NULL, PA = "presence"),
               sampleAreaNames = c(PO = NULL, PA = "area"),
-              distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), 
+              distributionFormula = distributionFormula, 
               biasFormula = ~1, 
               artefactFormulas = list(PA = ~1), # Intercept only
               control = my.control) 
@@ -398,7 +401,7 @@ m.int.bias <- isdm(observationList = list(POdat = PO,
                    mesh = mesh.range.10km.cutoff.50,
                    responseNames = c(PO = NULL, PA = "presence"),
                    sampleAreaNames = c(PO = NULL, PA = "area"),
-                   distributionFormula = ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2), 
+                   distributionFormula = distributionFormula, 
                    biasFormula = ~1 + log_dist_station, 
                    artefactFormulas = list(PA = ~1), # Intercept only
                    control = my.control) 
@@ -412,6 +415,8 @@ mod.list <- list(m.PA = m.PA,
                  m.PO.bias = m.PO.bias,
                  m.int = m.int,
                  m.int.bias = m.int.bias)
+
+mod.list <- list(m.PA = m.PA)
 
 
 # 3. EXTRACT MODEL RESULTS ------------------------------------------------
@@ -431,7 +436,7 @@ write.csv(extrap.scenario.df,
 covs$sampAreaPA_Vestfold <- mask(rast(covs[[1]], vals=80), covs[[1]])
 
 # Add sampling area for prediction to Bunger
-covs$sampAreaPA_Bunger <- mask(rast(covs[[1]], vals=1), covs[[1]])
+covs$sampAreaPA_Bunger <- mask(rast(covs[[1]], vals=100), covs[[1]])
 
 m.PA$preds.INT.Vestfold <- predict(m.PA, 
                                    covars = covs,
@@ -595,10 +600,15 @@ plot_predictions_func(mod.list = mod.list,
                       bunger_boundary = bunger_boundary)
 
 
+# Save output rasters -----------------------------------------------------
+
+save_output_rasters_func(mod.list = mod.list,
+                         outpath = outpath)
+
 
 # Partial dependence plots -------------------------------------------------
 
-# CHECK : do I want to run all models for this?
+# STOP & THINK: Do I want to run all models for this?
 
 partial_dependence_func(mod.list = mod.list,
                         covs = covs_no_bias,
@@ -608,9 +618,143 @@ partial_dependence_func(mod.list = mod.list,
 
 
 
+# 5. MODEL EVALUATION at VESTFOLD w PLANTARCTICA ----------------------------
+
+# ***NOTE STILL NEEDS TO BE UPDATED***
+
+if(group == "Moss") {
+  
+  veg_map <- st_read(here("Data/Biological_records/PlantarcticaVegetationMap.shp")) %>% 
+    filter(Vegetation == "Vegetation") %>% 
+    vect()
+  
+}
+
+if(group == "Lichen") {
+  
+  veg_map <- st_read(here("Data/Biological_records/PlantarcticaVegetationMap.shp")) %>% 
+    filter(Vegetation == "Lichen") %>% 
+    vect()
+  
+}
+
+grid <- rast(ext = ext(ice_free.EastAnt),
+             resolution = 100, 
+             vals = 1) 
+
+
+crs(grid) <- "epsg:3031"
+
+gridUNIQUE <- rast(ext = ext(ice_free.EastAnt), 
+                   resolution = 100, 
+                   vals = 1:ncell(grid)) 
+
+crs(gridUNIQUE) <- "epsg:3031"
+
+# Convert Plantarctica to presence-absence grid
+# Find the ice-free grid cell ID each vegetation record lies in with a unique value
+# ID is the ID of the veg record, lyr.1 is the unique ID of the cell
+extractUNIQUE <- terra::extract(gridUNIQUE, veg_map)
+
+# Count the number of veg points per unique grid cell
+count <- count(extractUNIQUE, lyr.1)
+
+# Make gridUNIQUE raster a data frame
+gridUNIQUEdf <- as.data.frame(gridUNIQUE, xy = TRUE)
+
+# Full join retains all values, join the grid dataframe and  the count values by the cell unique ID
+update_rast <- full_join(gridUNIQUEdf, count, by = "lyr.1") %>% 
+  .[, -3] %>% 
+  drop_na(x) %>% # Remove if there's a row with no xy (where the veg. data didn't overlap the coastline)
+  rast(.) 
+
+update_rast <- ifel(is.na(update_rast), 0, 1)
+
+crs(update_rast) <- "epsg:3031"
+
+names(update_rast) <- "Presence"
+
+
+## Add in PA vegetation dataset
+
+vegetation_PA <- mask(update_rast, ice_free.EastAnt, maskvalue = NA) %>% 
+  as.data.frame(xy = F)
+
+vegetation_PA.rast <- mask(update_rast, ice_free.EastAnt, maskvalue = NA)
+
+#writeRaster(vegetation_PA.rast, here("Data/Biological_records", "Plantarctica_lichen_PA.tif"))
+
+# Add presence-absence validation data to prediction dataframe
+pred_with_PA <- cbind(pred_cur_ensemble, vegetation_PA)   
+
+# Evaluate prediction on test set
+eval <- evaluate_prediction(pred_with_PA)
+
+eval_df.ens <- eval_df.ens %>% 
+  add_row(model = "Ensemble",
+          validation_dataset = "Plantarctica",
+          eval[["eval_df"]])
 
 
 
+############################################
+# 6. Evaluate the ensemble predictions on BUNGER PA dataset ----------------
+############################################
+
+Model = m.int
+
+
+# Convert probability prediction to a dataframe ---------------------------
+
+pred_cur <- Model$preds.prob.Bunger$field$Median
+
+pred_cur_df <- as.data.frame(pred_cur, xy = T, na.rm = T)
+
+pred_cur_upper <- Model$preds.prob.Bunger$field$Upper
+pred_cur_lower <- Model$preds.prob.Bunger$field$Lower
+
+
+# Load the presence-absence records ---------------------------------------
+
+PA_Bunger23_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_bunger23.shp"))
+
+PA_Bunger23_Veg_df <- PA_Bunger23_Veg_sf %>% 
+  st_coordinates() %>%
+  as.data.frame() %>% 
+  bind_cols(st_drop_geometry(PA_Bunger23_Veg_sf)) %>% 
+  rename(x = X, y = Y)
+
+if(group == "Moss") {
+  
+  PA_bunger23 <- PA_Bunger23_Veg_df %>% 
+    dplyr::select(x, y, srfc_ms) %>% 
+    rename(presence = srfc_ms)
+  
+}
+
+if(group == "Lichen") {
+  
+  PA_bunger23 <- PA_Bunger23_Veg_df %>% 
+    dplyr::select(x, y, srfc_lc) %>% 
+    rename(presence = srfc_lc)
+}
+
+
+PA_bunger23_covs <- terra::extract(covs, PA_bunger23[, c("x", "y")], xy = T)
+PA_bunger23_covs <- cbind(PA_bunger23_covs, PA_bunger23["presence"])
+PA_bunger23_covs <- PA_bunger23_covs %>% 
+  rename(Presence = presence)
+
+# Match predictions to PA locations
+pred_with_PA <- dplyr::left_join(PA_bunger23_covs, pred_cur_df[, c("x", "y", "Median")], by = c("x", "y"))
+
+# Evaluate prediction on test set
+eval <- evaluate_prediction(pred_with_PA)
+
+eval_df.ens <- eval_df.ens %>% 
+  add_row(model = "Ensemble",
+          validation_dataset = "Bunger23",
+          eval[["eval_df"]])
 
 
 
