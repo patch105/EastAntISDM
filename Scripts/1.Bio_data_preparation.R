@@ -579,7 +579,10 @@ count(vestfold_df, surface_lichen)
 
 # Unpublished records from a 2023/24 field season
 
-bunger23 <- read.csv(file.path(getwd(), "Data/Biological_records/Bunger_2023_Data.csv"), strip.white = T)
+bunger23 <- read.csv(file.path(getwd(), "Data/Biological_records/Bunger_2023_Data_EDIT.csv"), strip.white = T)
+
+# NOTE - there was one site (ROI12) where there was no plot centre GPS so I took the location given for sub-plot one for each of the three plots at this site
+
 
 # Remove observations taken opportunistically, not at designated stratified sites
 bunger23 <- bunger23 %>% filter(record_type != "Opportunistic obs. not at site")
@@ -588,13 +591,41 @@ bunger23 <- bunger23 %>% mutate(surface_moss = NA,
                                 surface_lichen = NA)
 
 
+# Set surface moss & lichen to 0 or 1 based on presence by checking presences in all subplots of each plot
 bunger23 <- bunger23 %>% 
-  filter(PlotCentreGPSLocation1 != "") %>% # Remove subplots
-  mutate(surface_moss = ifelse(!is.na(MossSpp_common) & MossSpp_common != "", 1, 0)) %>% 
-  mutate(surface_lichen = ifelse(!is.na(LichenSpp_common) & LichenSpp_common != "", 1, 0)) %>% 
-  rename(lat = plot_lat_dec1, lon = plot_lon_dec1) %>% 
-  dplyr::select(site_id, lat, lon, surface_moss, surface_lichen)
+  mutate(surface_moss = ifelse(!is.na(MossSpp_common) & MossSpp_common != "", 1, 
+                               ifelse(!is.na(MossSpp_Other) & MossSpp_Other != "", 1,
+                                      ifelse(!is.na(MossSpp1) & MossSpp1 != "", 1,
+                                             ifelse(!is.na(MossSpp2) & MossSpp2 != "", 1,
+                                                    ifelse(!is.na(MossSpp3) & MossSpp3 != "", 1, 
+                                                           ifelse(!is.na(MossSpp4) & MossSpp4 != "", 1,
+                                                                  ifelse(!is.na(MossSpp5) & MossSpp5 != "", 1, 0)))))))) %>% 
+  mutate(surface_lichen = ifelse(!is.na(LichenSpp_common) & LichenSpp_common != "", 1, 
+                                 ifelse(!is.na(LichenSpp_other) & LichenSpp_other != "", 1,
+                                        ifelse(!is.na(LichenSpp_common1) & LichenSpp_common1 != "", 1, 
+                                               ifelse(!is.na(LichenSpp_common2) & LichenSpp_common2 != "", 1, 
+                                                      ifelse(!is.na(LichenSpp_common3) & LichenSpp_common3 != "", 1, 
+                                                             ifelse(!is.na(LichenSpp_common4) & LichenSpp_common4 != "", 1, 
+                                                                    ifelse(!is.na(LichenSpp_common5) & LichenSpp_common5 != "", 1, 0)))))))) %>% rename(lat = plot_lat_dec1, lon = plot_lon_dec1)
 
+
+summarised <- bunger23 %>% 
+  group_by(plot_id1) %>% 
+  summarise(
+    surface_moss = ifelse(any(surface_moss == 1), 1, 0),
+    surface_lichen = ifelse(any(surface_lichen == 1), 1, 0),
+    .groups = "drop"
+  )
+
+
+bunger23 <- bunger23 %>% 
+  select(site_id, plot_id1, lat, lon)
+
+bunger23 <- summarised %>% 
+  left_join(bunger23 %>% 
+              select(plot_id1, site_id, lat, lon) %>% 
+              distinct(), 
+            by = "plot_id1")
 
 bunger23_sf <- st_as_sf(bunger23,
                         coords = c("lon", "lat"),
@@ -602,7 +633,7 @@ bunger23_sf <- st_as_sf(bunger23,
 
 bunger23_sf <- st_transform(bunger23_sf, 3031) #project to WGS_1984 Antarctic Polar Stereographic
 
-st_write(bunger23_sf, here("Data/Biological_records", "PA_Veg_bunger23.shp"))
+st_write(bunger23_sf, here("Data/Biological_records", "PA_Veg_bunger23.shp"), overwrite = T)
 
 bunger23_df <- bunger23_sf %>% 
   st_coordinates() %>%
