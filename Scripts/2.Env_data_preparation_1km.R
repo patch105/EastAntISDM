@@ -44,24 +44,6 @@ ACBRS_SPVE <- vect(ACBRS)
 ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
 
 
-# Aspect (northness)?
-# Soil conductivity
-# Wind 
-# Slope
-# Rugosity
-# Elevation
-
-# Mean summer precip
-# Snow cover
-# Dist. to seasonal meltwater
-# Melt days
-# Degree days -5
-# Solar radiation
-# Summer temp
-# Dist to birds
-
-
-
 # Make bounding boxes of Vestfold Hills & Bunger Hills --------------------
 
 Vestfold <- vect(here("Data/Biological_records", "PA_Veg_vestfold.shp")) 
@@ -82,31 +64,6 @@ bunger_buff <- buffer(bunger_box, width = 20000)
 # Save
 writeVector(vestfold_buff, here("Data/Environmental_predictors/vestfold_boundary.shp"), overwrite = T)
 writeVector(bunger_buff, here("Data/Environmental_predictors/bunger_boundary.shp"), overwrite = T)
-
-
-# Load the 100 m topographic variables ------------------------------------
-
-# Source: https://data.pgc.umn.edu/elev/dem/setsm/REMA/mosaic/latest/100m/
-# Original file is not in the EPSG 3031
-
-# # Unzip file
-# untar("C:/Users/n11222026/rema_mosaic_100m_v2.0_filled_cop30.tar.gz", list = TRUE)
-# untar("C:/Users/n11222026/rema_mosaic_100m_v2.0_filled_cop30.tar.gz", exdir = here("Data"))
-
-# Reproject to EPSG 3031
-# library(gdalUtilities)
-# rema <- gdalwarp(srcfile = here("Data/rema_mosaic_100m_v2.0_filled_cop30_dem.tif"),
-#                  dstfile = here("Data/rema_REPROJ_mosaic_100m_v2.0_filled_cop30_dem.tif"),
-#                  r = "bilinear",
-#                  t_srs = 'EPSG:3031',
-#                  overwrite = T,
-#                  tr = c(100, 100))
-
-# Load reprojected file
-# rema <- terra::rast(here("Data/rema_REPROJ_mosaic_100m_v2.0_filled_cop30_dem.tif"))
-
-# Load original file
-# rema <- terra::rast(here("Data/rema_mosaic_100m_v2.0_filled_cop30_dem.tif"))
 
 
 
@@ -164,97 +121,21 @@ writeVector(bunger_buff, here("Data/Environmental_predictors/bunger_boundary.shp
 
 # Conductivity ------------------------------------------------------------
 
+# Summer temperature -----------------------------------------------------
+
+rast(here("Data/Environmental_predictors/Mean_Summer_Temp_ICEFREE.tif")) %>%
+  crop(ext(ice_free.EastAnt)) %>%
+  writeRaster(here("Data/Environmental_predictors/Mean_Summer_Temp_EAST_ANTARCTICA.tif"), overwrite = T)
 
 
-# # Downscaling PolarRes variable (11 km to 1 km) ---------------------------
-# 
-# # Temperature is in K
-# summer_temp <- rast(here("Data/Environmental_predictors/Mean_Summer_Temperature_2001_2018.tif"))
-# summer_temp <- summer_temp - 273.15 # Convert to Celsius
-# 
-# names(summer_temp) <- "summer_temp"
-# 
-# # Make a buffered ice_free.EastAnt layer
-# ice_free.EastAnt_buffer <- terra::buffer(ice_free.EastAnt, width = 10000) 
-# ice_free.EastAnt_buffer <- terra::ifel(ice_free.EastAnt_buffer, 1, NA)
-# 
-# # Downscaling based on elevation, slope, and northness (relates to solar radiation)
-# elev_buffered <- rast(here("Data/Environmental_predictors/elev_upscaled_new_rockout_merged.tif")) %>% 
-#   crop(ext(ice_free.EastAnt_buffer)) 
-#   # resample(ice_free.EastAnt_buffer, method = "bilinear") 
-#   #mask(ice_free.EastAnt_buffer, maskvalue = NA)
-#   
-# slope_buffered <- rast(here("Data/Environmental_predictors/slope_upscaled_new_rockout_merged.tif")) %>% 
-#   crop(ext(ice_free.EastAnt_buffer)) 
-#   # resample(ice_free.EastAnt_buffer, method = "bilinear") 
-#   #mask(ice_free.EastAnt_buffer, maskvalue = NA) 
-#   
-# northness_buffered <- rast(here("Data/Environmental_predictors/northness_upscaled_new_rockout_merged.tif")) %>%
-#   crop(ext(ice_free.EastAnt_buffer)) 
-#   # resample(ice_free.EastAnt_buffer, method = "bilinear")
-#   #mask(ice_free.EastAnt_buffer, maskvalue = NA)
-#  
-# summer_temp <- crop(summer_temp, ext(ice_free.EastAnt_buffer))
-# 
-# # Combine predictors for spline into raster stack -------------------------
-# 
-# predictors <- c(elev_buffered, slope_buffered, northness_buffered)
-# names(predictors) <- c("elev", "slope", "northness")
-# 
-# predictors_10km <- resample(predictors, summer_temp, method = "bilinear")
-# 
-# # Create single stack and propagate NA values
-# stack <- c(summer_temp, predictors_10km)
-# stack <- ENMTools::check.env(stack)
-# 
-# 
-# # Probably need to go back and crop to coast or ice-free land -------------
-# 
-# ## Create data frame of values for GAM
-# 
-# coarse_field <- data.frame(long = crds(stack)[,1],
-#                            lat = crds(stack)[,2],
-#                            summer_temp = as.vector(values(stack["summer_temp"], na.rm = T)),
-#                            elev = as.vector(values(stack["elev"], na.rm = T)),
-#                            slope = as.vector(values(stack["slope"], na.rm = T)),
-#                            northness = as.vector(values(stack["northness"], na.rm = T)))
-# 
-# 
-# ## Plot histogram of summer temperature
-# 
-# hist(coarse_field$summer_temp)
-# 
-# ## Fit a thin plate regression spline model
-# 
-# mod_list <- list()
-# # 
-# # nms <- names(coarse_field[,3]) # Names of ERA5-Land variables
-# 
-# library(mgcv)
-# 
-# # Just for when running just wind
-# name <- "summer_temp"
-# 
-# for(name in nms){
-#   
-#   kk <- 1000
-#   runtime <- system.time(tps <- gam(coarse_field[[name]] ~ elev + northness + slope +
-#                                       s(long, lat, bs="tp", k = kk),
-#                                     method = "REML",
-#                                     data = coarse_field,
-#                                     family = gaussian()))
-#   mod_list[[name]] <- tps
-#   
-# }
-# 
-# # NOW RUNNING WITH A GAMMA DISTRIBUTION
-# runtime <- system.time(tps <- gam(coarse_field$w.speed ~ elev + aspect + slope +
-#                                     s(long, lat, bs="tp", k = kk),
-#                                   method = "REML",
-#                                   data = coarse_field,
-#                                   family = Gamma(link = "log")))
-# 
-# 
+# Wind speed (resample 10km to 1km) --------------------------------------
+
+rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS.tif")) %>%
+  crop(ext(ice_free.EastAnt)) %>%
+  terra::project(ice_free.EastAnt, method = "near") %>% 
+  mask(ice_free.EastAnt, maskvalue = NA) %>% 
+  writeRaster(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_EAST_ANTARCTICA.tif"), overwrite = T)
+
 
 
 ####################
@@ -279,16 +160,22 @@ names(dist_vertebrates) <- "dist_vertebrates"
 dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_EAST_ANTARCTICA.tif"))
 names(dist_seasonal_water) <- "dist_seasonal_water"
 
+summer_temp <- rast(here("Data/Environmental_predictors/Mean_Summer_Temp_EAST_ANTARCTICA.tif"))
+names(summer_temp) <- "summer_temp"
+
+wind_speed <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_EAST_ANTARCTICA.tif"))
+names(wind_speed) <- "wind_speed"
+
 # Bias covariate
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_EAST_ANTARCTICA.tif"))
 names(dist_station) <- "dist_station"
 
 # Stack covariates
-covs <- c(TWI, slope, northness, dist_vertebrates, dist_seasonal_water, dist_station)
+covs <- c(TWI, slope, northness, dist_vertebrates, dist_seasonal_water, summer_temp, wind_speed, dist_station)
 
 # Plot histograms
 hist(covs, na.rm = T, col = "lightblue")
-hist(log(covs), na.rm = T, col = "lightblue")
+hist(log(covs+1), na.rm = T, col = "lightblue")
 hist(sqrt(covs), na.rm = T, col = "lightblue")
 
 covs_cube <- sign(covs) * abs(covs)^(1/3)
