@@ -783,3 +783,130 @@ plot_predictions_func <- function(mod.list,
   
   }
 }
+
+
+# SAVE OUTPUT RASTERS --------------------------------------------------------
+
+save_output_rasters_func <- function(mod.list,
+                                     outpath) {
+  
+  mod_names <- names(mod.list)
+  
+  for(i in seq_along(mod.list)) {
+    
+    Model <- mod.list[[i]]
+    
+    name <- mod_names[i] 
+    
+    # If the model name contains PA or Integrated, pull out Bunger & Vestfold predictions
+    if(grepl("PA", name, fixed = T) | grepl("int", name, fixed = T)) {
+      
+      # 1. Pull out the median intensity prediction for each cell (VESTFOLD)
+      
+      Model$preds.INT.Vestfold$field$Median %>% 
+        writeRaster(paste0(outpath, "/VESTFOLD_Intensity_prediction_", name, "_median.tif"),
+                    overwrite = T)
+      
+      Model$preds.INT.Vestfold$field$Lower %>% 
+        writeRaster(paste0(outpath, "/VESTFOLD_Intensity_prediction_", name, "_lower.tif"),
+                    overwrite = T)
+      
+      Model$preds.INT.Vestfold$field$Upper %>% 
+        writeRaster(paste0(outpath, "/VESTFOLD_Intensity_prediction_", name, "_upper.tif"),
+                    overwrite = T)
+      
+      
+      # 2. Pull out the median probability prediction for each cell (VESTFOLD)
+      
+      Model$preds.prob.Vestfold$field$Median %>%
+        writeRaster(paste0(outpath, "/VESTFOLD_Probability_prediction_", name, "_median.tif"),
+                    overwrite = T)
+      
+      Model$preds.prob.Vestfold$field$Lower %>% 
+        writeRaster(paste0(outpath, "/VESTFOLD_Probability_prediction_", name, "_lower.tif"),
+                    overwrite = T)
+      
+      Model$preds.prob.Vestfold$field$Upper %>% 
+        writeRaster(paste0(outpath, "/VESTFOLD_Probability_prediction_", name, "_upper.tif"),
+                    overwrite = T)
+      
+      # 3. Pull out the median intensity prediction for each cell (BUNGER)
+      
+      Model$preds.INT.Bunger$field$Median %>%
+        writeRaster(paste0(outpath, "/BUNGER_Intensity_prediction_", name, "_median.tif"),
+                    overwrite = T)
+        
+      
+      Model$preds.INT.Bunger$field$Lower %>% 
+        writeRaster(paste0(outpath, "/BUNGER_Intensity_prediction_", name, "_lower.tif"),
+                    overwrite = T)
+        
+      
+      Model$preds.INT.Bunger$field$Upper %>% 
+        writeRaster(paste0(outpath, "/BUNGER_Intensity_prediction_", name, "_upper.tif"),
+                    overwrite = T)
+        
+      
+      # 4. Pull out the median probability prediction for each cell (BUNGER)
+      
+      Model$preds.prob.Bunger$field$Median %>%
+        writeRaster(paste0(outpath, "/BUNGER_Probability_prediction_", name, "_median.tif"),
+                    overwrite = T)
+        
+      
+      Model$preds.prob.Bunger$field$Lower %>%
+        writeRaster(paste0(outpath, "/BUNGER_Probability_prediction_", name, "_lower.tif"),
+                    overwrite = T)
+        
+      
+      Model$preds.prob.Bunger$field$Upper %>%
+        writeRaster(paste0(outpath, "/BUNGER_Probability_prediction_", name, "_upper.tif"),
+                    overwrite = T)
+      
+      
+    } 
+    
+    
+    # If the model name contains PO, there's just one prediction
+    if(grepl("PO", name, fixed = T)) {
+      
+      # 2. Pull out the median intensity prediction for each cell --------
+      
+      Model$preds.INT$field$Median %>%
+        writeRaster(paste0(outpath, "/Intensity_prediction_", name, "_median.tif"),
+                    overwrite = T)
+        
+      
+      Model$preds.INT$field$Lower %>% 
+        writeRaster(paste0(outpath, "/Intensity_prediction_", name, "_lower.tif"),
+                    overwrite = T)
+        
+      
+     Model$preds.INT$field$Upper %>% 
+        writeRaster(paste0(outpath, "/Intensity_prediction_", name, "_upper.tif"),
+                    overwrite = T)
+        
+      
+      # 2. Pull out the median probability prediction for each cell (BUNGER)
+      
+      Model$preds.prob$field$Median %>%
+        writeRaster(paste0(outpath, "/Probability_prediction_", name, "_median.tif"),
+                    overwrite = T)
+        
+      
+      Model$preds.prob$field$Lower %>% 
+        writeRaster(paste0(outpath, "/Probability_prediction_", name, "_lower.tif"),
+                    overwrite = T)
+        
+      
+      Model$preds.prob$field$Upper %>% 
+        writeRaster(paste0(outpath, "/Probability_prediction_", name, "_upper.tif"),
+                    overwrite = T)
+        
+      
+    }
+    
+    
+  }
+}
+
