@@ -42,38 +42,20 @@ if(!dir.exists(outpath)) {
   dir.create(outpath, showWarnings = FALSE)
 } 
 
-# # Domain setup 1 km ------------------------------------------------------------
-# 
-# # Load the ice-free areas
-# # ice_free <- rast(here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"))
-# ice_free <- rast(here("Data/Environmental_predictors/ice_free_upsamp_1km.tif"))
-# 
-# # Load the Antarctic Conservation Biogeographic Regions, filter to East Antarctica
-# ACBRS <- st_read(here("Data/Environmental_predictors/ACBRs_v2_2016.shp"), crs = 3031) %>% filter(ACBR_Name == "East Antarctica")
-# ACBRS_SPVE <- vect(ACBRS)
-# 
-# 
-# # Also trim ice-free land to just East Antarctica
-# ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
-# 
-# ice_free.EastAnt <- ifel(not.na(ice_free.EastAnt), 1, NA)
-# 
-# # Trim to Vestfold:
-# 
-# vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp"))
-# # bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
-# 
-# ice_free.EastAnt <- crop(ice_free.EastAnt, ext(vestfold_boundary))
-
-# Domain setup 100m ------------------------------------------------------------
+# Domain setup 1 km ------------------------------------------------------------
 
 # Load the ice-free areas
-ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_EastAnt_100m.tif"))
-  
+ice_free <- rast(here("Data/Environmental_predictors/ice_free_upsamp_1km.tif"))
+
 # Load the Antarctic Conservation Biogeographic Regions, filter to East Antarctica
 ACBRS <- st_read(here("Data/Environmental_predictors/ACBRs_v2_2016.shp"), crs = 3031) %>% filter(ACBR_Name == "East Antarctica")
 ACBRS_SPVE <- vect(ACBRS)
 
+
+# Also trim ice-free land to just East Antarctica
+ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
+
+ice_free.EastAnt <- ifel(not.na(ice_free.EastAnt), 1, NA)
 
 # Trim to Vestfold:
 
@@ -81,6 +63,23 @@ vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.
 bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
 
 ice_free.EastAnt <- crop(ice_free.EastAnt, ext(vestfold_boundary))
+
+# # Domain setup 100m ------------------------------------------------------------
+# 
+# # Load the ice-free areas
+# ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_EastAnt_100m.tif"))
+#   
+# # Load the Antarctic Conservation Biogeographic Regions, filter to East Antarctica
+# ACBRS <- st_read(here("Data/Environmental_predictors/ACBRs_v2_2016.shp"), crs = 3031) %>% filter(ACBR_Name == "East Antarctica")
+# ACBRS_SPVE <- vect(ACBRS)
+# 
+# 
+# # Trim to Vestfold:
+# 
+# vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp"))
+# bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
+# 
+# ice_free.EastAnt <- crop(ice_free.EastAnt, ext(vestfold_boundary))
 
 # Load the presence-only records ------------------------------------------
 
@@ -172,61 +171,36 @@ if(group == "Lichen") {
 # Add search area information
 
 PA_vestfold <- PA_vestfold %>% mutate(area = 80)
-PA_bunger23 <- PA_bunger23 %>% mutate(area = 1)
+PA_bunger23 <- PA_bunger23 %>% mutate(area = 100)
 
 # # Add together
 # PA_both <- rbind(PA_vestfold, PA_bunger23)
 
 # Load the 1km covariates -----------------------------------------------------
 
-# TWI <- rast(here("Data/Environmental_predictors/topographic_wetness_index_EAST_ANTARCTICA.tif"))
-# slope <- rast(here("Data/Environmental_predictors/slope_EAST_ANTARCTICA.tif"))
-# northness <- rast(here("Data/Environmental_predictors/northness_EAST_ANTARCTICA.tif"))
-# names(northness) <- "northness"
-# 
-# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
-# names(dist_vertebrates) <- "dist_vertebrates"
-# 
-# dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_EAST_ANTARCTICA.tif"))
-# names(dist_seasonal_water) <- "dist_seasonal_water"
-# 
-# # Bias covariate
-# dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_EAST_ANTARCTICA.tif"))
-# names(dist_station) <- "dist_station"
-# 
-# # Apply some transformations
-# sqrt_slope <- sqrt(slope)
-# names(sqrt_slope) <- "sqrt_slope"
-# 
-# log_dist_seasonal_water <- log(dist_seasonal_water+1)
-# names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
-# 
-# log_dist_station <- log(dist_station+1)
-# names(log_dist_station) <- "log_dist_station"
-
-
-# Load the 100m covariates -----------------------------------------------------
-
-TWI <- rast(here("Data/Environmental_predictors/TWI_100m_IceFree_EastAnt.tif"))
+TWI <- rast(here("Data/Environmental_predictors/topographic_wetness_index_EAST_ANTARCTICA.tif"))
 names(TWI) <- "TWI"
 
-slope <- rast(here("Data/Environmental_predictors/slope_100m_IceFree_EastAnt.tif"))
+slope <- rast(here("Data/Environmental_predictors/slope_EAST_ANTARCTICA.tif"))
 names(slope) <- "slope"
 
-aspect <- rast(here("Data/Environmental_predictors/aspect_100m_IceFree_EastAnt.tif"))
-names(aspect) <- "aspect"
+northness <- rast(here("Data/Environmental_predictors/northness_EAST_ANTARCTICA.tif"))
+names(northness) <- "northness"
 
-dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_ICEFREE_100m.tif"))
+dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
 names(dist_vertebrates) <- "dist_vertebrates"
 
-dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_100m.tif"))
+dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_EAST_ANTARCTICA.tif"))
 names(dist_seasonal_water) <- "dist_seasonal_water"
 
-summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_100m.tif"))
+summer_temp <- rast(here("Data/Environmental_predictors/Mean_Summer_Temp_EAST_ANTARCTICA.tif"))
 names(summer_temp) <- "summer_temp"
 
+wind_speed <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_EAST_ANTARCTICA.tif"))
+names(wind_speed) <- "wind_speed"
+
 # Bias covariate
-dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_100m.tif"))
+dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_EAST_ANTARCTICA.tif"))
 names(dist_station) <- "dist_station"
 
 # Apply some transformations
@@ -242,9 +216,47 @@ names(log_dist_station) <- "log_dist_station"
 log_dist_vertebrates <- log(dist_vertebrates+1)
 names(log_dist_vertebrates) <- "log_dist_vertebrates"
 
+
+# # Load the 100m covariates -----------------------------------------------------
+# 
+# TWI <- rast(here("Data/Environmental_predictors/TWI_100m_IceFree_EastAnt.tif"))
+# names(TWI) <- "TWI"
+# 
+# slope <- rast(here("Data/Environmental_predictors/slope_100m_IceFree_EastAnt.tif"))
+# names(slope) <- "slope"
+# 
+# aspect <- rast(here("Data/Environmental_predictors/aspect_100m_IceFree_EastAnt.tif"))
+# names(aspect) <- "aspect"
+# 
+# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_ICEFREE_100m.tif"))
+# names(dist_vertebrates) <- "dist_vertebrates"
+# 
+# dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_100m.tif"))
+# names(dist_seasonal_water) <- "dist_seasonal_water"
+# 
+# summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_100m.tif"))
+# names(summer_temp) <- "summer_temp"
+# 
+# # Bias covariate
+# dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_100m.tif"))
+# names(dist_station) <- "dist_station"
+# 
+# # Apply some transformations
+# sqrt_slope <- sqrt(slope)
+# names(sqrt_slope) <- "sqrt_slope"
+# 
+# log_dist_seasonal_water <- log(dist_seasonal_water+1)
+# names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
+# 
+# log_dist_station <- log(dist_station+1)
+# names(log_dist_station) <- "log_dist_station"
+# 
+# log_dist_vertebrates <- log(dist_vertebrates+1)
+# names(log_dist_vertebrates) <- "log_dist_vertebrates"
+
 # Stack covariates & save version w/o bias cov
-covs_no_bias <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water, summer_temp)
-covs <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water, summer_temp, log_dist_station)
+covs_no_bias <- c(TWI, sqrt_slope, northness, log_dist_seasonal_water, summer_temp)
+covs <- c(TWI, sqrt_slope, northness, log_dist_seasonal_water, summer_temp, log_dist_station)
 
 # Make sure that if any predictors are NA, all become NA
 
@@ -341,7 +353,7 @@ my.control.GRF <- list(coord.names = c("x", "y"),
                        addRandom = TRUE) # With random effect
 
 # Distribution formula
-distributionFormula <- ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(aspect, 2) + poly(log_dist_seasonal_water, 2) + poly(summer_temp, 2)
+distributionFormula <- ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(northness, 2) + poly(log_dist_seasonal_water, 2) + poly(summer_temp, 2)
 
 
 # Presence-Absence Model Fitting ------------------------------------------
@@ -596,7 +608,7 @@ mod.list <- list(m.PA = m.PA,
 
 plot_predictions_func(mod.list = mod.list, 
                       outpath = outpath,
-                      vestfold_boundary - vestfold_boundary,
+                      vestfold_boundary = vestfold_boundary,
                       bunger_boundary = bunger_boundary)
 
 

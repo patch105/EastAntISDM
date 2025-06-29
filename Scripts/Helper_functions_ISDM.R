@@ -8,33 +8,33 @@
 
 
 partial_dependence_func <- function(mod.list,
-                                    covs,
+                                    covs_no_bias,
                                     outpath,
                                     ice_free.EastAnt) {
   
   # 1. First, set up the function per covariate
-  partial_dependence_PER_COV_func <- function(covsForPDP, 
+  partial_dependence_PER_COV_func <- function(covs_no_bias, 
                                               var_name, 
                                               ice_free.EastAnt,
                                               model) {
     
     # Adding a temporary cell area layer
-    tmp_layer <- rast(rast(covsForPDP, nlyrs = 1))
+    tmp_layer <- rast(rast(covs_no_bias, nlyrs = 1))
     names(tmp_layer) <- "tmp.habiArea"
-    covsForPDP <- c( covsForPDP, tmp_layer)
+    covs_no_bias <- c( covs_no_bias, tmp_layer)
     
     # Area is now constant with log(1)=0 contribution
-    values( covsForPDP$tmp.habiArea) <- 1
+    values( covs_no_bias$tmp.habiArea) <- 1
     
-    # covsForPDP <- covsForPDP[[c(var_name, "tmp.habiArea")]]
+    # covs_no_bias <- covs_no_bias[[c(var_name, "tmp.habiArea")]]
     
-    covsForPDP$tmp.habiArea <- mask(covsForPDP$tmp.habiArea, ice_free.EastAnt)
+    covs_no_bias$tmp.habiArea <- mask(covs_no_bias$tmp.habiArea, ice_free.EastAnt)
     
     # Remove NAs
-    covsForPDP <- mask(covsForPDP, sum(covsForPDP)) 
+    covs_no_bias <- mask(covs_no_bias, sum(covs_no_bias)) 
     
     interpPreds <- predict( model, 
-                            covars=covsForPDP,
+                            covars=covs_no_bias,
                             habitatArea="tmp.habiArea", 
                             S=500,
                             includeFixed=var_name, 
@@ -42,7 +42,7 @@ partial_dependence_func <- function(mod.list,
                             type="link")
     
     #compile covariate and prediction
-    pred.df <- as.data.frame( cbind( slope=values( covsForPDP[[var_name]]),
+    pred.df <- as.data.frame( cbind( slope=values( covs_no_bias[[var_name]]),
                                      values( interpPreds$field[[c("Median","Lower","Upper")]])))
     #plot
     pred.df <- pred.df[!is.na(pred.df[, var_name]),]
@@ -63,7 +63,7 @@ partial_dependence_func <- function(mod.list,
   # 2. NOW, for every model run the PDP function per covariate 
   mod_names <- names(mod.list)
   
-  cov_names <- names(covs)
+  cov_names <- names(covs_no_bias)
   
   # For each model, run the PDP function
   
@@ -73,8 +73,8 @@ partial_dependence_func <- function(mod.list,
     
     name <- mod_names[i] 
     
-    PDP_list <- map(cov_names, ~ partial_dependence_func(
-      covsForPDP = covs, 
+    PDP_list <- map(cov_names, ~ partial_dependence_PER_COV_func(
+      covs_no_bias = covs_no_bias, 
       var_name = .x, 
       ice_free.EastAnt = ice_free.EastAnt, 
       model = Model
@@ -82,13 +82,25 @@ partial_dependence_func <- function(mod.list,
     
     
     # Stack and save the PDPs
+    dir.create(here(outpath, paste0(name, "_PDPs")), showWarnings = FALSE)
     
-    pdf(here(outpath, paste0("Partial_Dependence_Plots_", name,".pdf")), width = 10, height = 10)
-    par(mfrow = c(ceiling(length(PDP_list)/2), 2))  # adjust columns as needed
     
-    walk(PDP_list, replayPlot)
+    # Loop through PDP_list and save each plot
+    walk2(PDP_list, cov_names, ~ {
+      png(filename = here(outpath, paste0(name, "_PDPs"), paste0("PDP_", name, "_", .y, ".png")),
+          width = 1000, height = 800, res = 150)
+      
+      replayPlot(.x)
+      
+      dev.off()
+    })
     
-    dev.off()
+    # pdf(here(outpath, paste0("Partial_Dependence_Plots_", name,".pdf")), width = 10, height = 10)
+    # par(mfrow = c(ceiling(length(PDP_list)/2), 2))  # adjust columns as needed
+    # 
+    # walk(PDP_list, replayPlot)
+    # 
+    # dev.off()
     
     
     }
@@ -651,12 +663,13 @@ plot_predictions_func <- function(mod.list,
     } 
     
     
-    # If the model name contains PO, there's just one prediction
+    # If the model name contains PO, there's just one prediction (but two plots)
     if(grepl("PO", name, fixed = T)) {
       
-      # 2. Pull out the median intensity prediction for each cell --------
+      # 2. Pull out the median intensity prediction for each cell (VESTFOLD) ---
 
       median <- Model$preds.INT$field$Median %>%
+        crop(ext(vestfold_boundary)) %>% 
         as.data.frame(xy = T) %>%
         ggplot() +
         geom_tile(aes(x = x, y = y, fill = Median)) +
@@ -674,6 +687,7 @@ plot_predictions_func <- function(mod.list,
               axis.ticks.y = element_blank())
       
       lower <- Model$preds.INT$field$Lower %>% 
+        crop(ext(vestfold_boundary)) %>% 
         as.data.frame(xy = T) %>%
         ggplot() +
         geom_tile(aes(x = x, y = y, fill = Lower)) +
@@ -691,6 +705,7 @@ plot_predictions_func <- function(mod.list,
               axis.ticks.y = element_blank())
       
       upper <- Model$preds.INT$field$Upper %>% 
+        crop(ext(vestfold_boundary)) %>% 
         as.data.frame(xy = T) %>%
         ggplot() +
         geom_tile(aes(x = x, y = y, fill = Upper)) +
@@ -712,12 +727,78 @@ plot_predictions_func <- function(mod.list,
                         common.legend = TRUE, legend = "bottom",
                         align = "hv")
       
-      ggsave(paste0(outpath, "/Intensity_prediction_plot_", name,".png"), plot,
+      ggsave(paste0(outpath, "/VESTFOLD_Intensity_prediction_plot_", name,".png"), plot,
              width = 10, height = 6, dpi = 300)      
       
-      # 2. Pull out the median probability prediction for each cell (BUNGER)
+
+# Pull out the median intensity prediction for each cell (BUNGER) ---------
+
+      median <- Model$preds.INT$field$Median %>%
+        crop(ext(bunger_boundary)) %>% 
+        as.data.frame(xy = T) %>%
+        ggplot() +
+        geom_tile(aes(x = x, y = y, fill = Median)) +
+        scale_fill_viridis(guide = guide_colorbar(barwidth = 10, barheight = 0.5),
+                           name = "Intensity") +
+        coord_fixed() +
+        labs(title = "Median") +
+        theme_bw() +
+        theme(axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              legend.ticks = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.ticks.y = element_blank())
+      
+      lower <- Model$preds.INT$field$Lower %>% 
+        crop(ext(bunger_boundary)) %>% 
+        as.data.frame(xy = T) %>%
+        ggplot() +
+        geom_tile(aes(x = x, y = y, fill = Lower)) +
+        scale_fill_viridis(guide = guide_colorbar(barwidth = 10, barheight = 0.5),
+                           name = "Intensity") +
+        coord_fixed() +
+        labs(title = "Lower") +
+        theme_bw() +
+        theme(axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              legend.ticks = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.ticks.y = element_blank())
+      
+      upper <- Model$preds.INT$field$Upper %>% 
+        crop(ext(bunger_boundary)) %>% 
+        as.data.frame(xy = T) %>%
+        ggplot() +
+        geom_tile(aes(x = x, y = y, fill = Upper)) +
+        scale_fill_viridis(guide = guide_colorbar(barwidth = 10, barheight = 0.5),
+                           name = "Intensity") +
+        coord_fixed() +
+        labs(title = "Upper") +
+        theme_bw() +
+        theme(axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              legend.ticks = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.ticks.y = element_blank())
+      
+      plot <- ggarrange(median, NULL, lower, upper, 
+                        ncol = 2, nrow = 2,
+                        common.legend = TRUE, legend = "bottom",
+                        align = "hv")
+      
+      ggsave(paste0(outpath, "/BUNGER_Intensity_prediction_plot_", name,".png"), plot,
+             width = 10, height = 6, dpi = 300)      
+      
+      # 2. Pull out the median probability prediction for each cell (VESTFOLD)
       
       median <- Model$preds.prob$field$Median %>%
+        crop(ext(vestfold_boundary)) %>%
         as.data.frame(xy = T) %>%
         ggplot() +
         geom_tile(aes(x = x, y = y, fill = Median)) +
@@ -735,6 +816,7 @@ plot_predictions_func <- function(mod.list,
               axis.ticks.y = element_blank())
       
       lower <- Model$preds.prob$field$Lower %>% 
+        crop(ext(vestfold_boundary)) %>%
         as.data.frame(xy = T) %>%
         ggplot() +
         geom_tile(aes(x = x, y = y, fill = Lower)) +
@@ -752,6 +834,7 @@ plot_predictions_func <- function(mod.list,
               axis.ticks.y = element_blank())
       
       upper <- Model$preds.prob$field$Upper %>% 
+        crop(ext(vestfold_boundary)) %>%
         as.data.frame(xy = T) %>%
         ggplot() +
         geom_tile(aes(x = x, y = y, fill = Upper)) +
@@ -773,7 +856,71 @@ plot_predictions_func <- function(mod.list,
                         common.legend = TRUE, legend = "bottom",
                         align = "hv")
       
-      ggsave(paste0(outpath, "/Intensity_prediction_plot_", name,".png"), plot,
+      ggsave(paste0(outpath, "/VESTFOLD_Probability_prediction_plot_", name,".png"), plot,
+             width = 10, height = 6, dpi = 300)
+      
+      # 2. Pull out the median probability prediction for each cell (BUNGER)
+      
+      median <- Model$preds.prob$field$Median %>%
+        crop(ext(bunger_boundary)) %>%
+        as.data.frame(xy = T) %>%
+        ggplot() +
+        geom_tile(aes(x = x, y = y, fill = Median)) +
+        scale_fill_viridis(guide = guide_colorbar(barwidth = 10, barheight = 0.5),
+                           name = "Probability") +
+        coord_fixed() +
+        labs(title = "Median") +
+        theme_bw() +
+        theme(axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              legend.ticks = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.ticks.y = element_blank())
+      
+      lower <- Model$preds.prob$field$Lower %>% 
+        crop(ext(bunger_boundary)) %>%
+        as.data.frame(xy = T) %>%
+        ggplot() +
+        geom_tile(aes(x = x, y = y, fill = Lower)) +
+        scale_fill_viridis(guide = guide_colorbar(barwidth = 10, barheight = 0.5),
+                           name = "Probability") +
+        coord_fixed() +
+        labs(title = "Lower") +
+        theme_bw() +
+        theme(axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              legend.ticks = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.ticks.y = element_blank())
+      
+      upper <- Model$preds.prob$field$Upper %>% 
+        crop(ext(bunger_boundary)) %>%
+        as.data.frame(xy = T) %>%
+        ggplot() +
+        geom_tile(aes(x = x, y = y, fill = Upper)) +
+        scale_fill_viridis(guide = guide_colorbar(barwidth = 10, barheight = 0.5),
+                           name = "Probability") +
+        coord_fixed() +
+        labs(title = "Upper") +
+        theme_bw() +
+        theme(axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              legend.ticks = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.ticks.y = element_blank())
+      
+      plot <- ggarrange(median, NULL, lower, upper, 
+                        ncol = 2, nrow = 2,
+                        common.legend = TRUE, legend = "bottom",
+                        align = "hv")
+      
+      ggsave(paste0(outpath, "/BUNGER_Probability_prediction_plot_", name,".png"), plot,
              width = 10, height = 6, dpi = 300)
       
       
