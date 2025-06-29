@@ -188,6 +188,17 @@ log_dist_station <- log(dist_station+1)
 
 
 ####################
-# Test for correlation of covariates --------------------------------------
+# Check for correlation among predictors ---------------------------------
 ####################
+
+library(corrplot)
+
+covs_df <- as.data.frame(covs, xy = F, na.rm = T)
+
+ecospat::ecospat.cor.plot(covs_df)
+
+# Nicer corr plot
+corrplot.mixed(cor(covs_df), order = 'AOE')
+
+usdm::vif(covs)
 
