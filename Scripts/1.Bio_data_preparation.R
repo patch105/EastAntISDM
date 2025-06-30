@@ -522,6 +522,25 @@ ICEFREE_east_ant.df <- ICEFREE_east_ant.df %>%
   mutate(vegtype = ifelse(class == "Bryopsida", "Moss", "Lichen"))
 
 
+# Count species numbers------------------------------------------------
+
+count1 <- GBIF_east_ant.df %>% 
+  dplyr::select(vegtype, scientificNameClean, genusClean)
+count2 <- ICEFREE_east_ant.df %>%
+  dplyr::select(vegtype, scientificNameClean, genusClean)
+
+count_lichen <- rbind(count1, count2) %>% 
+  filter(vegtype == "Lichen") %>% 
+  count(scientificNameClean, genusClean) 
+
+# 106 - 13 is 93 lichen taxa
+
+count_moss <- rbind(count1, count2) %>% 
+  filter(vegtype == "Moss") %>% 
+  count(scientificNameClean, genusClean)
+
+# 19 - 2 is 17 moss taxa
+
 # Tidy and join the datasets ------------------------------------------
 
 GBIF_east_ant.sf <- st_as_sf(GBIF_east_ant.df, 
@@ -632,8 +651,12 @@ bunger23_sf <- st_as_sf(bunger23,
                         crs = 4326) # WGS 84 geographic coordinates
 
 bunger23_sf <- st_transform(bunger23_sf, 3031) #project to WGS_1984 Antarctic Polar Stereographic
+lichen <- bunger23_sf %>% select(!surface_moss)
+moss <- bunger23_sf %>% select(!surface_lichen)
 
-st_write(bunger23_sf, here("Data/Biological_records", "PA_Veg_bunger23.shp"), overwrite = T)
+st_write(bunger23_sf, here("Data/Biological_records", "PA_Veg_bunger23.shp"),append = F)
+st_write(lichen, here("Data/Biological_records", "PA_Lichen_bunger23.shp"), append = F)
+st_write(moss, here("Data/Biological_records", "PA_Moss_bunger23.shp"), append = F)
 
 bunger23_df <- bunger23_sf %>% 
   st_coordinates() %>%
