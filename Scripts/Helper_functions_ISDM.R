@@ -44,18 +44,8 @@ partial_dependence_func <- function(mod.list,
     #compile covariate and prediction
     pred.df <- as.data.frame( cbind( slope=values( covs_no_bias[[var_name]]),
                                      values( interpPreds$field[[c("Median","Lower","Upper")]])))
-    #plot
-    pred.df <- pred.df[!is.na(pred.df[, var_name]),]
-    pred.df <- pred.df[order( pred.df[, var_name]),]
-    matplot( pred.df[,1], pred.df[,2:4], pch="", xlab=var_name, ylab="Effect",
-             main=paste0("Effect plot for ", var_name))
-    polygon( x=c( pred.df[, var_name], rev( pred.df[, var_name])),
-             c(pred.df$Upper, rev(pred.df$Lower)),
-             col=grey(0.95), bor=NA)
-    lines( pred.df[,c(var_name,"Median")], type='l', lwd=2)
-    
-    # Capture and return the plot
-    recordPlot()
+   
+    return(pred.df)
   }
   
   
@@ -90,7 +80,18 @@ partial_dependence_func <- function(mod.list,
       png(filename = here(outpath, paste0(name, "_PDPs"), paste0("PDP_", name, "_", .y, ".png")),
           width = 1000, height = 800, res = 150)
       
-      replayPlot(.x)
+      pred.df <- .x
+      var_name <- .y
+      
+      #plot
+      pred.df <- pred.df[!is.na(pred.df[, var_name]),]
+      pred.df <- pred.df[order( pred.df[, var_name]),]
+      matplot( pred.df[,1], pred.df[,2:4], pch="", xlab=var_name, ylab="Effect",
+               main=paste0("Effect plot for ", var_name))
+      polygon( x=c( pred.df[, var_name], rev( pred.df[, var_name])),
+               c(pred.df$Upper, rev(pred.df$Lower)),
+               col=grey(0.95), bor=NA)
+      lines( pred.df[,c(var_name,"Median")], type='l', lwd=2)
       
       dev.off()
     })
@@ -932,10 +933,10 @@ plot_predictions_func <- function(mod.list,
 }
 
 
-# SAVE OUTPUT RASTERS --------------------------------------------------------
+# SAVE OUTPUT RASTERS & DATAFRAMES -------------------------------------------
 
-save_output_rasters_func <- function(mod.list,
-                                     outpath) {
+save_output_rasters_df_func <- function(mod.list,
+                                        outpath) {
   
   mod_names <- names(mod.list)
   
@@ -977,6 +978,11 @@ save_output_rasters_func <- function(mod.list,
         writeRaster(paste0(outpath, "/VESTFOLD_Probability_prediction_", name, "_upper.tif"),
                     overwrite = T)
       
+      # Save the dataframe for model evaluation
+      Model$Vestfold_median_probability_pred_df <- as.data.frame(Model$preds.prob.Vestfold$field$Median, xy = T)
+      names(Model$Vestfold_median_probability_pred_df) <- c("x", "y", "pred")
+      
+      
       # 3. Pull out the median intensity prediction for each cell (BUNGER)
       
       Model$preds.INT.Bunger$field$Median %>%
@@ -1010,7 +1016,12 @@ save_output_rasters_func <- function(mod.list,
         writeRaster(paste0(outpath, "/BUNGER_Probability_prediction_", name, "_upper.tif"),
                     overwrite = T)
       
+      # Save the dataframe for model evaluation
+      Model$Bunger_median_probability_pred_df <- as.data.frame(Model$preds.prob.Bunger$field$Median, xy = T)
+      names(Model$Bunger_median_probability_pred_df) <- c("x", "y", "pred")
       
+      # Save updated model
+      mod.list[[i]] <- Model
     } 
     
     
@@ -1050,10 +1061,147 @@ save_output_rasters_func <- function(mod.list,
         writeRaster(paste0(outpath, "/Probability_prediction_", name, "_upper.tif"),
                     overwrite = T)
         
+      # Save the dataframe for model evaluation
+      Model$Bunger_median_probability_pred_df <- as.data.frame(Model$preds.prob$field$Median, xy = T)
+      names(Model$Bunger_median_probability_pred_df) <- c("x", "y", "pred")
+      
+      # Save updated model
+      mod.list[[i]] <- Model
       
     }
     
     
   }
+  
+  return(mod.list)
 }
+
+#############################################################################
+
+# Model evaluation ISDM
+
+evaluate_prediction_isdm <- function(mod.list,
+                                outpath) { 
+  
+  mod_names <- names(mod.list)
+  
+  all_eval_df <- list()  # to collect results
+  
+  for(i in seq_along(mod.list)) {
+    
+    Model <- mod.list[[i]]
+    
+    name <- mod_names[i] 
+    
+    # If the model name contains PA or Integrated, pull out Bunger predictions
+    if(grepl("PA", name, fixed = T) | grepl("int", name, fixed = T)) {
+      
+      # Match predictions to PA locations
+      PA_bunger23$pred <- terra::extract(Model$preds.prob.Bunger$field$Median, PA_bunger23[, c("x", "y")])[,2]
+      
+      pred_with_PA <- PA_bunger23
+      
+    }
+    
+    # If PO, there's only one prediction
+    if(grepl("PO", name, fixed = T)) {
+      
+      # Match predictions to PA locations
+      PA_bunger23$pred <- terra::extract(Model$preds.prob$field$Median, PA_bunger23[, c("x", "y")])[,2]
+      
+      pred_with_PA <- PA_bunger23 
+      
+    }
+    
+    ROC = precrec::auc(precrec::evalmod(scores = pred_with_PA$pred, labels = pred_with_PA$Presence))[1,4]
+    PRG = prg::calc_auprg(prg::create_prg_curve(labels = pred_with_PA$Presence, pos_scores = pred_with_PA$pred))
+    
+    plot1 <- autoplot(precrec::evalmod(scores = pred_with_PA$pred, labels = pred_with_PA$Presence))[[1]]
+    plot2 <- autoplot(precrec::evalmod(scores = pred_with_PA$pred, labels = pred_with_PA$Presence))[[2]]
+    
+    boyce = ecospat::ecospat.boyce(fit = pred_with_PA$pred, 
+                                   obs = pred_with_PA$pred[which(pred_with_PA$Presence==1)], 
+                                   nclass = 0, # Calculate continuous index
+                                   method = "pearson",
+                                   PEplot = T)[["cor"]]
+    
+    partialROC = kuenm::kuenm_proc(occ.test = pred_with_PA$pred[which(pred_with_PA$Presence==1)],
+                                   model = pred_with_PA$pred,
+                                   threshold = 80,   # Omission threshold (e.g., 80%)
+                                   rand.percent = 50, # What percent of testing data for bootstrap
+                                   iterations = 500)$pROC_summary[[1]]
+    
+    brier = DescTools::BrierScore(resp = pred_with_PA$Presence,
+                                  pred = pred_with_PA$pred)
+    
+    eval_df <- data.frame(model = name,
+                          ROC = ROC,
+                          PRG = PRG,
+                          boyce = boyce,
+                          partialROC = partialROC,
+                          brier = brier) 
+    
+    # Save AUC and PRG plots
+    png(paste0(outpath,  "/auc_plot_", name, ".png"), width = 800, height = 600)
+    print(plot1)
+    dev.off()
+    
+    png(paste0(outpath,  "/prg_plot_", name, ".png"), width = 800, height = 600)
+    print(plot2)
+    dev.off()
+    
+    all_eval_df[[i]] <- eval_df  # store in list
+    
+    
+  }
+  
+  final_eval_df <- do.call(rbind, all_eval_df)
+  return(final_eval_df)
+  
+  }
+  
+  
+#############################################################################
+
+# Model evaluation PO ENSEMBLE
+
+evaluate_prediction_ensemble <- function(x){
+  
+  ROC = precrec::auc(precrec::evalmod(scores = x$pred, labels = x$Presence))[1,4]
+  PRG = prg::calc_auprg(prg::create_prg_curve(labels = x$Presence, pos_scores = x$pred))
+  
+  plot1 <- autoplot(precrec::evalmod(scores = x$pred, labels = x$Presence))[[1]]
+  plot2 <- autoplot(precrec::evalmod(scores = x$pred, labels = x$Presence))[[2]]
+  
+  boyce = ecospat::ecospat.boyce(fit = x$pred, 
+                                 obs = x$pred[which(x$Presence==1)], 
+                                 nclass = 0, # Calculate continuous index
+                                 method = "pearson",
+                                 PEplot = T)[["cor"]]
+  
+  partialROC = kuenm::kuenm_proc(occ.test = x$pred[which(x$Presence==1)],
+                                 model = x$pred,
+                                 threshold = 80,   # Omission threshold (e.g., 80%)
+                                 rand.percent = 50, # What percent of testing data for bootstrap
+                                 iterations = 500)$pROC_summary[[1]]
+  
+  eval_df <- data.frame(ROC = ROC,
+                        PRG = PRG,
+                        boyce = boyce,
+                        partialROC = partialROC) 
+  
+  # Save AUC and PRG plots
+  png(paste0(outpath,  "/auc_plot.png"), width = 800, height = 600)
+  print(plot1)
+  dev.off()
+  
+  png(paste0(outpath,  "/prg_plot.png"), width = 800, height = 600)
+  print(plot2)
+  dev.off()
+  
+  return(list(eval_df = eval_df))
+  
+}
+
+
 
