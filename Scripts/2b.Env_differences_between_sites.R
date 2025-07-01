@@ -10,7 +10,7 @@
 
 library(purrr)
 
-packages <- c("here", "sf", "terra", "dplyr", "tidyr", "viridis", "ggplot2", "tidyterra", "flexsdm", "viridisLite", "ggridges")
+packages <- c("here", "sf", "terra", "dplyr", "tidyr", "viridis", "ggplot2", "tidyterra", "flexsdm", "viridisLite", "ggridges", "ggpubr")
 
 walk(packages, require, character.only = T)
 
@@ -29,6 +29,12 @@ names(dist_vertebrates) <- "dist_vertebrates"
 
 dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_EAST_ANTARCTICA.tif"))
 names(dist_seasonal_water) <- "dist_seasonal_water"
+
+summer_temp <- rast(here("Data/Environmental_predictors/Mean_Summer_Temp_EAST_ANTARCTICA.tif"))
+names(summer_temp) <- "summer_temp"
+
+wind_speed <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_EAST_ANTARCTICA.tif"))
+names(wind_speed) <- "wind_speed"
 
 # Bias covariate
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_EAST_ANTARCTICA.tif"))
@@ -50,18 +56,8 @@ ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
 
 ice_free.EastAnt <- ifel(not.na(ice_free.EastAnt), 1, NA)
 
-summer_temp <- rast(here("Data/Environmental_predictors/Mean_Summer_Temp_ICEFREE.tif"))
-summer_temp <- crop(summer_temp, ice_free.EastAnt) # Crop to ice-free land
-names(summer_temp) <- "summer_temp"
-
-wind <- rast(here("Data/Environmental_predictors/mean_wind_bm.tif"))
-wind <- crop(wind, ice_free.EastAnt) 
-names(wind) <- "wind"
-wind <- resample(wind, ice_free.EastAnt, method = "bilinear") # Resample to match summer_temp resolution
-wind <- mask(wind, ice_free.EastAnt) # Mask to ice-free land
-
 # Stack covariates
-EastAnt <- c(TWI, slope, northness, dist_vertebrates, dist_seasonal_water, dist_station, summer_temp, wind)
+EastAnt <- c(TWI, slope, northness, dist_vertebrates, dist_seasonal_water, dist_station, summer_temp, wind_speed)
 
 
 # Plotting environmental conditions at sites ------------------------------
@@ -143,7 +139,95 @@ PA_Vestfold_df <- terra::extract(EastAnt, PA_Vestfold_vect, xy = FALSE, na.rm = 
 
 
 
-# PLOTTING comparisong PO vs. PA vs. Bunger -------------------------------
+# PLOTTING PA data hints of selection  --------------------------------
+PA_for_plot <- terra::extract(EastAnt, PA_Vestfold_vect, xy = FALSE, na.rm = TRUE) %>% 
+  mutate(surface_moss = PA_Vestfold_vect[["srfc_ms"]],
+         surface_lichen = PA_Vestfold_vect[["srfc_lc"]])
+
+
+for(i in seq_along(names(EastAnt))) {
+  
+  plot <- ggplot() +
+          geom_density(data = PA_for_plot, 
+                       aes(x = .data[[names(EastAnt)[i]]], fill = as.factor(surface_moss)), 
+                       alpha = 0.5) +
+          theme_bw() +
+          labs(title = names(EastAnt)[i])
+  
+  ggsave(filename = here("Outputs/Figures", paste0("PA_MOSS_Vestfold_", names(EastAnt)[i], ".png")),
+         plot = plot,
+         width = 8, height = 4, dpi = 300, units = "in")
+  
+}
+
+for(i in seq_along(names(EastAnt))) {
+  
+  plot <- ggplot() +
+    geom_density(data = PA_for_plot, 
+                 aes(x = .data[[names(EastAnt)[i]]], fill = as.factor(surface_lichen)), 
+                 alpha = 0.5) +
+    theme_bw() +
+    labs(title = names(EastAnt)[i])
+  
+  ggsave(filename = here("Outputs/Figures", paste0("PA_LICHEN_Vestfold_", names(EastAnt)[i], ".png")),
+         plot = plot,
+         width = 8, height = 4, dpi = 300, units = "in")
+  
+}
+
+# PLOTTING PO data hints of selection  --------------------------------
+
+PO_EASTANT_lichen <- rbind(EastAnt.df, PO_lichen_df)
+PO_EASTANT_lichen$Region <- factor(PO_EASTANT_lichen$Region, levels = c("PO Lichen", "East Antarctica"))
+
+for(i in seq_along(names(EastAnt))) {
+  
+  xmax <- quantile(PO_EASTANT_lichen[, i], 0.95, na.rm = TRUE)
+  
+  plot <- ggplot(PO_EASTANT_lichen, aes(x = .data[[names(PO_EASTANT_lichen)[[i]]]], y = Region, fill = Region)) +
+    geom_density_ridges(scale = 4, alpha = 0.8) +
+    scale_y_discrete(expand = c(0, 0)) +     # will generally have to set the `expand` option
+    scale_x_continuous(expand = c(0, 0)) +   # for both axes to remove unneeded padding
+    coord_cartesian(xlim = c(NA, xmax)) + # to avoid clipping of the very top of the top ridgeline
+    scale_fill_manual(values = c(
+      "East Antarctica" = "purple4",  
+      "PO Lichen" = "purple"   
+    )) +
+    theme_classic()+
+    labs(x = names(PO_EASTANT_lichen)[[i]], y = NULL, title = paste0("Distribution of ", names(PO_EASTANT_lichen)[[i]], " Across East Antarctica & PO Lichen"))
+  
+  ggsave(filename = here("Outputs/Figures", paste0("Distribution_of_", names(PO_EASTANT_lichen)[[i]], "_Across_PO_Lichen.png")),
+         plot = plot,
+         width = 8, height = 4, dpi = 300, units = "in")
+  
+}
+
+PO_EASTANT_moss <- rbind(EastAnt.df, PO_moss_df)
+PO_EASTANT_moss$Region <- factor(PO_EASTANT_moss$Region, levels = c("PO Moss", "East Antarctica"))
+
+for(i in seq_along(names(EastAnt))) {
+  
+  xmax <- quantile(PO_EASTANT_moss[, i], 0.95, na.rm = TRUE)
+  
+  plot <- ggplot(PO_EASTANT_moss, aes(x = .data[[names(PO_EASTANT_moss)[[i]]]], y = Region, fill = Region)) +
+    geom_density_ridges(scale = 4, alpha = 0.8) +
+    scale_y_discrete(expand = c(0, 0)) +     # will generally have to set the `expand` option
+    scale_x_continuous(expand = c(0, 0)) +   # for both axes to remove unneeded padding
+    coord_cartesian(xlim = c(NA, xmax)) + # to avoid clipping of the very top of the top ridgeline
+    scale_fill_manual(values = c(
+      "East Antarctica" = "purple4",  # deep orange-red
+      "PO Moss" = "purple"   # warm coral-orange
+    )) +
+    theme_classic()+
+    labs(x = names(PO_EASTANT_moss)[[i]], y = NULL, title = paste0("Distribution of ", names(PO_EASTANT_moss)[[i]], " Across East Antarctica & PO Moss"))
+  
+  ggsave(filename = here("Outputs/Figures", paste0("Distribution_of_", names(PO_EASTANT_moss)[[i]], "_Across_PO_Moss.png")),
+         plot = plot,
+         width = 8, height = 4, dpi = 300, units = "in")
+  
+}
+
+# PLOTTING comparison PO vs. PA vs. Bunger -------------------------------
 
 all_lichen <- rbind(bunger.df, PO_lichen_df, PA_Vestfold_df)
 
