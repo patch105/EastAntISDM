@@ -135,8 +135,14 @@ if(group == "Lichen") {
 
 # Load the covariates -----------------------------------------------------
 
+# Load the 1km covariates -----------------------------------------------------
+
 TWI <- rast(here("Data/Environmental_predictors/topographic_wetness_index_EAST_ANTARCTICA.tif"))
+names(TWI) <- "TWI"
+
 slope <- rast(here("Data/Environmental_predictors/slope_EAST_ANTARCTICA.tif"))
+names(slope) <- "slope"
+
 northness <- rast(here("Data/Environmental_predictors/northness_EAST_ANTARCTICA.tif"))
 names(northness) <- "northness"
 
@@ -146,21 +152,37 @@ names(dist_vertebrates) <- "dist_vertebrates"
 dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_EAST_ANTARCTICA.tif"))
 names(dist_seasonal_water) <- "dist_seasonal_water"
 
+summer_temp <- rast(here("Data/Environmental_predictors/Mean_Summer_Temp_EAST_ANTARCTICA.tif"))
+names(summer_temp) <- "summer_temp"
+
+wind_speed <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_EAST_ANTARCTICA.tif"))
+names(wind_speed) <- "wind_speed"
+
 # Bias covariate
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_EAST_ANTARCTICA.tif"))
 names(dist_station) <- "dist_station"
 
 # Apply some transformations
 sqrt_slope <- sqrt(slope)
-log_dist_seasonal_water <- log(dist_seasonal_water+1)
-log_dist_station <- log(dist_station+1)
+names(sqrt_slope) <- "sqrt_slope"
 
-# Stack covariates
-covs <- c(TWI, sqrt_slope, northness, dist_vertebrates, log_dist_seasonal_water, log_dist_station)
+log_dist_seasonal_water <- log(dist_seasonal_water+1)
+names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
+
+log_dist_station <- log(dist_station+1)
+names(log_dist_station) <- "log_dist_station"
+
+log_dist_vertebrates <- log(dist_vertebrates+1)
+names(log_dist_vertebrates) <- "log_dist_vertebrates"
+
+# Stack covariates & save version w/o bias cov
+covs_no_bias <- c(TWI, sqrt_slope, northness, log_dist_seasonal_water, summer_temp)
+covs <- c(TWI, sqrt_slope, northness, log_dist_seasonal_water, summer_temp, log_dist_station)
 
 # Make sure that if any predictors are NA, all become NA
 
 # Here we're just exploiting the fact that sum will by default return NA when any layer has an NA
+covs_no_bias <- terra::mask(covs_no_bias, sum(covs_no_bias))
 covs <- terra::mask(covs, sum(covs))
 
 
@@ -738,6 +760,8 @@ writeRaster(pred_cur_ensemble.rast, here(outpath, paste0("Prediction_ensemble_Ea
 # Evaluate the ensemble predictions on VESTFOLD PA dataset ----------------
 ############################################
 
+source(here("Scripts/Helper_functions_ISDM.R"))
+
 colnames(pred_cur_ensemble)[grepl("pred", colnames(pred_cur_ensemble))] <- "pred"
 
 
@@ -775,7 +799,7 @@ PA_vestfold_covs <- PA_vestfold_covs %>%
 pred_with_PA <- dplyr::left_join(PA_vestfold_covs, pred_cur_ensemble[, c("x", "y", "pred")], by = c("x", "y"))
 
 # Evaluate prediction on test set
-eval <- evaluate_prediction(pred_with_PA)
+eval <- evaluate_prediction_ensemble(pred_with_PA)
 
 eval_df.ens <- data.frame(model = "Ensemble",
                           validation_dataset = "Vestfold",
@@ -821,7 +845,7 @@ PA_bunger23_covs <- PA_bunger23_covs %>%
 pred_with_PA <- dplyr::left_join(PA_bunger23_covs, pred_cur_ensemble[, c("x", "y", "pred")], by = c("x", "y"))
 
 # Evaluate prediction on test set
-eval <- evaluate_prediction(pred_with_PA)
+eval <- evaluate_prediction_ensemble(pred_with_PA)
 
 eval_df.ens <- eval_df.ens %>% 
   add_row(model = "Ensemble",
@@ -829,95 +853,84 @@ eval_df.ens <- eval_df.ens %>%
           eval[["eval_df"]])
 
 
-############################################
-# Evaluate the ensemble predictions on Plantarctica PA dataset ----------------
-############################################
-
-if(group == "Moss") {
-  
-  veg_map <- st_read(here("Data/Biological_records/PlantarcticaVegetationMap.shp")) %>% 
-    filter(Vegetation == "Vegetation") %>% 
-    vect()
-  
-}
-
-if(group == "Lichen") {
-  
-  veg_map <- st_read(here("Data/Biological_records/PlantarcticaVegetationMap.shp")) %>% 
-    filter(Vegetation == "Lichen") %>% 
-    vect()
-  
-}
-
-grid <- rast(ext = ext(ice_free.EastAnt),
-             resolution = 1000, 
-             vals = 1) 
+write.csv(eval_df.ens, file = here(outpath, "Ensemble_eval_df.csv"))
 
 
-crs(grid) <- "epsg:3031"
+# ############################################
+# # Evaluate the ensemble predictions on Plantarctica PA dataset ----------------
+# ############################################
+# 
+# if(group == "Moss") {
+#   
+#   veg_map <- st_read(here("Data/Biological_records/PlantarcticaVegetationMap.shp")) %>% 
+#     filter(Vegetation == "Vegetation") %>% 
+#     vect()
+#   
+# }
+# 
+# if(group == "Lichen") {
+#   
+#   veg_map <- st_read(here("Data/Biological_records/PlantarcticaVegetationMap.shp")) %>% 
+#     filter(Vegetation == "Lichen") %>% 
+#     vect()
+#   
+# }
+# 
+# grid <- rast(ext = ext(ice_free.EastAnt),
+#              resolution = 1000, 
+#              vals = 1) 
+# 
+# 
+# crs(grid) <- "epsg:3031"
+# 
+# gridUNIQUE <- rast(ext = ext(ice_free.EastAnt), 
+#                    resolution = 1000, 
+#                    vals = 1:ncell(grid)) 
+# 
+# crs(gridUNIQUE) <- "epsg:3031"
+# 
+# # Convert Plantarctica to presence-absence grid
+# # Find the ice-free grid cell ID each vegetation record lies in with a unique value
+# # ID is the ID of the veg record, lyr.1 is the unique ID of the cell
+# extractUNIQUE <- terra::extract(gridUNIQUE, veg_map)
+# 
+# # Count the number of veg points per unique grid cell
+# count <- count(extractUNIQUE, lyr.1)
+# 
+# # Make gridUNIQUE raster a data frame
+# gridUNIQUEdf <- as.data.frame(gridUNIQUE, xy = TRUE)
+# 
+# # Full join retains all values, join the grid dataframe and  the count values by the cell unique ID
+# update_rast <- full_join(gridUNIQUEdf, count, by = "lyr.1") %>% 
+#   .[, -3] %>% 
+#   drop_na(x) %>% # Remove if there's a row with no xy (where the veg. data didn't overlap the coastline)
+#   rast(.) 
+# 
+# update_rast <- ifel(is.na(update_rast), 0, 1)
+# 
+# crs(update_rast) <- "epsg:3031"
+# 
+# names(update_rast) <- "Presence"
+# 
+# 
+# ## Add in PA vegetation dataset
+# 
+# vegetation_PA <- mask(update_rast, ice_free.EastAnt, maskvalue = NA) %>% 
+#   as.data.frame(xy = F)
+# 
+# vegetation_PA.rast <- mask(update_rast, ice_free.EastAnt, maskvalue = NA)
+# 
+# #writeRaster(vegetation_PA.rast, here("Data/Biological_records", "Plantarctica_lichen_PA.tif"))
+# 
+# # Add presence-absence validation data to prediction dataframe
+# pred_with_PA <- cbind(pred_cur_ensemble, vegetation_PA)   
+# 
+# # Evaluate prediction on test set
+# eval <- evaluate_prediction(pred_with_PA)
+# 
+# eval_df.ens <- eval_df.ens %>% 
+#   add_row(model = "Ensemble",
+#           validation_dataset = "Plantarctica",
+#           eval[["eval_df"]])
 
-gridUNIQUE <- rast(ext = ext(ice_free.EastAnt), 
-                   resolution = 1000, 
-                   vals = 1:ncell(grid)) 
-
-crs(gridUNIQUE) <- "epsg:3031"
-
-# Convert Plantarctica to presence-absence grid
-# Find the ice-free grid cell ID each vegetation record lies in with a unique value
-# ID is the ID of the veg record, lyr.1 is the unique ID of the cell
-extractUNIQUE <- terra::extract(gridUNIQUE, veg_map)
-
-# Count the number of veg points per unique grid cell
-count <- count(extractUNIQUE, lyr.1)
-
-# Make gridUNIQUE raster a data frame
-gridUNIQUEdf <- as.data.frame(gridUNIQUE, xy = TRUE)
-
-# Full join retains all values, join the grid dataframe and  the count values by the cell unique ID
-update_rast <- full_join(gridUNIQUEdf, count, by = "lyr.1") %>% 
-  .[, -3] %>% 
-  drop_na(x) %>% # Remove if there's a row with no xy (where the veg. data didn't overlap the coastline)
-  rast(.) 
-
-update_rast <- ifel(is.na(update_rast), 0, 1)
-
-crs(update_rast) <- "epsg:3031"
-
-names(update_rast) <- "Presence"
-
-
-## Add in PA vegetation dataset
-
-vegetation_PA <- mask(update_rast, ice_free.EastAnt, maskvalue = NA) %>% 
-  as.data.frame(xy = F)
-
-vegetation_PA.rast <- mask(update_rast, ice_free.EastAnt, maskvalue = NA)
-
-#writeRaster(vegetation_PA.rast, here("Data/Biological_records", "Plantarctica_lichen_PA.tif"))
-
-# Add presence-absence validation data to prediction dataframe
-pred_with_PA <- cbind(pred_cur_ensemble, vegetation_PA)   
-
-# Evaluate prediction on test set
-eval <- evaluate_prediction(pred_with_PA)
-
-eval_df.ens <- eval_df.ens %>% 
-  add_row(model = "Ensemble",
-          validation_dataset = "Plantarctica",
-          eval[["eval_df"]])
-
-
-############################################
-# Examine the environmental difference between PO and Bunger / Vestfold--------
-############################################
-
-PA_bunger23_covs
-PA_vestfold_covs
-
-extrap<- flexsdm::extra_eval(training_data = train_PB_covs[, c(1,2,3,4,7)],
-                             pr_ab = "Presence",
-                             projection_data = pred_cur_covs[, 3:6],
-                             metric = "mahalanobis",
-                             univar_comb = T,
-                             n_cores = 3)
 
