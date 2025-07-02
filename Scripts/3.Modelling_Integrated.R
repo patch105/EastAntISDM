@@ -22,7 +22,10 @@ library(RISDM,lib.loc=lib_loc)
 library(fmesher,lib.loc=lib_loc)
 library(flexsdm, lib.loc=lib_loc)
 library(DescTools, lib.loc = lib_loc)
-
+library(precrec, lib.loc = lib_loc)
+library(ecospat, lib.loc = lib_loc)
+library(kuenm, lib.loc = lib_loc)
+library(prg, lib.loc = lib_loc)
 
 
 # Load some helper functions -----------------------------------------------
@@ -35,9 +38,15 @@ source(here("Scripts/Helper_functions_ISDM.R"))
 group <- "Lichen"
 # group <- "Moss"
 
+
+# Set scenario ---------------------------------------------------------------
+
+scenario = "TEST"
+
+
 # Set outpath -------------------------------------------------------------
 
-outpath <- here("Outputs", "Integrated", group)
+outpath <- here("Outputs", "Integrated", group, scenario)
 
 if(!dir.exists(outpath)) {
   dir.create(outpath, showWarnings = FALSE)

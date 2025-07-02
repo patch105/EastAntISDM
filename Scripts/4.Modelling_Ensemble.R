@@ -70,9 +70,15 @@ model_types <- list("Maxent", "LASSO", "GAM", "RF", "BRT")
 group <- "Lichen"
 # group <- "Moss"
 
+
+# Set scenario ---------------------------------------------------------------
+
+scenario = "TEST_w_new_Bunger"
+
+
 # Set outpath -------------------------------------------------------------
 
-outpath <- here("Outputs", "Ensemble", group)
+outpath <- here("Outputs", "Ensemble", group, scenario)
 
 if(!dir.exists(outpath)) {
   dir.create(outpath, showWarnings = FALSE)
@@ -854,6 +860,54 @@ eval_df.ens <- eval_df.ens %>%
 
 
 write.csv(eval_df.ens, file = here(outpath, "Ensemble_eval_df.csv"))
+
+
+# Plotting - Vestfold ------------------------------------------------------
+
+vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp"))
+bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
+
+p1 <- pred_cur_ensemble.rast %>% 
+  crop(ext(vestfold_boundary)) %>% 
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 1, barheight = 6),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = paste0(group, " - PO Ensemble")) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank()) 
+
+ggsave(paste0(outpath, "/VESTFOLD_Probability_prediction_plot.png"), p1,
+       width = 10, height = 6, dpi = 300)
+
+p2 <- pred_cur_ensemble.rast %>% 
+  crop(ext(vestfold_boundary)) %>% 
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 1, barheight = 6),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = paste0(group, " - PO Ensemble")) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+ggsave(paste0(outpath, "/BUNGER_Probability_prediction_plot.png"), p2,
+       width = 10, height = 6, dpi = 300)
 
 
 # ############################################
