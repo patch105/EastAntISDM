@@ -1159,6 +1159,91 @@ evaluate_prediction_isdm <- function(mod.list,
   return(final_eval_df)
   
   }
+
+#############################################################################
+
+# Model evaluation ISDM from raster
+
+evaluate_prediction_raster_isdm <- function(mod.list,
+                                     outpath) { 
+  
+  mod_names <- names(mod.list)
+  
+  all_eval_df <- list()  # to collect results
+  
+  for(i in seq_along(mod.list)) {
+    
+    Model <- mod.list[[i]]
+    
+    name <- mod_names[i] 
+    
+    # If the model name contains PA or Integrated, pull out Bunger predictions
+    if(grepl("PA", name, fixed = T) | grepl("int", name, fixed = T)) {
+      
+      # Match predictions to PA locations
+      PA_bunger23$pred <- terra::extract(Model$preds.prob.Bunger$Median, PA_bunger23[, c("x", "y")])[,2]
+      
+      pred_with_PA <- PA_bunger23
+      
+    }
+    
+    # If PO, there's only one prediction
+    if(grepl("PO", name, fixed = T)) {
+      
+      # Match predictions to PA locations
+      PA_bunger23$pred <- terra::extract(Model$preds.prob$Median, PA_bunger23[, c("x", "y")])[,2]
+      
+      pred_with_PA <- PA_bunger23 
+      
+    }
+    
+    ROC = precrec::auc(precrec::evalmod(scores = pred_with_PA$pred, labels = pred_with_PA$Presence))[1,4]
+    PRG = prg::calc_auprg(prg::create_prg_curve(labels = pred_with_PA$Presence, pos_scores = pred_with_PA$pred))
+    
+    plot1 <- autoplot(precrec::evalmod(scores = pred_with_PA$pred, labels = pred_with_PA$Presence))[[1]]
+    plot2 <- autoplot(precrec::evalmod(scores = pred_with_PA$pred, labels = pred_with_PA$Presence))[[2]]
+    
+    boyce = ecospat::ecospat.boyce(fit = pred_with_PA$pred, 
+                                   obs = pred_with_PA$pred[which(pred_with_PA$Presence==1)], 
+                                   nclass = 0, # Calculate continuous index
+                                   method = "pearson",
+                                   PEplot = T)[["cor"]]
+    
+    partialROC = kuenm::kuenm_proc(occ.test = pred_with_PA$pred[which(pred_with_PA$Presence==1)],
+                                   model = pred_with_PA$pred,
+                                   threshold = 80,   # Omission threshold (e.g., 80%)
+                                   rand.percent = 50, # What percent of testing data for bootstrap
+                                   iterations = 500)$pROC_summary[[1]]
+    
+    brier = DescTools::BrierScore(resp = pred_with_PA$Presence,
+                                  pred = pred_with_PA$pred)
+    
+    eval_df <- data.frame(model = name,
+                          ROC = ROC,
+                          PRG = PRG,
+                          boyce = boyce,
+                          partialROC = partialROC,
+                          brier = brier) 
+    
+    # Save AUC and PRG plots
+    png(paste0(outpath,  "/auc_plot_", name, ".png"), width = 800, height = 600)
+    print(plot1)
+    dev.off()
+    
+    png(paste0(outpath,  "/prg_plot_", name, ".png"), width = 800, height = 600)
+    print(plot2)
+    dev.off()
+    
+    all_eval_df[[i]] <- eval_df  # store in list
+    
+    
+  }
+  
+  final_eval_df <- do.call(rbind, all_eval_df)
+  return(final_eval_df)
+  
+}
+
   
   
 #############################################################################
