@@ -41,7 +41,7 @@ group <- "Lichen"
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "500m"
+scenario = "GRF_500m"
 
 
 # Set outpath -------------------------------------------------------------
@@ -192,9 +192,13 @@ PA_bunger23 <- PA_bunger23 %>% mutate(area = 100)
 
 TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
 names(TWI) <- "TWI"
+
 slope <- rast(here("Data/Environmental_predictors/slope_500m_IceFree_EastAnt.tif"))
+names(slope) <- "slope"
+
 northness <- rast(here("Data/Environmental_predictors/northness_500m_IceFree_EastAnt.tif"))
 names(northness) <- "northness"
+
 aspect <- rast(here("Data/Environmental_predictors/aspect_500m_IceFree_EastAnt.tif"))
 names(aspect) <- "aspect"
 
@@ -308,12 +312,12 @@ my.control.GRF <- list(coord.names = c("x", "y"),
                        addRandom = TRUE) # With random effect
 
 # Distribution formula
-distributionFormula <- ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(northness, 2) + poly(summer_temp, 2) + poly(wind, 2)
+distributionFormula <- ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(northness, 2) + poly(summer_temp, 2)
 
 
 # Presence-Absence Model Fitting ------------------------------------------
 
-m.PA <- isdm(observationList = list(PAdat = PA_vestfold),
+m.PA.GRF <- isdm(observationList = list(PAdat = PA_vestfold),
              covars = covs,
              mesh = mesh.range.10km.cutoff.50,
              responseNames = c(PA = "presence"),
@@ -321,14 +325,14 @@ m.PA <- isdm(observationList = list(PAdat = PA_vestfold),
              distributionFormula = distributionFormula, 
              biasFormula = NULL, #Intercept only
              artefactFormulas = list(PA = ~1), # Intercept only
-             control = my.control)
+             control = my.control.GRF)
 
 
 
 # Presence-Only Model Fitting ----------------------------------------------
 
 
-m.PO <- isdm(observationList = list(POdat = PO), 
+m.PO.GRF <- isdm(observationList = list(POdat = PO), 
              covars = covs,
              mesh = mesh.range.10km.cutoff.50,
              responseNames = NULL,
@@ -336,9 +340,9 @@ m.PO <- isdm(observationList = list(POdat = PO),
              distributionFormula = distributionFormula, 
              biasFormula = ~1,
              artefactFormulas = NULL,
-             control = my.control)
+             control = my.control.GRF)
 
-m.PO.bias <- isdm(observationList = list(POdat = PO), 
+m.PO.bias.GRF <- isdm(observationList = list(POdat = PO), 
                   covars = covs,
                   mesh = mesh.range.10km.cutoff.50,
                   responseNames = NULL,
@@ -346,12 +350,12 @@ m.PO.bias <- isdm(observationList = list(POdat = PO),
                   distributionFormula = distributionFormula, 
                   biasFormula = ~1 + log_dist_station,
                   artefactFormulas = NULL,
-                  control = my.control)
+                  control = my.control.GRF)
 
 
 # Integrated Model Fitting ------------------------------------------------
 
-m.int <- isdm(observationList = list(POdat = PO,
+m.int.GRF <- isdm(observationList = list(POdat = PO,
                                      PAdat = PA_vestfold),
               covars = covs,
               mesh = mesh.range.10km.cutoff.50,
@@ -360,9 +364,9 @@ m.int <- isdm(observationList = list(POdat = PO,
               distributionFormula = distributionFormula, 
               biasFormula = ~1, 
               artefactFormulas = list(PA = ~1), # Intercept only
-              control = my.control) 
+              control = my.control.GRF) 
 
-m.int.bias <- isdm(observationList = list(POdat = PO,
+m.int.bias.GRF <- isdm(observationList = list(POdat = PO,
                                           PAdat = PA_vestfold),
                    covars = covs,
                    mesh = mesh.range.10km.cutoff.50,
@@ -371,17 +375,17 @@ m.int.bias <- isdm(observationList = list(POdat = PO,
                    distributionFormula = distributionFormula, 
                    biasFormula = ~1 + log_dist_station, 
                    artefactFormulas = list(PA = ~1), # Intercept only
-                   control = my.control) 
+                   control = my.control.GRF) 
 
 
 
 # Save all models to a list -----------------------------------------------
 
-mod.list <- list(m.PA = m.PA,
-                 m.PO = m.PO,
-                 m.PO.bias = m.PO.bias,
-                 m.int = m.int,
-                 m.int.bias = m.int.bias)
+mod.list <- list(m.PA.GRF = m.PA.GRF,
+                 m.PO.GRF = m.PO.GRF,
+                 m.PO.bias.GRF = m.PO.bias.GRF,
+                 m.int.GRF = m.int.GRF,
+                 m.int.bias.GRF = m.int.bias.GRF)
 
 
 # 3. EXTRACT MODEL RESULTS ------------------------------------------------
@@ -403,7 +407,7 @@ covs$sampAreaPA_Vestfold <- mask(rast(covs[[1]], vals=80), covs[[1]])
 # Add sampling area for prediction to Bunger
 covs$sampAreaPA_Bunger <- mask(rast(covs[[1]], vals=100), covs[[1]])
 
-m.PA$preds.INT.Vestfold <- predict(m.PA, 
+m.PA.GRF$preds.INT.Vestfold <- predict(m.PA.GRF, 
                                    covars = covs,
                                    habitatArea="sampAreaPA_Vestfold",
                                    S = 500,
@@ -412,7 +416,7 @@ m.PA$preds.INT.Vestfold <- predict(m.PA,
                                    includeRandom = F,
                                    includeFixed = T)
 
-m.PA$preds.INT.Bunger <- predict(m.PA, 
+m.PA.GRF$preds.INT.Bunger <- predict(m.PA.GRF, 
                                  covars = covs,
                                  habitatArea="sampAreaPA_Bunger",
                                  S = 500,
@@ -421,7 +425,7 @@ m.PA$preds.INT.Bunger <- predict(m.PA,
                                  includeRandom = F,
                                  includeFixed = T)
 
-m.PA$preds.prob.Vestfold <- predict(m.PA, 
+m.PA.GRF$preds.prob.Vestfold <- predict(m.PA.GRF, 
                                     covars = covs,
                                     habitatArea="sampAreaPA_Vestfold",
                                     S = 500,
@@ -430,7 +434,7 @@ m.PA$preds.prob.Vestfold <- predict(m.PA,
                                     includeRandom = F,
                                     includeFixed = T)
 
-m.PA$preds.prob.Bunger <- predict(m.PA, 
+m.PA.GRF$preds.prob.Bunger <- predict(m.PA.GRF, 
                                   covars = covs,
                                   habitatArea="sampAreaPA_Bunger",
                                   S = 500,
@@ -439,9 +443,17 @@ m.PA$preds.prob.Bunger <- predict(m.PA,
                                   includeRandom = F,
                                   includeFixed = T)
 
+m.PA.GRF$preds.GRF <- predict(m.PA.GRF,
+                              covars = covs,
+                              S = 500, 
+                              intercept.terms = NULL,
+                              type = "intensity",
+                              includeRandom = T,
+                              includeFixed = F) # No fixed effect
+
 # Presence-only models -------------------------------------------------
 
-m.PO$preds.INT <- predict(m.PO, 
+m.PO.GRF$preds.INT <- predict(m.PO.GRF, 
                           covars = covs,
                           S = 500,
                           intercept.terms = "PO_Intercept",
@@ -449,7 +461,7 @@ m.PO$preds.INT <- predict(m.PO,
                           includeRandom = F,
                           includeFixed = T)
 
-m.PO$preds.prob <- predict(m.PO, 
+m.PO.GRF$preds.prob <- predict(m.PO.GRF, 
                            covars = covs,
                            S = 500,
                            intercept.terms = "PO_Intercept",
@@ -457,7 +469,7 @@ m.PO$preds.prob <- predict(m.PO,
                            includeRandom = F,
                            includeFixed = T)
 
-m.PO.bias$preds.INT <- predict(m.PO.bias, 
+m.PO.bias.GRF$preds.INT <- predict(m.PO.bias.GRF, 
                                covars = covs,
                                S = 500,
                                intercept.terms = "PO_Intercept",
@@ -465,7 +477,7 @@ m.PO.bias$preds.INT <- predict(m.PO.bias,
                                includeRandom = F,
                                includeFixed = T)
 
-m.PO.bias$preds.prob <- predict(m.PO.bias, 
+m.PO.bias.GRF$preds.prob <- predict(m.PO.bias.GRF, 
                                 covars = covs,
                                 S = 500,
                                 intercept.terms = "PO_Intercept",
@@ -473,10 +485,27 @@ m.PO.bias$preds.prob <- predict(m.PO.bias,
                                 includeRandom = F,
                                 includeFixed = T)
 
+# GRF predictions
+m.PO.GRF$preds.GRF <- predict(m.PO.GRF,
+                              covars = covs,
+                              S = 500, 
+                              intercept.terms = NULL,
+                              type = "intensity",
+                              includeRandom = T,
+                              includeFixed = F) # No fixed effect
+
+m.PO.bias.GRF$preds.GRF <- predict(m.PO.bias.GRF,
+                              covars = covs,
+                              S = 500, 
+                              intercept.terms = NULL,
+                              type = "intensity",
+                              includeRandom = T,
+                              includeFixed = F) # No fixed effect
+
 
 # Integrated models -------------------------------------------------------
 
-m.int$preds.INT.Vestfold <- predict(m.int, 
+m.int.GRF$preds.INT.Vestfold <- predict(m.int.GRF, 
                                     covars = covs,
                                     habitatArea = "sampAreaPA_Vestfold",
                                     S = 500,
@@ -485,7 +514,7 @@ m.int$preds.INT.Vestfold <- predict(m.int,
                                     includeRandom = F,
                                     includeFixed = T)
 
-m.int$preds.INT.Bunger <- predict(m.int, 
+m.int.GRF$preds.INT.Bunger <- predict(m.int.GRF, 
                                   covars = covs,
                                   habitatArea = "sampAreaPA_Bunger",
                                   S = 500,
@@ -494,7 +523,7 @@ m.int$preds.INT.Bunger <- predict(m.int,
                                   includeRandom = F,
                                   includeFixed = T)
 
-m.int$preds.prob.Vestfold <- predict(m.int, 
+m.int.GRF$preds.prob.Vestfold <- predict(m.int.GRF, 
                                      covars = covs,
                                      habitatArea = "sampAreaPA_Vestfold",
                                      S = 500,
@@ -503,7 +532,7 @@ m.int$preds.prob.Vestfold <- predict(m.int,
                                      includeRandom = F,
                                      includeFixed = T)
 
-m.int$preds.prob.Bunger <- predict(m.int, 
+m.int.GRF$preds.prob.Bunger <- predict(m.int.GRF, 
                                    covars = covs,
                                    habitatArea = "sampAreaPA_Bunger",
                                    S = 500,
@@ -512,7 +541,7 @@ m.int$preds.prob.Bunger <- predict(m.int,
                                    includeRandom = F,
                                    includeFixed = T)
 
-m.int.bias$preds.INT.Vestfold <- predict(m.int.bias, 
+m.int.bias.GRF$preds.INT.Vestfold <- predict(m.int.bias.GRF, 
                                          covars = covs,
                                          habitatArea = "sampAreaPA_Vestfold",
                                          S = 500,
@@ -521,7 +550,7 @@ m.int.bias$preds.INT.Vestfold <- predict(m.int.bias,
                                          includeRandom = F,
                                          includeFixed = T)
 
-m.int.bias$preds.INT.Bunger <- predict(m.int.bias, 
+m.int.bias.GRF$preds.INT.Bunger <- predict(m.int.bias.GRF, 
                                        covars = covs,
                                        habitatArea = "sampAreaPA_Bunger",
                                        S = 500,
@@ -530,7 +559,7 @@ m.int.bias$preds.INT.Bunger <- predict(m.int.bias,
                                        includeRandom = F,
                                        includeFixed = T)
 
-m.int.bias$preds.prob.Vestfold <- predict(m.int.bias, 
+m.int.bias.GRF$preds.prob.Vestfold <- predict(m.int.bias.GRF, 
                                           covars = covs,
                                           habitatArea = "sampAreaPA_Vestfold",
                                           S = 500,
@@ -539,7 +568,7 @@ m.int.bias$preds.prob.Vestfold <- predict(m.int.bias,
                                           includeRandom = F,
                                           includeFixed = T)
 
-m.int.bias$preds.prob.Bunger <- predict(m.int.bias, 
+m.int.bias.GRF$preds.prob.Bunger <- predict(m.int.bias.GRF, 
                                         covars = covs,
                                         habitatArea = "sampAreaPA_Bunger",
                                         S = 500,
@@ -548,13 +577,31 @@ m.int.bias$preds.prob.Bunger <- predict(m.int.bias,
                                         includeRandom = F,
                                         includeFixed = T)
 
+# GRF predictions
+m.int.GRF$preds.GRF <- predict(m.int.GRF,
+                                   covars = covs,
+                                   S = 500, 
+                                   intercept.terms = NULL,
+                                   type = "intensity",
+                                   includeRandom = T,
+                                   includeFixed = F) # No fixed effect
+
+m.int.bias.GRF$preds.GRF <- predict(m.int.bias.GRF,
+                               covars = covs,
+                               S = 500, 
+                               intercept.terms = NULL,
+                               type = "intensity",
+                               includeRandom = T,
+                               includeFixed = F) # No fixed effect
+
+
 # Save all models to a list again-----------------------------------------
 
-mod.list <- list(m.PA = m.PA,
-                 m.PO = m.PO,
-                 m.PO.bias = m.PO.bias,
-                 m.int = m.int,
-                 m.int.bias = m.int.bias)
+mod.list <- list(m.PA.GRF = m.PA.GRF,
+                 m.PO.GRF = m.PO.GRF,
+                 m.PO.bias.GRF = m.PO.bias.GRF,
+                 m.int.GRF = m.int.GRF,
+                 m.int.bias.GRF = m.int.bias.GRF)
 
 
 # Plotting predictions ----------------------------------------------------
@@ -622,4 +669,3 @@ partial_dependence_func(mod.list = mod.list,
 #                                     outpath = outpath)
 # 
 # write.csv(eval_df, file = paste0(outpath, "/RISDM_eval_df.csv"))
-
