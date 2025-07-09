@@ -237,12 +237,12 @@ predict_from_fitted_func <- function(mod.list,
       
       if(grepl("PO", name, fixed = T)) { # If models are PO, use PO intercept
         
-        Model$preds.link <- predict(Model,
-                                    covars = covs,
-                                    S = posterior_nsamps, 
-                                    intercept.terms = "PO_Intercept",
-                                    type = "link",
-                                    includeRandom = F) # No GRF
+        # Model$preds.link <- predict(Model,
+        #                             covars = covs,
+        #                             S = posterior_nsamps, 
+        #                             intercept.terms = "PO_Intercept",
+        #                             type = "link",
+        #                             includeRandom = F) # No GRF
         
         Model$preds.intensity <- predict(Model,
                                          covars = covs,
@@ -263,12 +263,12 @@ predict_from_fitted_func <- function(mod.list,
         
       } else { # If models are PA or Integrated, use PA intercept
         
-        Model$preds.link <- predict(Model,
-                                    covars = covs,
-                                    S = posterior_nsamps, 
-                                    intercept.terms = "PA_Intercept",
-                                    type = "link",
-                                    includeRandom = F) # No GRF
+        # Model$preds.link <- predict(Model,
+        #                             covars = covs,
+        #                             S = posterior_nsamps, 
+        #                             intercept.terms = "PA_Intercept",
+        #                             type = "link",
+        #                             includeRandom = F) # No GRF
         
         Model$preds.intensity <- predict(Model,
                                          covars = covs,
@@ -299,12 +299,12 @@ predict_from_fitted_func <- function(mod.list,
       
       if(grepl("PO", name, fixed = T)) { # If models are PO, use PO intercept
         
-        Model$preds.link <- predict(Model,
-                                    covars = covs,
-                                    S = posterior_nsamps, 
-                                    intercept.terms = "PO_Intercept",
-                                    type = "link",
-                                    includeRandom = T) # Add GRF
+        # Model$preds.link <- predict(Model,
+        #                             covars = covs,
+        #                             S = posterior_nsamps, 
+        #                             intercept.terms = "PO_Intercept",
+        #                             type = "link",
+        #                             includeRandom = T) # Add GRF
         
         Model$preds.intensity <- predict(Model,
                                          covars = covs,
@@ -320,17 +320,18 @@ predict_from_fitted_func <- function(mod.list,
                                     type = "probability",
                                     includeRandom = T) # Add GRF
         
+        
         # Save updated model
         mod.list[[i]] <- Model
         
       } else{ # If models are PA or Integrated, use PA intercept
         
-        Model$preds.link <- predict(Model,
-                                    covars = covs,
-                                    S = posterior_nsamps, 
-                                    intercept.terms = "PA_Intercept",
-                                    type = "link",
-                                    includeRandom = T) # Add GRF
+        # Model$preds.link <- predict(Model,
+        #                             covars = covs,
+        #                             S = posterior_nsamps, 
+        #                             intercept.terms = "PA_Intercept",
+        #                             type = "link",
+        #                             includeRandom = T) # Add GRF
         
         Model$preds.intensity <- predict(Model,
                                          covars = covs,
@@ -345,6 +346,7 @@ predict_from_fitted_func <- function(mod.list,
                                     intercept.terms = "PA_Intercept",
                                     type = "probability",
                                     includeRandom = T) # Add GRF
+        
         
         # Save updated model
         mod.list[[i]] <- Model
@@ -388,7 +390,8 @@ predict_from_fitted_func <- function(mod.list,
 plot_predictions_func <- function(mod.list,
                                   outpath,
                                   vestfold_boundary,
-                                  bunger_boundary) {
+                                  bunger_boundary,
+                                  pred.GRF = T) {
   
   mod_names <- names(mod.list)
   
@@ -927,7 +930,142 @@ plot_predictions_func <- function(mod.list,
       
     }
     
-    
+   
+    # If a GRF has been plotted
+    if(pred.GRF == T & grepl("GRF", name, fixed = T)) {
+      
+      # 1. Pull out the median GRF intensity prediction for each cell & VESTFOLD plot
+      
+      median <- Model$preds.GRF$field$Median %>%
+        crop(ext(vestfold_boundary)) %>% 
+        as.data.frame(xy = T) %>%
+        ggplot() +
+        geom_tile(aes(x = x, y = y, fill = Median)) +
+        scale_fill_viridis(guide = guide_colorbar(barwidth = 10, barheight = 0.5),
+                           name = "Intensity") +
+        coord_fixed() +
+        labs(title = "Median") +
+        theme_bw() +
+        theme(axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              legend.ticks = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.ticks.y = element_blank())
+      
+      lower <- Model$preds.GRF$field$Lower %>% 
+        crop(ext(vestfold_boundary)) %>% 
+        as.data.frame(xy = T) %>%
+        ggplot() +
+        geom_tile(aes(x = x, y = y, fill = Lower)) +
+        scale_fill_viridis(guide = guide_colorbar(barwidth = 10, barheight = 0.5),
+                           name = "Intensity") +
+        coord_fixed() +
+        labs(title = "Lower") +
+        theme_bw() +
+        theme(axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              legend.ticks = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.ticks.y = element_blank())
+      
+      upper <- Model$preds.GRF$field$Upper %>% 
+        crop(ext(vestfold_boundary)) %>% 
+        as.data.frame(xy = T) %>%
+        ggplot() +
+        geom_tile(aes(x = x, y = y, fill = Upper)) +
+        scale_fill_viridis(guide = guide_colorbar(barwidth = 10, barheight = 0.5),
+                           name = "Intensity") +
+        coord_fixed() +
+        labs(title = "Upper") +
+        theme_bw() +
+        theme(axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              legend.ticks = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.ticks.y = element_blank())
+      
+      plot <- ggarrange(median, NULL, lower, upper, 
+                        ncol = 2, nrow = 2,
+                        common.legend = TRUE, legend = "bottom",
+                        align = "hv")
+      
+      ggsave(paste0(outpath, "/VESTFOLD_GRF_prediction_plot_", name,".png"), plot,
+             width = 10, height = 6, dpi = 300)
+      
+      # 2. Pull out the median GRF intensity prediction for each cell & BUNGER plot
+      
+      median <- Model$preds.GRF$field$Median %>%
+        crop(ext(bunger_boundary)) %>% 
+        as.data.frame(xy = T) %>%
+        ggplot() +
+        geom_tile(aes(x = x, y = y, fill = Median)) +
+        scale_fill_viridis(guide = guide_colorbar(barwidth = 10, barheight = 0.5),
+                           name = "Intensity") +
+        coord_fixed() +
+        labs(title = "Median") +
+        theme_bw() +
+        theme(axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              legend.ticks = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.ticks.y = element_blank())
+      
+      lower <- Model$preds.GRF$field$Lower %>% 
+        crop(ext(bunger_boundary)) %>% 
+        as.data.frame(xy = T) %>%
+        ggplot() +
+        geom_tile(aes(x = x, y = y, fill = Lower)) +
+        scale_fill_viridis(guide = guide_colorbar(barwidth = 10, barheight = 0.5),
+                           name = "Intensity") +
+        coord_fixed() +
+        labs(title = "Lower") +
+        theme_bw() +
+        theme(axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              legend.ticks = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.ticks.y = element_blank())
+      
+      upper <- Model$preds.GRF$field$Upper %>% 
+        crop(ext(bunger_boundary)) %>% 
+        as.data.frame(xy = T) %>%
+        ggplot() +
+        geom_tile(aes(x = x, y = y, fill = Upper)) +
+        scale_fill_viridis(guide = guide_colorbar(barwidth = 10, barheight = 0.5),
+                           name = "Intensity") +
+        coord_fixed() +
+        labs(title = "Upper") +
+        theme_bw() +
+        theme(axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              legend.ticks = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.ticks.y = element_blank())
+      
+      plot <- ggarrange(median, NULL, lower, upper, 
+                        ncol = 2, nrow = 2,
+                        common.legend = TRUE, legend = "bottom",
+                        align = "hv")
+      
+      ggsave(paste0(outpath, "/BUNGER_GRF_prediction_plot_", name,".png"), plot,
+             width = 10, height = 6, dpi = 300)
+      
+      
+      
+    }
+     
   
   }
 }
@@ -1070,7 +1208,24 @@ save_output_rasters_df_func <- function(mod.list,
       
     }
     
+  if(pred.GRF == T & grepl("GRF", name, fixed = T)) {
     
+    # 1. Pull out the median GRF intensity prediction for each cell 
+    
+    Model$pred.GRF$field$Median %>% 
+      writeRaster(paste0(outpath, "/GRF_Intensity_prediction_", name, "_median.tif"),
+                  overwrite = T)
+    
+    Model$pred.GRF$field$Lower %>% 
+      writeRaster(paste0(outpath, "/GRF_Intensity_prediction_", name, "_lower.tif"),
+                  overwrite = T)
+    
+    Model$pred.GRF$field$Upper %>% 
+      writeRaster(paste0(outpath, "/GRF_Intensity_prediction_", name, "_upper.tif"),
+                  overwrite = T)
+    
+  }
+      
   }
   
   return(mod.list)
@@ -1270,10 +1425,14 @@ evaluate_prediction_ensemble <- function(x){
                                  rand.percent = 50, # What percent of testing data for bootstrap
                                  iterations = 500)$pROC_summary[[1]]
   
+  brier = DescTools::BrierScore(resp = x$Presence,
+                                pred = x$pred)
+  
   eval_df <- data.frame(ROC = ROC,
                         PRG = PRG,
                         boyce = boyce,
-                        partialROC = partialROC) 
+                        partialROC = partialROC,
+                        brier = brier) 
   
   # Save AUC and PRG plots
   png(paste0(outpath,  "/auc_plot.png"), width = 800, height = 600)
