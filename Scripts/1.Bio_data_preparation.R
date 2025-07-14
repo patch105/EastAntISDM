@@ -3,14 +3,21 @@
 ########## 1. Biological Data Preparation ##########
 #####################################################
 
-# This code cleans the Biodiversity of Ice-Free Antarctica Database (Terauds et al., 2025) and the GBIF data and combines them for subsequent analysis.
+# This  code cleans and formats four datasets of surface lichens and moss for subsequent analysis.
 
+# The first is a presence-only database that combines the Biodiversity of Ice-Free Antarctica Database (Terauds et al., 2025) and GBIF data.
 # Steps for the GBIF approach are summarised as follows:
-#   1. Download GBIF data online by selecting all occurrences with Antarctic as the continent
+# 1. Download GBIF data online by selecting all occurrences with Antarctic as the continent (done manually, not covered here)
 # 2. Drop records with no coordinates
-# 3. Crop records to the ice-free areas of Antarctica (represented by the rock union layer of Toth et al.)
+# 3. Crop records to the ice-free areas of Antarctica (represented by the rock union layer of Toth & Terauds (2023))
 # 4. Drop records with various other criteria (e.g., genetic data)
 # 5. Save as csv
+
+# The second is a presence-absence survey from the Vestfold Hills, East Antarctica
+
+# The third is a presence-absence survey from the Bunger Hills, East Antarctica
+
+# The fourth is a satellite-derived dataset from across Antarctica.
 
 
 # Load packages -----------------------------------------------------------
@@ -690,6 +697,7 @@ bunger23_df <- bunger23_sf %>%
   bind_cols(st_drop_geometry(bunger23_sf)) %>% 
   rename(x = X, y = Y) 
 
+
 ########################################################################
 ## Presence-absence survey - Bunger Hills 23  SITE LEVEL OBSERVATIONS #####
 ########################################################################
@@ -781,6 +789,7 @@ bunger23_df <- bunger23_sf %>%
   bind_cols(st_drop_geometry(bunger23_sf)) %>% 
   rename(x = X, y = Y) 
 
+
 #####################################################################
 ############ Presence-absence survey - Bunger Hills Leishman #########
 ####################################################################
@@ -812,66 +821,34 @@ leishman_df <- leishman_sf %>%
   rename(x = X, y = Y)
 
 
+##########################################################################
+######### Plantarctica Presences ###################################
+##########################################################################
 
-# 
-# # Plot records across East Antarctica -------------------------------------
-# 
-# # Load the Antarctic coastline for plotting
-# coast <- st_read(here("Data/Environmental_predictors/add_coastline_high_res_polygon_v7_10.shp"), crs = 3031)
-# 
-# # Plot distribution of presence-only lichen records across East Antarctica
-# a <- ggplot() +
-#   geom_sf(data = coast, color = "black", size = 0.05) +
-#   geom_tile(data = as.data.frame(ice_free.EastAnt, xy = T)) +
-#   geom_sf(data = veg.east.ant.sf, aes(color = vegtype)) +
-#   coord_sf(
-#     xlim = c(ext(ice_free.EastAnt)$xmin, ext(ice_free.EastAnt)$xmax), 
-#     ylim = c(ext(ice_free.EastAnt)$ymin, ext(ice_free.EastAnt)$ymax)) +
-#   # scale_fill_manual(name = "", 
-#   #                   labels = element_blank(),
-#   #                   values = c("white", "grey92","grey92", "grey92")) +
-#   theme_bw() + 
-#   theme(legend.title = element_blank(),
-#         legend.key = element_blank(),
-#         legend.background = element_blank())
-# 
-# # Now just in Vestfold Hills
-# b <- ggplot() +
-#   geom_sf(data = coast, color = "black", size = 0.05) +
-#   geom_sf(data = ice_free, fill = "grey80", size = 0.05) +
-#   geom_sf(data = bio_east_ant_sf, aes(color = class)) +
-#   coord_sf(
-#     xlim = c(st_bbox(bio_vestfold_sf)$xmin, st_bbox(bio_vestfold_sf)$xmax), 
-#     ylim = c(st_bbox(bio_vestfold_sf)$ymin, st_bbox(bio_vestfold_sf)$ymax)) +
-#   scale_fill_manual(name = "", 
-#                     labels = element_blank(),
-#                     values = c("white", "grey92","grey92", "grey92")) +
-#   theme_bw() +
-#   theme(legend.title = element_blank(),
-#         legend.key = element_blank(),
-#         legend.background = element_blank())
-# 
-# # And in Bunger Hills
-# c <- ggplot() +
-#   geom_sf(data = coast, color = "black", size = 0.05) +
-#   geom_sf(data = ice_free, fill = "grey80", size = 0.05) +
-#   geom_sf(data = bio_east_ant_sf, aes(color = class)) +
-#   coord_sf(
-#     xlim = c(st_bbox(bio_bunger_sf)$xmin, st_bbox(bio_bunger_sf)$xmax), 
-#     ylim = c(st_bbox(bio_bunger_sf)$ymin, st_bbox(bio_bunger_sf)$ymax)) +
-#   scale_fill_manual(name = "", 
-#                     labels = element_blank(),
-#                     values = c("white", "grey92","grey92", "grey92")) +
-#   theme_bw() +
-#   theme(legend.title = element_blank(),
-#         legend.key = element_blank(),
-#         legend.background = element_blank())
-# 
-# PO_plot <- ggarrange(a , 
-#                      ggarrange(b, c, nrow = 2, labels = c("(b)", "(c)")),
-#                      labels = c("(a)", ""), ncol = 2, 
-#                      common.legend = T)
-# 
-# # ggsave(plot = PO , filename = here("output/Locs_of_PO_data_East_Ant_plot.png"), w = 21.5, h = 21.2, units = "cm", dpi = 800, device = "png" )
+# These data are from Walshaw et al. (2024) <https://doi.org/10.1038/s41561-024-01492-4>
+
+veg_map <- st_read(here("Data/Biological_records/PlantarcticaVegetationMap.shp")) %>%
+  vect()
+
+# Crop to East Antarctica
+veg_map <- terra::crop(veg_map, ext(ACBRS_SPVE))
+
+veg_map <- centroids(veg_map)
+
+writeVector(veg_map, here("Data/Biological_records", "PO_Plantarctica.shp"))
+
+
+# REFERENCES --------------------------------------------------------------
+
+# GBIF data download: GBIF.org (04 February 2025) GBIF Occurrence Download  https://doi.org/10.15468/dl.fkccvd
+
+# Terauds, A., Lee, J.R., Wauchope, H.S., Raymond, B., Bergstrom, D.M., Convey, P., Mason, C., Patterson, C.R., Robinson, S.A., Van de Putte, A., Watts, D., Chown, S.L., 2025. The biodiversity of ice-free Antarctica database. Ecology 106, e70000. https://doi.org/10.1002/ecy.70000
+
+# Toth, A. and Terauds, A. (2023) Ice-free Antarctica - A union of rock outcrop layers derived from imagery collected from 1960-2020, Ver. 1, Australian Antarctic Data Centre - doi:10.26179/7mnh-j215, Accessed: 2025-02-04
+
+# Travers, T.D., Terauds, A., Virtue, P. and Bergstrom, D.M. (2024) Presence-absence survey of terrestrial flora taxa across the Vestfold Hills, Ver. 1, Australian Antarctic Data Centre - doi:10.26179/wrss-ta40, Accessed: 2025-06-27
+
+# Walshaw, C.V., Gray, A., Fretwell, P.T., Convey, P., Davey, M.P., Johnson, J.S., Colesie, C., 2024. A satellite-derived baseline of photosynthetic life across Antarctica. Nature Geoscience. 17, 755–762. https://doi.org/10.1038/s41561-024-01492-4
+
 
 
