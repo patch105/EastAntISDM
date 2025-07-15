@@ -32,26 +32,13 @@ here::here()
 # # Save
 # writeRaster(ice_free_union, here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"), overwrite = T)
 
-# Load the ice-free areas
-ice_free <- rast(here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"))
+# Load the ice-free areas of East Antarctica
+ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_union_500m.tif"))
 
 # Load the Antarctic Conservation Biogeographic Regions, filter to East Antarctica
 ACBRS <- st_read(here("Data/Environmental_predictors/ACBRs_v2_2016.shp"), crs = 3031) %>% filter(ACBR_Name == "East Antarctica")
 ACBRS_SPVE <- vect(ACBRS)
 
-# Also trim ice-free land to just East Antarctica
-ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
-
-# Now using our 100m topography as the template for our domain dimensions (because we don't want to resample these topographic layers if we don't need to), we'll resample our ice-free area layer to match the dimensions of the topography rasters
-
-# Load one 100m topography as our template
-template <- rast(here("Data/Environmental_predictors/TWI_100m_IceFree_EastAnt.tif"))
-ice_free.EastAnt <- resample(ice_free.EastAnt, template, method = "bilinear")
-
-# Save the ice-free land for East Antarctica with the right domain
-writeRaster(ice_free.EastAnt, here("Data/Environmental_predictors/ice_free_EastAnt_100m.tif"), overwrite = T)
-
-# ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_EastAnt_100m.tif"))
 
 # Make bounding boxes of Vestfold Hills & Bunger Hills --------------------
 
@@ -97,7 +84,7 @@ stations_SPVE <- vect(stations)
 dist_station <- terra::distance(ice_free.EastAnt, stations_SPVE)
 dist_station <- mask(dist_station, ice_free.EastAnt, maskvalue = NA)
 
-writeRaster(dist_station, here("Data/Environmental_predictors/distance_to_station_ICEFREE_100m.tif"), overwrite = T)
+writeRaster(dist_station, here("Data/Environmental_predictors/distance_to_station_ICEFREE_500m.tif"), overwrite = T)
 
 
 # ################################################
@@ -119,7 +106,7 @@ seasonal_waterSPVE <- mask(seasonal_waterSPVE, domainSPVE)
 dist_seasonal_water <- terra::distance(ice_free.EastAnt, seasonal_waterSPVE)
 dist_seasonal_water <- mask(dist_seasonal_water, ice_free.EastAnt, maskvalue = NA)
 
-writeRaster(dist_seasonal_water, here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_100m.tif"), overwrite = T)
+writeRaster(dist_seasonal_water, here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"), overwrite = T)
 plot(dist_seasonal_water)
 
 
@@ -127,39 +114,39 @@ plot(dist_seasonal_water)
 ########### Distance to vertebrates ##################
 ####################################################
 
-# Load the xy records with just seals
-seals_xy <- read.csv(here("Data/Environmental_predictors/ICEFREE_GBIF_SEAL_XY.csv"), header = T)
-
-seals_xy <- st_as_sf(seals_xy,
-                     coords = c("x", "y"),
-                     crs = 3031) #set as WGS 1984
-
-seals_SPVE <- vect(seals_xy) %>%
-  as.polygons()
-
-# Load the xy records with just seabirds
-seabirds_xy <- read.csv(here("Data/Environmental_predictors/ICEFREE_GBIF_SEABIRD_XY.csv"), header = T)
-
-seabirds_xy <- st_as_sf(seabirds_xy,
-                        coords = c("x", "y"),
-                        crs = 3031) #set as WGS 1984
-
-seabirds_SPVE <- vect(seabirds_xy) %>%
-  as.polygons()
-
-# Load the penguin colony locations
-penguins_xy <- st_read(here("Data/Environmental_predictors/penguin_rookeries.trim.shp"), crs = 3031)
-
-penguin_colony_SPVE <- vect(penguins_xy)
-
-# Combine them together
-
-vertebrates <- rbind(penguin_colony_SPVE, seals_SPVE, seabirds_SPVE)
-
-dist_vertebrates <- terra::distance(ice_free.EastAnt, vertebrates)
-dist_vertebrates <- mask(dist_vertebrates, ice_free.EastAnt, maskvalue = NA)
-
-writeRaster(dist_vertebrates, here("Data/Environmental_predictors/distance_to_vertebrates_ICEFREE_100m.tif"), overwrite = T)
+# # Load the xy records with just seals
+# seals_xy <- read.csv(here("Data/Environmental_predictors/ICEFREE_GBIF_SEAL_XY.csv"), header = T)
+# 
+# seals_xy <- st_as_sf(seals_xy,
+#                      coords = c("x", "y"),
+#                      crs = 3031) #set as WGS 1984
+# 
+# seals_SPVE <- vect(seals_xy) %>%
+#   as.polygons()
+# 
+# # Load the xy records with just seabirds
+# seabirds_xy <- read.csv(here("Data/Environmental_predictors/ICEFREE_GBIF_SEABIRD_XY.csv"), header = T)
+# 
+# seabirds_xy <- st_as_sf(seabirds_xy,
+#                         coords = c("x", "y"),
+#                         crs = 3031) #set as WGS 1984
+# 
+# seabirds_SPVE <- vect(seabirds_xy) %>%
+#   as.polygons()
+# 
+# # Load the penguin colony locations
+# penguins_xy <- st_read(here("Data/Environmental_predictors/penguin_rookeries.trim.shp"), crs = 3031)
+# 
+# penguin_colony_SPVE <- vect(penguins_xy)
+# 
+# # Combine them together
+# 
+# vertebrates <- rbind(penguin_colony_SPVE, seals_SPVE, seabirds_SPVE)
+# 
+# dist_vertebrates <- terra::distance(ice_free.EastAnt, vertebrates)
+# dist_vertebrates <- mask(dist_vertebrates, ice_free.EastAnt, maskvalue = NA)
+# 
+# writeRaster(dist_vertebrates, here("Data/Environmental_predictors/distance_to_vertebrates_ICEFREE_100m.tif"), overwrite = T)
 
 
 ###################################################
@@ -195,7 +182,7 @@ summer_temp <- crop(summer_temp, ext(ice_free.EastAnt))
 
 summer_temp <- terra::project(summer_temp, ice_free.EastAnt, method = "near")
 summer_temp <- mask(summer_temp, ice_free.EastAnt, maskvalue = NA)
-writeRaster(summer_temp, here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_100m.tif"), overwrite = T)
+writeRaster(summer_temp, here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"), overwrite = T)
 
 
 ###################################################
@@ -204,13 +191,11 @@ writeRaster(summer_temp, here("Data/Environmental_predictors/mean_summer_temp_An
 
 wind <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS.tif"))
 
+wind <- crop(wind, ext(ice_free.EastAnt))
 
-###################################################
-########### Precipitation ##################
-####################################################
-
-precipitation_rain <- rast(here("Data/Environmental_predictors/Mean_Annual_Precipitation_RAIN_ALL_YEARS.tif"))
-precipitation_snow <- rast(here("Data/Environmental_predictors/Mean_Annual_Precipitation_SNOW_ALL_YEARS.tif"))
+wind <- terra::project(wind, ice_free.EastAnt, method = "near")
+wind <- mask(wind, ice_free.EastAnt, maskvalue = NA)
+writeRaster(wind, here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_500m.tif"), overwrite = T)
 
 
 ####################

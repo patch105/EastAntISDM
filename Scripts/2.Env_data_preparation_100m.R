@@ -225,6 +225,8 @@ slope <- rast(here("Data/Environmental_predictors/slope_100m_IceFree_EastAnt.tif
 names(slope) <- "slope"
 aspect <- rast(here("Data/Environmental_predictors/aspect_100m_IceFree_EastAnt.tif"))
 names(aspect) <- "aspect"
+northness <- rast(here("Data/Environmental_predictors/northness_100m_IceFree_EastAnt.tif"))
+names(northness) <- "northness"
 
 dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_ICEFREE_100m.tif"))
 names(dist_vertebrates) <- "dist_vertebrates"
