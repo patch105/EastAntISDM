@@ -1074,7 +1074,8 @@ plot_predictions_func <- function(mod.list,
 # SAVE OUTPUT RASTERS & DATAFRAMES -------------------------------------------
 
 save_output_rasters_df_func <- function(mod.list,
-                                        outpath) {
+                                        outpath,
+                                        pred.GRF = T) {
   
   mod_names <- names(mod.list)
   
