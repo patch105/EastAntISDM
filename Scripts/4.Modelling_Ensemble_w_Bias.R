@@ -67,13 +67,13 @@ model_types <- list("Maxent", "LASSO", "GAM", "RF", "BRT")
 
 # Set group ---------------------------------------------------------------
 
- group <- "Lichen"
-# group <- "Moss"
+ #group <- "Lichen"
+ group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "Test_no_seasonal_water"
+scenario = "PO_Ensemble_Jul_16"
 
 
 # Set outpath -------------------------------------------------------------
@@ -173,9 +173,14 @@ if(group == "Lichen") {
 # Load the 500m covariates ------------------------------------------------
 
 TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
+names(TWI) <- "TWI"
+
 slope <- rast(here("Data/Environmental_predictors/slope_500m_IceFree_EastAnt.tif"))
+names(slope) <- "slope"
+
 northness <- rast(here("Data/Environmental_predictors/northness_500m_IceFree_EastAnt.tif"))
 names(northness) <- "northness"
+
 aspect <- rast(here("Data/Environmental_predictors/aspect_500m_IceFree_EastAnt.tif"))
 names(aspect) <- "aspect"
 
@@ -796,12 +801,39 @@ writeRaster(pred_cur_ensemble.rast, here(outpath, paste0("Prediction_ensemble_Ea
 
 
 ############################################
-# Evaluate the ensemble predictions on VESTFOLD PA dataset ----------------
+# Evaluate the ensemble fit on PO data used for fitting ------------------
 ############################################
 
 source(here("Scripts/Helper_functions_ISDM.R"))
 
 colnames(pred_cur_ensemble)[grepl("pred", colnames(pred_cur_ensemble))] <- "pred"
+
+# Extract locations of PO data to match the prediction raster grid cells
+PO_covs <- terra::extract(covs, PO[, c("x", "y")], xy = T)
+PO_covs <- cbind(PO_covs, PO["Presence"])
+PO_covs <- PO_covs %>% 
+  mutate(Presence = 1)
+
+# Match predictions to PO training data locations
+pred_with_PO <- dplyr::left_join(PO_covs, pred_cur_ensemble[, c("x", "y", "pred")], by = c("x", "y"))
+
+# Remove a couple of NAs
+pred_with_PO <- pred_with_PO %>% 
+  filter(!is.na(pred))
+
+# Evaluate prediction on test set
+fit <- evaluate_fit_ensemble(x = pred_with_PO,
+                             pred_cur_ensemble = pred_cur_ensemble)
+
+eval_df.ens <- data.frame(model = "Ensemble",
+                          validation_dataset = "Training data",
+                          fit[["fit_df"]])
+
+
+
+############################################
+# Evaluate the ensemble predictions on VESTFOLD PA dataset ----------------
+############################################
 
 
 # Load the presence-absence records ---------------------------------------
@@ -849,9 +881,10 @@ pred_with_PA <- pred_with_PA %>%
 # Evaluate prediction on test set
 eval <- evaluate_prediction_ensemble(pred_with_PA)
 
-eval_df.ens <- data.frame(model = "Ensemble",
-                          validation_dataset = "Vestfold",
-                          eval[["eval_df"]])
+eval_df.ens <- eval_df.ens %>% 
+  add_row(model = "Ensemble",
+          validation_dataset = "Vestfold",
+          eval[["eval_df"]])
 
 
 ############################################
