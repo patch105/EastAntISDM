@@ -1448,5 +1448,26 @@ evaluate_prediction_ensemble <- function(x){
   
 }
 
+#############################################################################
 
+# Model FIT assessment PO ENSEMBLE
+
+evaluate_fit_ensemble <- function(x,
+                                  pred_cur_ensemble){
+
+  boyce = ecospat::ecospat.boyce(fit = pred_cur_ensemble$pred, # predictions across all the landscape
+                                 obs = x$pred[which(x$Presence==1)], 
+                                 nclass = 0, # Calculate continuous index
+                                 method = "pearson",
+                                 PEplot = T)[["cor"]]
+  
+  fit_df <- data.frame(ROC = NA,
+                       PRG = NA,
+                       boyce = boyce,
+                       partialROC = NA,
+                       brier = NA) 
+  
+  return(list(fit_df = fit_df))
+  
+}
 
