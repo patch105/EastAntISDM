@@ -34,8 +34,8 @@ names(slope) <- "slope"
 northness <- rast(here("Data/Environmental_predictors/northness_500m_IceFree_EastAnt.tif"))
 names(northness) <- "northness"
 
-aspect <- rast(here("Data/Environmental_predictors/aspect_500m_IceFree_EastAnt.tif"))
-names(aspect) <- "aspect"
+# aspect <- rast(here("Data/Environmental_predictors/aspect_500m_IceFree_EastAnt.tif"))
+# names(aspect) <- "aspect"
 
 # dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
 # names(dist_seasonal_water) <- "dist_seasonal_water"
@@ -43,7 +43,7 @@ names(aspect) <- "aspect"
 summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"))
 names(summer_temp) <- "summer_temp"
 
-wind_speed <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_500m.tif"))
+wind_speed <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
 names(wind_speed) <- "wind_speed"
 
 # Bias covariate
