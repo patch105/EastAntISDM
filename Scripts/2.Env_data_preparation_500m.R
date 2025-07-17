@@ -197,52 +197,67 @@ wind <- terra::project(wind, ice_free.EastAnt, method = "near")
 wind <- mask(wind, ice_free.EastAnt, maskvalue = NA)
 writeRaster(wind, here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_500m.tif"), overwrite = T)
 
+wind2 <- rast(here("Data/Environmental_predictors/mean_wind_bm.tif"))
+wind2 <- project(wind2, "EPSG:3031")
+wind2 <- crop(wind2, ext(ice_free.EastAnt))
+
+wind2 <- terra::project(wind2, ice_free.EastAnt, method = "near")
+wind2 <- mask(wind2, ice_free.EastAnt, maskvalue = NA)
+writeRaster(wind2, here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"), overwrite = T)
+
+
 
 ####################
 # Inspect covariate distributions and transform ---------------------------
 ####################
 
-ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_EastAnt_100m.tif"))
+# Load ice-free land 500m -------------------------------------------------
 
-TWI <- rast(here("Data/Environmental_predictors/TWI_100m_IceFree_EastAnt.tif"))
+ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_union_EastAnt_500m.tif"))
+
+
+# Load covariates for all of East Antarctica ------------------------------
+
+TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
 names(TWI) <- "TWI"
-slope <- rast(here("Data/Environmental_predictors/slope_100m_IceFree_EastAnt.tif"))
-names(slope) <- "slope"
-aspect <- rast(here("Data/Environmental_predictors/aspect_100m_IceFree_EastAnt.tif"))
-names(aspect) <- "aspect"
 
-dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_ICEFREE_100m.tif"))
-names(dist_vertebrates) <- "dist_vertebrates"
+slope <- rast(here("Data/Environmental_predictors/slope_500m_IceFree_EastAnt.tif"))
+names(slope) <- "Slope"
 
-dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_100m.tif"))
-names(dist_seasonal_water) <- "dist_seasonal_water"
+northness <- rast(here("Data/Environmental_predictors/northness_500m_IceFree_EastAnt.tif"))
+names(northness) <- "Northness"
+
+# dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
+# names(dist_seasonal_water) <- "dist_seasonal_water"
+
+summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"))
+names(summer_temp) <- "Summer temp."
+
+wind_speed <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
+names(wind_speed) <- "Wind speed"
 
 # Bias covariate
-dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_100m.tif"))
-names(dist_station) <- "dist_station"
-
-summer_temp <- here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_100m.tif")
-names(summer_temp) <- "summer_temp"
+dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_500m.tif"))
+names(dist_station) <- "Dist. to Station"
 
 # Stack covariates
-covs <- c(TWI, slope, aspect, dist_seasonal_water, dist_station, dist_vertebrates, summer_temp)
+covs <- c(TWI, slope, northness, summer_temp, wind_speed, dist_station)
 
-# Plot histograms
-hist(covs, na.rm = T, col = "lightblue")
-hist(log(covs), na.rm = T, col = "lightblue")
-hist(sqrt(covs), na.rm = T, col = "lightblue")
-
-covs_cube <- sign(covs) * abs(covs)^(1/3)
-hist(covs_cube, na.rm = T, col = "lightblue")
-
-# Apply some transformations
-sqrt_slope <- sqrt(slope)
-log_dist_seasonal_water <- log(dist_seasonal_water+1)
-log_dist_station <- log(dist_station+1)
-log_dist_vertebrates <- log(dist_vertebrates+1)
-
-
-covs <- c(TWI, sqrt_slope, aspect, log_dist_seasonal_water, log_dist_station, log_dist_vertebrates, summer_temp)
+# # Plot histograms
+# hist(covs, na.rm = T, col = "lightblue")
+# hist(log(covs), na.rm = T, col = "lightblue")
+# hist(sqrt(covs), na.rm = T, col = "lightblue")
+# 
+# covs_cube <- sign(covs) * abs(covs)^(1/3)
+# hist(covs_cube, na.rm = T, col = "lightblue")
+# 
+# # Apply some transformations
+# sqrt_slope <- sqrt(slope)
+# log_dist_seasonal_water <- log(dist_seasonal_water+1)
+# log_dist_station <- log(dist_station+1)
+# log_dist_vertebrates <- log(dist_vertebrates+1)
+# 
+# 
 
 ####################
 # Check for correlation among predictors ---------------------------------
@@ -252,10 +267,19 @@ library(corrplot)
 
 covs_df <- as.data.frame(covs, xy = F, na.rm = T)
 
-ecospat::ecospat.cor.plot(covs_df)
+# Save the correlation plot
+
+# plot <- ecospat::ecospat.cor.plot(covs_df)
+
+M <- cor(covs_df, use = "pairwise.complete.obs")
 
 # Nicer corr plot
-corrplot.mixed(M, order = 'AOE')
+
+png((here("Outputs/Results/Covariate_correlation_plot.png")), width = 900, height = 600)
+
+print(corrplot.mixed(M, order = 'AOE'))
+
+dev.off()
 
 usdm::vif(covs)
 
