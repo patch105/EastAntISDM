@@ -187,14 +187,14 @@ names(aspect) <- "aspect"
 # dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
 # names(dist_vertebrates) <- "dist_vertebrates"
 
-dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
-names(dist_seasonal_water) <- "dist_seasonal_water"
+# dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
+# names(dist_seasonal_water) <- "dist_seasonal_water"
 
 summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"))
 names(summer_temp) <- "summer_temp"
 
-wind <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_500m.tif"))
-names(wind) <- "wind"
+wind <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
+names(wind_speed) <- "wind"
 
 # Bias covariate
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_500m.tif"))
@@ -205,15 +205,15 @@ names(dist_station) <- "dist_station"
 sqrt_slope <- sqrt(slope)
 names(sqrt_slope) <- "sqrt_slope"
 
-log_dist_seasonal_water <- log(dist_seasonal_water+1)
-names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
+# log_dist_seasonal_water <- log(dist_seasonal_water+1)
+# names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
 
 log_dist_station <- log(dist_station+1)
 names(log_dist_station) <- "log_dist_station"
 
 # Stack covariates & save version w/o bias cov
-covs_no_bias <- c(TWI, sqrt_slope, northness, log_dist_seasonal_water, summer_temp, wind)
-covs <- c(TWI, sqrt_slope, northness, log_dist_seasonal_water, summer_temp, log_dist_station, wind)
+covs_no_bias <- c(TWI, sqrt_slope, northness, summer_temp, wind)
+covs <- c(TWI, sqrt_slope, northness, summer_temp, log_dist_station, wind)
 
 # Make sure that if any predictors are NA, all become NA
 
@@ -822,7 +822,7 @@ pred_with_PO <- pred_with_PO %>%
   filter(!is.na(pred))
 
 # Evaluate prediction on test set
-fit <- evaluate_fit_ensemble(x = pred_with_PO,
+fit <- evaluate_fit_PO_ensemble(x = pred_with_PO,
                              pred_cur_ensemble = pred_cur_ensemble)
 
 eval_df.ens <- data.frame(model = "Ensemble",
