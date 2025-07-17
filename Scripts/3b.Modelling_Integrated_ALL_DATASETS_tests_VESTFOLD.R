@@ -45,7 +45,7 @@ scenario = "TEST"
 
 # Set outpath -------------------------------------------------------------
 
-outpath <- here("Outputs", "Integrated", group, scenario)
+outpath <- here("Outputs", "Integrated_ALL_DATA", group, scenario)
 
 if(!dir.exists(outpath)) {
   dir.create(outpath, showWarnings = FALSE)
@@ -101,6 +101,54 @@ PO_East_Ant_Veg_df <- PO_East_Ant_Veg_sf %>%
   rename(x = X, y = Y) 
 
 
+# Load the Plantarctica records ------------------------------------------
+
+veg_map <- st_read(here("Data/Biological_records/PlantarcticaVegetationMap.shp")) %>%
+  vect()
+
+vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp"))
+bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
+
+# Crop to East Antarctica
+veg_map <- terra::crop(veg_map, ext(ACBRS_SPVE))
+
+veg_map <- centroids(veg_map)
+
+Plantarctica_sf <- st_as_sf(veg_map)
+
+Plantarctica_df <- Plantarctica_sf %>% 
+  st_coordinates() %>%
+  as.data.frame() %>% 
+  bind_cols(st_drop_geometry(Plantarctica_sf)) %>% 
+  rename(x = X, y = Y) 
+
+
+if(group == "Moss") {
+  
+  PO_Plantarctica <- Plantarctica_df %>% 
+    filter(Vegetation == "Vegetation") %>% 
+    dplyr::select(x, y) %>% 
+    mutate(Presence = 1)
+  
+  PO_Plantarctica.sf <- Plantarctica_sf %>% 
+    filter(Vegetation == "Vegetation") %>% 
+    mutate(Presence = 1)
+}
+
+if(group == "Lichen") {
+  
+  PO_Plantarctica <- Plantarctica_df %>% 
+    filter(Vegetation == "Lichen") %>%
+    dplyr::select(x, y) %>% 
+    mutate(Presence = 1)
+  
+  PO_Plantarctica.sf <- Plantarctica_sf %>% 
+    filter(Vegetation == "Lichen") %>%
+    mutate(Presence = 1)
+}
+
+
+
 # Load the presence-absence records ---------------------------------------
 
 PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
@@ -135,6 +183,9 @@ if(group == "Moss") {
   PO.sf <- PO_East_Ant_Veg_sf %>% 
     filter(vegtype == "Moss")
   
+  PO_Plantarctica <- PO_Plantarctica %>% 
+    dplyr::select(x, y)
+  
   PA_vestfold <- PA_Vestfold_Veg_df %>% 
     dplyr::select(x, y, srfc_ms) %>% 
     rename(presence = srfc_ms)
@@ -159,6 +210,9 @@ if(group == "Lichen") {
   
   PO.sf <- PO_East_Ant_Veg_sf %>% 
     filter(vegtype == "Lichen")
+  
+  PO_Plantarctica <- PO_Plantarctica %>% 
+    dplyr::select(x, y)
   
   PA_vestfold <- PA_Vestfold_Veg_df %>% 
     dplyr::select(x, y, srfc_lc) %>% 
@@ -306,7 +360,20 @@ PO <- PO.sf %>%
   as.data.frame() %>% 
   bind_cols(st_drop_geometry(PO.sf)) %>% 
   rename(x = X, y = Y) %>% 
-  select(x, y)
+  dplyr::select(x, y)
+
+# Crop PO Plantarctica to Vestfold
+PO_Plantarctica.sf <- crop(vect(PO_Plantarctica.sf), ext(vestfold_boundary)) %>% 
+  st_as_sf()
+
+
+PO_Plantarctica <- PO_Plantarctica.sf %>% 
+  st_coordinates() %>%
+  as.data.frame() %>% 
+  bind_cols(st_drop_geometry(PO_Plantarctica.sf)) %>% 
+  rename(x = X, y = Y) %>% 
+  dplyr::select(x, y)
+
 
 mesh.range.10km.cutoff.50 <- fmesher::fm_mesh_2d_inla(loc = st_coordinates(PO.sf),
                                                       boundary = boundary,
@@ -364,8 +431,6 @@ my.control.GRF <- list(coord.names = c("x", "y"),
 # Distribution formula
 distributionFormula <- ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(northness, 2) + poly(log_dist_seasonal_water, 2) + poly(summer_temp, 2)
 
-distributionFormula <- ~0 + sqrt_slope + TWI + northness + log_dist_seasonal_water + summer_temp
-
 
 # Presence-Absence Model Fitting ------------------------------------------
 
@@ -394,7 +459,7 @@ m.PO <- isdm(observationList = list(POdat = PO),
                     artefactFormulas = NULL,
                     control = my.control)
 
-m.PO.bias4 <- isdm(observationList = list(POdat = PO), 
+m.PO.bias <- isdm(observationList = list(POdat = PO), 
                     covars = covs,
                     mesh = mesh.range.10km.cutoff.50,
                     responseNames = NULL,
@@ -405,9 +470,27 @@ m.PO.bias4 <- isdm(observationList = list(POdat = PO),
                     control = my.control)
 
 
+# Presence-only model fitting Plantarctica --------------------------------
+
+m.PO.Plantarctica <- isdm(observationList = list(POdat = PO_Plantarctica), 
+                          covars = covs,
+                          mesh = mesh.range.10km.cutoff.50,
+                          responseNames = NULL,
+                          sampleAreaNames = NULL,
+                          distributionFormula = distributionFormula, 
+                          biasFormula = ~1,
+                          artefactFormulas = NULL,
+                          control = my.control)
+
+
 # Integrated Model Fitting ------------------------------------------------
 
-m.int <- isdm(observationList = list(POdat = PO,
+# COMBINE the two PO sources 
+
+PO_combined <- rbind(PO, PO_Plantarctica)
+
+
+m.int <- isdm(observationList = list(POdat = PO_combined,
                                      PAdat = PA_vestfold),
               covars = covs,
               mesh = mesh.range.10km.cutoff.50,
@@ -418,7 +501,7 @@ m.int <- isdm(observationList = list(POdat = PO,
               artefactFormulas = list(PA = ~1), # Intercept only
               control = my.control) 
 
-m.int.bias <- isdm(observationList = list(POdat = PO,
+m.int.bias <- isdm(observationList = list(POdat = PO_combined,
                                           PAdat = PA_vestfold),
                    covars = covs,
                    mesh = mesh.range.10km.cutoff.50,
@@ -435,13 +518,12 @@ m.int.bias <- isdm(observationList = list(POdat = PO,
 
 mod.list <- list(m.PA = m.PA,
                  m.PO = m.PO,
-                 m.PO.bias = m.PO.bias,
-                 m.int = m.int,
-                 m.int.bias = m.int.bias)
-
-mod.list <- list(m.PA = m.PA,
-                 m.PO = m.PO,
+                 m.PO.Plantarctica = m.PO.Plantarctica,
                  m.int = m.int)
+
+# mod.list <- list(m.PA = m.PA,
+#                  m.PO = m.PO,
+#                  m.int = m.int)
 
 
 # 3. EXTRACT MODEL RESULTS ------------------------------------------------
@@ -534,6 +616,25 @@ m.PO.bias$preds.prob <- predict(m.PO.bias,
                                 includeFixed = T)
 
 
+# Presence-only Plantarctica models ------------------------------------------
+
+m.PO.Plantarctica$preds.INT <- predict(m.PO.Plantarctica, 
+                          covars = covs,
+                          S = 500,
+                          intercept.terms = "PO_Intercept",
+                          type = "intensity",
+                          includeRandom = F,
+                          includeFixed = T)
+
+m.PO.Plantarctica$preds.prob <- predict(m.PO.Plantarctica, 
+                           covars = covs,
+                           S = 500,
+                           intercept.terms = "PO_Intercept",
+                           type = "probability",
+                           includeRandom = F,
+                           includeFixed = T)
+
+
 # Integrated models -------------------------------------------------------
 
 m.int$preds.INT.Vestfold <- predict(m.int, 
@@ -612,9 +713,8 @@ m.int.bias$preds.prob.Bunger <- predict(m.int.bias,
 
 mod.list <- list(m.PA = m.PA,
                  m.PO = m.PO,
-                 m.PO.bias = m.PO.bias,
-                 m.int = m.int,
-                 m.int.bias = m.int.bias)
+                 m.PO.Plantarctica = m.PO.Plantarctica,
+                 m.int = m.int)
 
 
 # Plotting predictions ----------------------------------------------------

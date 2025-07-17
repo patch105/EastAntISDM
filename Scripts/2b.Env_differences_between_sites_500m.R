@@ -60,8 +60,8 @@ ACBRS_SPVE <- vect(ACBRS)
 
 
 # Stack covariates
-EastAnt <- c(TWI, sqrt_slope, northness, summer_temp, wind_speed)
-EastAnt_w_bias <- c(c(TWI, sqrt_slope, northness, log_dist_station, summer_temp, wind_speed))
+EastAnt_no_bias <- c(TWI, sqrt_slope, northness, summer_temp, wind_speed)
+EastAnt <- c(c(TWI, sqrt_slope, northness, log_dist_station, summer_temp, wind_speed))
 
 
 # Load boundaries
@@ -400,19 +400,23 @@ ggsave(here("Outputs/Figures", "Combined_MOSS_Distribution_Plots_500m_HISTOGRAM.
 # Adding presence column due to extra_eval requirements
 # Trimming so just the covariates
 projection <- bunger.df %>% 
-  dplyr::select(-Region)
+  dplyr::select(-Region) %>% 
+  dplyr::select(-dist_station)
 
 training_PO_lichen <- PO_lichen_df %>% 
   mutate(Presence = 1) %>% 
-  dplyr::select(-Region)
+  dplyr::select(-Region)%>% 
+  dplyr::select(-dist_station)
 
 training_PO_moss <- PO_moss_df %>% 
   mutate(Presence = 1) %>% 
-  dplyr::select(-Region)
+  dplyr::select(-Region)%>% 
+  dplyr::select(-dist_station)
 
 training_PA_Vestfold <- PA_Vestfold_df %>%
   mutate(Presence = 1) %>% 
-  dplyr::select(-Region)
+  dplyr::select(-Region)%>% 
+  dplyr::select(-dist_station)
 
 training_integrated_lichen <- rbind(training_PO_lichen, training_PA_Vestfold)
 training_integrated_moss <- rbind(training_PO_moss, training_PA_Vestfold)
@@ -420,11 +424,13 @@ training_integrated_moss <- rbind(training_PO_moss, training_PA_Vestfold)
 # Adding Plantarctica data to the training data
 training_Plantarctica_lichen <- Plantarctica_lichen_df %>% 
   mutate(Presence = 1) %>% 
-  dplyr::select(-Region)
+  dplyr::select(-Region)%>% 
+  dplyr::select(-dist_station)
 
 training_Plantarctica_moss <- Plantarctica_moss_df %>%
   mutate(Presence = 1) %>% 
-  dplyr::select(-Region)
+  dplyr::select(-Region)%>% 
+  dplyr::select(-dist_station)
 
 training_PO_PA_Plantarctica_lichen <- rbind(training_PO_lichen, 
                                             training_PA_Vestfold, 
@@ -819,8 +825,11 @@ write.csv(extrap_summary,
 ##########################################################################
 
 # Plot the extrapolation across Bunger Hills
-bunger.xy.df <- as.data.frame(bunger, xy = T)
-
+#first removing any rows with NAs in any columns
+bunger.xy.df <- as.data.frame(bunger, xy = T) %>%
+  na.omit()
+  
+  
 
 # LICHEN ------------------------------------------------------------------
 
