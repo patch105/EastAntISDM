@@ -285,6 +285,233 @@ usdm::vif(covs)
 
 
 
+# PLOTTING ENVIRONMENTAL COVARIATES ---------------------------------------
+
+covs <- c(TWI, sqrt(slope), northness, summer_temp, wind_speed, log(dist_station+1))
+names(covs) <- c("TWI", "Slope", "Northness", "Summer_temp", "Wind_speed", "Dist_to_station")
+
+
+# Load boundaries
+vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp"))
+bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
+
+P1 <- covs %>%
+  crop(ext(bunger_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = TWI)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Topographic Wetness Index") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+P2 <- covs %>%
+  crop(ext(bunger_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Slope)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Slope (sqrt)") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
+P3 <- covs %>%
+  crop(ext(bunger_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Northness)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Northness") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
+P4 <- covs %>%
+  crop(ext(bunger_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Summer_temp)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Mean Summer Temperature") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
+P5 <- covs %>%
+  crop(ext(bunger_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Wind_speed)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Mean Wind Speed") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
+P6 <- covs %>%
+  crop(ext(bunger_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Dist_to_station)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Distance to station (log)") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
+# Make the combined figure ------------------------------------------------
+
+# Arrange Lichen row
+plot <- ggarrange(P1, P2, P3, P4, P5, P6, 
+                  ncol = 2, nrow = 3, align = "hv")
+
+# Save the combined figure ------------------------------------------------
+
+ggsave(here("Outputs/Figures", "Covariates_BUNGER.png"),
+       plot = plot,
+       width = 17, height = 17, units = "cm", dpi = 600)
+
+
+# VESTFOLD ----------------------------------------------------------------
+
+P1 <- covs %>%
+  crop(ext(vestfold_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = TWI)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Topographic Wetness Index") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+P2 <- covs %>%
+  crop(ext(vestfold_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Slope)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Slope (sqrt)") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
+P3 <- covs %>%
+  crop(ext(vestfold_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Northness)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Northness") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
+P4 <- covs %>%
+  crop(ext(vestfold_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Summer_temp)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Mean Summer Temperature") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
+P5 <- covs %>%
+  crop(ext(vestfold_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Wind_speed)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Mean Wind Speed") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
+P6 <- covs %>%
+  crop(ext(vestfold_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Dist_to_station)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Distance to station (log)") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
+# Make the combined figure ------------------------------------------------
+
+# Arrange Lichen row
+plot <- ggarrange(P1, P2, P3, P4, P5, P6, 
+                  ncol = 2, nrow = 3, align = "hv")
+
+# Save the combined figure ------------------------------------------------
+
+ggsave(here("Outputs/Figures", "Covariates_VESTFOLD.png"),
+       plot = plot,
+       width = 17, height = 17, units = "cm", dpi = 600)
+
 
 
 

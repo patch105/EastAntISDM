@@ -20,7 +20,7 @@ ice_free_100m <- rast("C:/Users/n11222026/OneDrive - Queensland University of Te
 
 ice_free_500m <- aggregate(ice_free_100m, fact = 5, fun = mean, na.rm = TRUE)
 
-# Match extents of the two rasters
+# # Now using our 500m topography as the template for our domain dimensions (because we don't want to resample these topographic layers if we don't need to), we'll resample our ice-free area layer to match the dimensions of the topography rasters
 ice_free_500m <- resample(ice_free_500m, TWI, method = "bilinear")
 
 # writeRaster(ice_free_500m, here("Data/Environmental_predictors/ice_free_union_500m.tif"))
@@ -31,7 +31,7 @@ ACBRS_SPVE <- vect(ACBRS)
 
 ice_free.EastAnt <- terra::crop(ice_free_500m, ext(ACBRS_SPVE))
 
-writeRaster(ice_free.EastAnt, "Data/Environmental_predictors/ice_free_union_EastAnt_500m.tif", overwrite = TRUE)
+# writeRaster(ice_free.EastAnt, "Data/Environmental_predictors/ice_free_union_EastAnt_500m.tif", overwrite = TRUE)
 
 # TWI - Crop the topography to ice-free East Antarctica 
 TWI <- terra::crop(TWI, ext(ACBRS_SPVE))
