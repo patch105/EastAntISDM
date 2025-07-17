@@ -1452,7 +1452,7 @@ evaluate_prediction_ensemble <- function(x){
 
 # Model FIT assessment PO ENSEMBLE
 
-evaluate_fit_ensemble <- function(x,
+evaluate_fit_PO_ensemble <- function(x,
                                   pred_cur_ensemble){
 
   boyce = ecospat::ecospat.boyce(fit = pred_cur_ensemble$pred, # predictions across all the landscape
@@ -1466,6 +1466,44 @@ evaluate_fit_ensemble <- function(x,
                        boyce = boyce,
                        partialROC = NA,
                        brier = NA) 
+  
+  return(list(fit_df = fit_df))
+  
+}
+
+
+#############################################################################
+
+# Model FIT assessment PA ENSEMBLE
+
+evaluate_fit_PA_ensemble <- function(x){
+  
+  ROC = precrec::auc(precrec::evalmod(scores = x$pred, labels = x$Presence))[1,4]
+  PRG = prg::calc_auprg(prg::create_prg_curve(labels = x$Presence, pos_scores = x$pred))
+  
+  plot1 <- autoplot(precrec::evalmod(scores = x$pred, labels = x$Presence))[[1]]
+  plot2 <- autoplot(precrec::evalmod(scores = x$pred, labels = x$Presence))[[2]]
+  
+  boyce = ecospat::ecospat.boyce(fit = x$pred, 
+                                 obs = x$pred[which(x$Presence==1)], 
+                                 nclass = 0, # Calculate continuous index
+                                 method = "pearson",
+                                 PEplot = T)[["cor"]]
+  
+  partialROC = kuenm::kuenm_proc(occ.test = x$pred[which(x$Presence==1)],
+                                 model = x$pred,
+                                 threshold = 80,   # Omission threshold (e.g., 80%)
+                                 rand.percent = 50, # What percent of testing data for bootstrap
+                                 iterations = 500)$pROC_summary[[1]]
+  
+  brier = DescTools::BrierScore(resp = x$Presence,
+                                pred = x$pred)
+  
+  fit_df <- data.frame(ROC = ROC,
+                        PRG = PRG,
+                        boyce = boyce,
+                        partialROC = partialROC,
+                        brier = brier)  
   
   return(list(fit_df = fit_df))
   
