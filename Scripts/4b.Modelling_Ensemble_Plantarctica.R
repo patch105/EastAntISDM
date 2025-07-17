@@ -68,17 +68,17 @@ model_types <- list("Maxent", "LASSO", "GAM", "RF", "BRT")
 # Set group ---------------------------------------------------------------
 
 # group <- "Lichen"
-group <- "Moss"
+ group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "TEST_w_new_Bunger"
+scenario = "Plantarctica_Ensemble_Jul_16"
 
 
 # Set outpath -------------------------------------------------------------
 
-outpath <- here("Outputs", "Ensemble", group, scenario)
+outpath <- here("Outputs", "Ensemble_Plantarctica", group, scenario)
 
 if(!dir.exists(outpath)) {
   dir.create(outpath, showWarnings = FALSE)
@@ -89,22 +89,34 @@ if(!dir.exists(outpath)) {
 
 # Load the ice-free areas
 # ice_free <- rast(here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"))
-ice_free <- rast(here("Data/Environmental_predictors/ice_free_upsamp_1km.tif"))
+#ice_free <- rast(here("Data/Environmental_predictors/ice_free_upsamp_1km.tif"))
+
 
 # Load the Antarctic Conservation Biogeographic Regions, filter to East Antarctica
 ACBRS <- st_read(here("Data/Environmental_predictors/ACBRs_v2_2016.shp"), crs = 3031) %>% filter(ACBR_Name == "East Antarctica")
 ACBRS_SPVE <- vect(ACBRS)
 
-
-# Also trim ice-free land to just East Antarctica
-ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
-
-ice_free.EastAnt <- ifel(not.na(ice_free.EastAnt), 1, NA)
+# 
+# # Also trim ice-free land to just East Antarctica
+# ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
+# 
+# ice_free.EastAnt <- ifel(not.na(ice_free.EastAnt), 1, NA)
+ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_union_EastAnt_500m.tif"))
 
 
 # Load the presence-only records ------------------------------------------
+veg_map <- st_read(here("Data/Biological_records/PlantarcticaVegetationMap.shp")) %>%
+  vect()
 
-PO_East_Ant_Veg_sf <- st_read(here("Data/Biological_records", "PO_Veg_East_Ant.shp"))
+vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp"))
+bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
+
+# Crop to East Antarctica
+veg_map <- terra::crop(veg_map, ext(ACBRS_SPVE))
+
+veg_map <- centroids(veg_map)
+
+PO_East_Ant_Veg_sf <- st_as_sf(veg_map)
 
 PO_East_Ant_Veg_df <- PO_East_Ant_Veg_sf %>% 
   st_coordinates() %>%
@@ -118,24 +130,24 @@ PO_East_Ant_Veg_df <- PO_East_Ant_Veg_sf %>%
 if(group == "Moss") {
   
   PO <- PO_East_Ant_Veg_df %>% 
-    filter(vegtype == "Moss") %>% 
+    filter(Vegetation == "Vegetation") %>% 
     dplyr::select(x, y) %>% 
     mutate(Presence = 1)
   
   PO.sf <- PO_East_Ant_Veg_sf %>% 
-    filter(vegtype == "Moss") %>% 
+    filter(Vegetation == "Vegetation") %>% 
     mutate(Presence = 1)
 }
 
 if(group == "Lichen") {
   
   PO <- PO_East_Ant_Veg_df %>% 
-    filter(vegtype == "Lichen") %>% 
+    filter(Vegetation == "Lichen") %>%
     dplyr::select(x, y) %>% 
     mutate(Presence = 1)
   
   PO.sf <- PO_East_Ant_Veg_sf %>% 
-    filter(vegtype == "Lichen") %>% 
+    filter(Vegetation == "Lichen") %>%
     mutate(Presence = 1)
 }
 
@@ -143,52 +155,73 @@ if(group == "Lichen") {
 
 # Load the 1km covariates -----------------------------------------------------
 
-TWI <- rast(here("Data/Environmental_predictors/topographic_wetness_index_EAST_ANTARCTICA.tif"))
-names(TWI) <- "TWI"
-
-slope <- rast(here("Data/Environmental_predictors/slope_EAST_ANTARCTICA.tif"))
-names(slope) <- "slope"
-
-northness <- rast(here("Data/Environmental_predictors/northness_EAST_ANTARCTICA.tif"))
-names(northness) <- "northness"
-
-dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
-names(dist_vertebrates) <- "dist_vertebrates"
-
-dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_EAST_ANTARCTICA.tif"))
-names(dist_seasonal_water) <- "dist_seasonal_water"
-
-summer_temp <- rast(here("Data/Environmental_predictors/Mean_Summer_Temp_EAST_ANTARCTICA.tif"))
-names(summer_temp) <- "summer_temp"
-
-wind <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_EAST_ANTARCTICA.tif"))
-names(wind) <- "wind"
-
+# TWI <- rast(here("Data/Environmental_predictors/topographic_wetness_index_EAST_ANTARCTICA.tif"))
+# names(TWI) <- "TWI"
+# 
+# slope <- rast(here("Data/Environmental_predictors/slope_EAST_ANTARCTICA.tif"))
+# names(slope) <- "slope"
+# 
+# northness <- rast(here("Data/Environmental_predictors/northness_EAST_ANTARCTICA.tif"))
+# names(northness) <- "northness"
+# 
+# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
+# names(dist_vertebrates) <- "dist_vertebrates"
+# 
+# dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_EAST_ANTARCTICA.tif"))
+# names(dist_seasonal_water) <- "dist_seasonal_water"
+# 
+# summer_temp <- rast(here("Data/Environmental_predictors/Mean_Summer_Temp_EAST_ANTARCTICA.tif"))
+# names(summer_temp) <- "summer_temp"
+# 
+# wind <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_EAST_ANTARCTICA.tif"))
+# names(wind) <- "wind"
+# 
 # # Bias covariate
 # dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_EAST_ANTARCTICA.tif"))
 # names(dist_station) <- "dist_station"
+
+
+# Load the 500m covariates ------------------------------------------------
+
+TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
+names(TWI) <- "TWI"
+
+slope <- rast(here("Data/Environmental_predictors/slope_500m_IceFree_EastAnt.tif"))
+names(slope) <- "slope"
+
+northness <- rast(here("Data/Environmental_predictors/northness_500m_IceFree_EastAnt.tif"))
+names(northness) <- "northness"
+
+aspect <- rast(here("Data/Environmental_predictors/aspect_500m_IceFree_EastAnt.tif"))
+names(aspect) <- "aspect"
+
+# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
+# names(dist_vertebrates) <- "dist_vertebrates"
+
+# dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
+# names(dist_seasonal_water) <- "dist_seasonal_water"
+
+summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"))
+names(summer_temp) <- "summer_temp"
+
+wind <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
+names(wind_speed) <- "wind"
+
 
 # Apply some transformations
 sqrt_slope <- sqrt(slope)
 names(sqrt_slope) <- "sqrt_slope"
 
-log_dist_seasonal_water <- log(dist_seasonal_water+1)
-names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
+# log_dist_seasonal_water <- log(dist_seasonal_water+1)
+# names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
 
-# log_dist_station <- log(dist_station+1)
-# names(log_dist_station) <- "log_dist_station"
-
-log_dist_vertebrates <- log(dist_vertebrates+1)
-names(log_dist_vertebrates) <- "log_dist_vertebrates"
 
 # Stack covariates & save version w/o bias cov
-covs_no_bias <- c(TWI, sqrt_slope, northness, log_dist_seasonal_water, summer_temp, wind)
-covs <- c(TWI, sqrt_slope, northness, log_dist_seasonal_water, summer_temp, wind)
+covs <- c(TWI, sqrt_slope, northness, summer_temp, wind)
 
 # Make sure that if any predictors are NA, all become NA
 
 # Here we're just exploiting the fact that sum will by default return NA when any layer has an NA
-covs_no_bias <- terra::mask(covs_no_bias, sum(covs_no_bias))
 covs <- terra::mask(covs, sum(covs))
 
 
@@ -335,7 +368,18 @@ for (v in cov_names) {
 
 prNum <- as.numeric(table(train_PB_covs$Presence)["1"]) # number of presences
 bgNum <- as.numeric(table(train_PB_covs$Presence)["0"]) # number of backgrounds
-wt <- ifelse(train_PB_covs$Presence == 1, 1, prNum / bgNum) # down-weighting
+
+if(group == "Lichen") {
+  
+  wt <- ifelse(train_PB_covs$Presence == 1, 1, prNum / bgNum) # down-weighting absences
+  
+}
+
+if(group == "Moss") {
+  
+  wt <- ifelse(train_PB_covs$Presence == 1, bgNum / prNum, 1) # down-weighting presences
+  
+}
 
 
 ############################################
@@ -570,7 +614,19 @@ train_PB_covs_norm_rf$Presence <- as.factor(train_PB_covs_norm_rf$Presence)
 
 # For down-sampling, the number of background (0s) in each bootstrap sample should be the same as presences
 # (1s). For this, we use sampsize argument to do this.
-smpsize <- c("0" = prNum, "1" = prNum)
+
+# There are more presences than backgrounds in moss so it's the opposite
+
+if(group == "Lichen") {
+  
+  smpsize <- c("0" = prNum, "1" = prNum)
+  
+}
+
+if(group == "Moss") {
+  
+  smpsize <- c("0" = bgNum, "1" = bgNum)
+}
 
 # Using the default for mtry (sqrt(ncovs))
 rf <- randomForest::randomForest(formula = Presence ~.,
@@ -763,6 +819,37 @@ writeRaster(pred_cur_ensemble.rast, here(outpath, paste0("Prediction_ensemble_Ea
 
 
 ############################################
+# Evaluate the ensemble fit on PO data used for fitting ------------------
+############################################
+
+source(here("Scripts/Helper_functions_ISDM.R"))
+
+colnames(pred_cur_ensemble)[grepl("pred", colnames(pred_cur_ensemble))] <- "pred"
+
+# Extract locations of PO data to match the prediction raster grid cells
+PO_covs <- terra::extract(covs, PO[, c("x", "y")], xy = T)
+PO_covs <- cbind(PO_covs, PO["Presence"])
+PO_covs <- PO_covs %>% 
+  mutate(Presence = 1)
+
+# Match predictions to PO training data locations
+pred_with_PO <- dplyr::left_join(PO_covs, pred_cur_ensemble[, c("x", "y", "pred")], by = c("x", "y"))
+
+# Remove a couple of NAs
+pred_with_PO <- pred_with_PO %>% 
+  filter(!is.na(pred))
+
+# Evaluate prediction on test set
+fit <- evaluate_fit_PO_ensemble(x = pred_with_PO,
+                             pred_cur_ensemble = pred_cur_ensemble)
+
+eval_df.ens <- data.frame(model = "Ensemble",
+                          validation_dataset = "Training data",
+                          fit[["fit_df"]])
+
+
+
+############################################
 # Evaluate the ensemble predictions on VESTFOLD PA dataset ----------------
 ############################################
 
@@ -808,14 +895,17 @@ pred_with_PA <- dplyr::left_join(PA_vestfold_covs, pred_cur_ensemble[, c("x", "y
 # pred_with_PA <- pred_with_PA %>% 
 #   sample_n(65)
 
+# Remove a couple of NAs
+pred_with_PA <- pred_with_PA %>% 
+  filter(!is.na(pred))
 
 # Evaluate prediction on test set
 eval <- evaluate_prediction_ensemble(pred_with_PA)
 
-eval_df.ens <- data.frame(model = "Ensemble",
-                          validation_dataset = "Vestfold",
-                          eval[["eval_df"]])
-
+eval_df.ens <- eval_df.ens %>% 
+  add_row(model = "Ensemble",
+          validation_dataset = "Vestfold",
+          eval[["eval_df"]])
 
 ############################################
 # Evaluate the ensemble predictions on BUNGER PA dataset ----------------
@@ -855,6 +945,10 @@ PA_bunger23_covs <- PA_bunger23_covs %>%
 # Match predictions to PA locations
 pred_with_PA <- dplyr::left_join(PA_bunger23_covs, pred_cur_ensemble[, c("x", "y", "pred")], by = c("x", "y"))
 
+# Remove a couple of NAs
+pred_with_PA <- pred_with_PA %>% 
+  filter(!is.na(pred))
+
 # Evaluate prediction on test set
 eval <- evaluate_prediction_ensemble(pred_with_PA)
 
@@ -873,7 +967,7 @@ vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.
 bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
 
 p1 <- pred_cur_ensemble.rast %>% 
-  crop(ext(bunger_boundary)) %>% 
+  crop(ext(vestfold_boundary)) %>% 
   as.data.frame(xy = T) %>%
   ggplot() +
   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
@@ -894,7 +988,7 @@ ggsave(paste0(outpath, "/VESTFOLD_Probability_prediction_plot.png"), p1,
        width = 10, height = 6, dpi = 300)
 
 p2 <- pred_cur_ensemble.rast %>% 
-  crop(ext(vestfold_boundary)) %>% 
+  crop(ext(bunger_boundary)) %>% 
   as.data.frame(xy = T) %>%
   ggplot() +
   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
@@ -915,81 +1009,5 @@ ggsave(paste0(outpath, "/BUNGER_Probability_prediction_plot.png"), p2,
        width = 10, height = 6, dpi = 300)
 
 
-# ############################################
-# # Evaluate the ensemble predictions on Plantarctica PA dataset ----------------
-# ############################################
-# 
-# if(group == "Moss") {
-#   
-#   veg_map <- st_read(here("Data/Biological_records/PlantarcticaVegetationMap.shp")) %>% 
-#     filter(Vegetation == "Vegetation") %>% 
-#     vect()
-#   
-# }
-# 
-# if(group == "Lichen") {
-#   
-#   veg_map <- st_read(here("Data/Biological_records/PlantarcticaVegetationMap.shp")) %>% 
-#     filter(Vegetation == "Lichen") %>% 
-#     vect()
-#   
-# }
-# 
-# grid <- rast(ext = ext(ice_free.EastAnt),
-#              resolution = 1000, 
-#              vals = 1) 
-# 
-# 
-# crs(grid) <- "epsg:3031"
-# 
-# gridUNIQUE <- rast(ext = ext(ice_free.EastAnt), 
-#                    resolution = 1000, 
-#                    vals = 1:ncell(grid)) 
-# 
-# crs(gridUNIQUE) <- "epsg:3031"
-# 
-# # Convert Plantarctica to presence-absence grid
-# # Find the ice-free grid cell ID each vegetation record lies in with a unique value
-# # ID is the ID of the veg record, lyr.1 is the unique ID of the cell
-# extractUNIQUE <- terra::extract(gridUNIQUE, veg_map)
-# 
-# # Count the number of veg points per unique grid cell
-# count <- count(extractUNIQUE, lyr.1)
-# 
-# # Make gridUNIQUE raster a data frame
-# gridUNIQUEdf <- as.data.frame(gridUNIQUE, xy = TRUE)
-# 
-# # Full join retains all values, join the grid dataframe and  the count values by the cell unique ID
-# update_rast <- full_join(gridUNIQUEdf, count, by = "lyr.1") %>% 
-#   .[, -3] %>% 
-#   drop_na(x) %>% # Remove if there's a row with no xy (where the veg. data didn't overlap the coastline)
-#   rast(.) 
-# 
-# update_rast <- ifel(is.na(update_rast), 0, 1)
-# 
-# crs(update_rast) <- "epsg:3031"
-# 
-# names(update_rast) <- "Presence"
-# 
-# 
-# ## Add in PA vegetation dataset
-# 
-# vegetation_PA <- mask(update_rast, ice_free.EastAnt, maskvalue = NA) %>% 
-#   as.data.frame(xy = F)
-# 
-# vegetation_PA.rast <- mask(update_rast, ice_free.EastAnt, maskvalue = NA)
-# 
-# #writeRaster(vegetation_PA.rast, here("Data/Biological_records", "Plantarctica_lichen_PA.tif"))
-# 
-# # Add presence-absence validation data to prediction dataframe
-# pred_with_PA <- cbind(pred_cur_ensemble, vegetation_PA)   
-# 
-# # Evaluate prediction on test set
-# eval <- evaluate_prediction(pred_with_PA)
-# 
-# eval_df.ens <- eval_df.ens %>% 
-#   add_row(model = "Ensemble",
-#           validation_dataset = "Plantarctica",
-#           eval[["eval_df"]])
 
 

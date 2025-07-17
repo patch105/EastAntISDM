@@ -260,8 +260,8 @@ names(dist_seasonal_water) <- "dist_seasonal_water"
 summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"))
 names(summer_temp) <- "summer_temp"
 
-wind <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_500m.tif"))
-names(wind) <- "wind"
+wind <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
+names(wind_speed) <- "wind"
 
 # Bias covariate
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_500m.tif"))
@@ -474,9 +474,9 @@ mod.list <- list(m.PA = m.PA,
                  m.PO.bias = m.PO.bias,
                  m.PO.Plantarctica = m.PO.Plantarctica,
                  m.int.occ.VH = m.int.occ.VH,
-                 m.int.occ.VH.bias,
-                 m.int.Plantarctica.VH,
-                 m.int.occ.Plantarctica.VH)
+                 m.int.occ.VH.bias = m.int.occ.VH.bias,
+                 m.int.Plantarctica.VH = m.int.Plantarctica.VH,
+                 m.int.occ.Plantarctica.VH = m.int.occ.Plantarctica.VH)
 
 
 # 3. EXTRACT MODEL RESULTS ------------------------------------------------
@@ -749,9 +749,9 @@ mod.list <- list(m.PA = m.PA,
                  m.PO.bias = m.PO.bias,
                  m.PO.Plantarctica = m.PO.Plantarctica,
                  m.int.occ.VH = m.int.occ.VH,
-                 m.int.occ.VH.bias,
-                 m.int.Plantarctica.VH,
-                 m.int.occ.Plantarctica.VH)
+                 m.int.occ.VH.bias = m.int.occ.VH.bias,
+                 m.int.Plantarctica.VH = m.int.Plantarctica.VH,
+                 m.int.occ.Plantarctica.VH = m.int.occ.Plantarctica.VH)
 
 
 # Plotting predictions ----------------------------------------------------

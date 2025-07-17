@@ -4,7 +4,7 @@
 # lib_loc <- paste(dirname(getwd()),"/r_lib",sep="")
 
 # Non-HPC version
- lib_loc = .libPaths()
+lib_loc = .libPaths()
 
 # Load packages -----------------------------------------------------------
 
@@ -21,7 +21,7 @@ library(sf) # NOTE SF MUST BE LOADED BEFORE RISDM
 library(flexsdm, lib.loc=lib_loc)
 library(ecospat, lib.loc = lib_loc)
 library(usdm, lib.loc = lib_loc)
- 
+
 library(tidyterra, lib.loc = lib_loc)
 library(dismo, lib.loc = lib_loc)
 library(predicts, lib.loc = lib_loc)
@@ -33,47 +33,47 @@ library(precrec, lib.loc = lib_loc)
 library(glmnet, lib.loc = lib_loc)
 library(flexsdm, lib.loc = lib_loc)
 # NOTE * - Also required to have rJava  installed
- 
- # # Installing and loading packages
- # if(!require(devtools)){
- #   install.packages("devtools")
- # }
- # 
- # if(!require(kuenm)){
- #   devtools::install_github("marlonecobos/kuenm")
- # }
- 
+
+# # Installing and loading packages
+# if(!require(devtools)){
+#   install.packages("devtools")
+# }
+# 
+# if(!require(kuenm)){
+#   devtools::install_github("marlonecobos/kuenm")
+# }
+
 library(kuenm, lib.loc = lib_loc)
- 
+
 # library(devtools)
 # install_github('meeliskull/prg/R_package/prg')
 library(prg, lib.loc = lib_loc)
- 
+
 # remotes::install_github("rvalavi/myspatial")
 library(myspatial, lib.loc = lib_loc)
- 
- 
 
- # Source helper functions -------------------------------------------------
- 
- source(here("C:/Users/n11222026/OneDrive - Queensland University of Technology/Code/Objective_3/AntarcticFutureHabitat/Scripts/Additional_functions.R"))
- 
- 
+
+
+# Source helper functions -------------------------------------------------
+
+source(here("C:/Users/n11222026/OneDrive - Queensland University of Technology/Code/Objective_3/AntarcticFutureHabitat/Scripts/Additional_functions.R"))
+
+
 # Set model types to run --------------------------------------------------
- 
-model_types <- list("Maxent", "LASSO", "GAM", "RF", "BRT")
+
+model_types <- list("LASSO", "GAM", "RF", "BRT")
 
 
 
 # Set group ---------------------------------------------------------------
 
 # group <- "Lichen"
-group <- "Moss"
+ group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "TEST_w_new_Bunger"
+scenario = "PA_Ensemble_Jul_16"
 
 
 # Set outpath -------------------------------------------------------------
@@ -84,174 +84,140 @@ if(!dir.exists(outpath)) {
   dir.create(outpath, showWarnings = FALSE)
 } 
 
- 
+
 # Domain setup ------------------------------------------------------------
 
 # Load the ice-free areas
 # ice_free <- rast(here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"))
-ice_free <- rast(here("Data/Environmental_predictors/ice_free_upsamp_1km.tif"))
+#ice_free <- rast(here("Data/Environmental_predictors/ice_free_upsamp_1km.tif"))
+
 
 # Load the Antarctic Conservation Biogeographic Regions, filter to East Antarctica
 ACBRS <- st_read(here("Data/Environmental_predictors/ACBRs_v2_2016.shp"), crs = 3031) %>% filter(ACBR_Name == "East Antarctica")
 ACBRS_SPVE <- vect(ACBRS)
 
+# 
+# # Also trim ice-free land to just East Antarctica
+# ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
+# 
+# ice_free.EastAnt <- ifel(not.na(ice_free.EastAnt), 1, NA)
+ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_union_EastAnt_500m.tif"))
 
-# Also trim ice-free land to just East Antarctica
-ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
+# Load the presence-absence records ---------------------------------------
 
-ice_free.EastAnt <- ifel(not.na(ice_free.EastAnt), 1, NA)
+PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
 
-
-# Load the presence-only records ------------------------------------------
-
-PO_East_Ant_Veg_sf <- st_read(here("Data/Biological_records", "PO_Veg_East_Ant.shp"))
-
-PO_East_Ant_Veg_df <- PO_East_Ant_Veg_sf %>% 
+PA_Vestfold_Veg_df <- PA_Vestfold_Veg_sf %>% 
   st_coordinates() %>%
   as.data.frame() %>% 
-  bind_cols(st_drop_geometry(PO_East_Ant_Veg_sf)) %>% 
-  rename(x = X, y = Y) 
+  bind_cols(st_drop_geometry(PA_Vestfold_Veg_sf)) %>% 
+  rename(x = X, y = Y)
 
 
-# Format for modelling MOSS ----------------------------------------------------
+
+# Format for modelling  ----------------------------------------------------
 
 if(group == "Moss") {
   
-  PO <- PO_East_Ant_Veg_df %>% 
-    filter(vegtype == "Moss") %>% 
-    dplyr::select(x, y) %>% 
-    mutate(Presence = 1)
+  PA <- PA_Vestfold_Veg_df %>% 
+    dplyr::select(x, y, srfc_ms) %>% 
+    rename(Presence = srfc_ms)
   
-  PO.sf <- PO_East_Ant_Veg_sf %>% 
-    filter(vegtype == "Moss") %>% 
-    mutate(Presence = 1)
+  PA.sf <- PA_Vestfold_Veg_sf %>% 
+    rename(Presence = srfc_ms)
+  
 }
 
 if(group == "Lichen") {
   
-  PO <- PO_East_Ant_Veg_df %>% 
-    filter(vegtype == "Lichen") %>% 
-    dplyr::select(x, y) %>% 
-    mutate(Presence = 1)
+  PA <- PA_Vestfold_Veg_df %>% 
+    dplyr::select(x, y, srfc_lc) %>% 
+    rename(Presence = srfc_lc)
   
-  PO.sf <- PO_East_Ant_Veg_sf %>% 
-    filter(vegtype == "Lichen") %>% 
-    mutate(Presence = 1)
+  PA.sf <- PA_Vestfold_Veg_sf %>% 
+    rename(Presence = srfc_lc)
+  
 }
+
 
 # Load the covariates -----------------------------------------------------
 
 # Load the 1km covariates -----------------------------------------------------
 
-TWI <- rast(here("Data/Environmental_predictors/topographic_wetness_index_EAST_ANTARCTICA.tif"))
-names(TWI) <- "TWI"
-
-slope <- rast(here("Data/Environmental_predictors/slope_EAST_ANTARCTICA.tif"))
-names(slope) <- "slope"
-
-northness <- rast(here("Data/Environmental_predictors/northness_EAST_ANTARCTICA.tif"))
-names(northness) <- "northness"
-
-dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
-names(dist_vertebrates) <- "dist_vertebrates"
-
-dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_EAST_ANTARCTICA.tif"))
-names(dist_seasonal_water) <- "dist_seasonal_water"
-
-summer_temp <- rast(here("Data/Environmental_predictors/Mean_Summer_Temp_EAST_ANTARCTICA.tif"))
-names(summer_temp) <- "summer_temp"
-
-wind <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_EAST_ANTARCTICA.tif"))
-names(wind) <- "wind"
-
+# TWI <- rast(here("Data/Environmental_predictors/topographic_wetness_index_EAST_ANTARCTICA.tif"))
+# names(TWI) <- "TWI"
+# 
+# slope <- rast(here("Data/Environmental_predictors/slope_EAST_ANTARCTICA.tif"))
+# names(slope) <- "slope"
+# 
+# northness <- rast(here("Data/Environmental_predictors/northness_EAST_ANTARCTICA.tif"))
+# names(northness) <- "northness"
+# 
+# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
+# names(dist_vertebrates) <- "dist_vertebrates"
+# 
+# dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_EAST_ANTARCTICA.tif"))
+# names(dist_seasonal_water) <- "dist_seasonal_water"
+# 
+# summer_temp <- rast(here("Data/Environmental_predictors/Mean_Summer_Temp_EAST_ANTARCTICA.tif"))
+# names(summer_temp) <- "summer_temp"
+# 
+# wind <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_EAST_ANTARCTICA.tif"))
+# names(wind) <- "wind"
+# 
 # # Bias covariate
 # dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_EAST_ANTARCTICA.tif"))
 # names(dist_station) <- "dist_station"
+
+
+# Load the 500m covariates ------------------------------------------------
+
+TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
+names(TWI) <- "TWI"
+
+slope <- rast(here("Data/Environmental_predictors/slope_500m_IceFree_EastAnt.tif"))
+names(slope) <- "slope"
+
+northness <- rast(here("Data/Environmental_predictors/northness_500m_IceFree_EastAnt.tif"))
+names(northness) <- "northness"
+
+aspect <- rast(here("Data/Environmental_predictors/aspect_500m_IceFree_EastAnt.tif"))
+names(aspect) <- "aspect"
+
+# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
+# names(dist_vertebrates) <- "dist_vertebrates"
+
+# dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
+# names(dist_seasonal_water) <- "dist_seasonal_water"
+
+summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"))
+names(summer_temp) <- "summer_temp"
+
+wind <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
+names(wind_speed) <- "wind"
+
 
 # Apply some transformations
 sqrt_slope <- sqrt(slope)
 names(sqrt_slope) <- "sqrt_slope"
 
-log_dist_seasonal_water <- log(dist_seasonal_water+1)
-names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
+# log_dist_seasonal_water <- log(dist_seasonal_water+1)
+# names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
 
-# log_dist_station <- log(dist_station+1)
-# names(log_dist_station) <- "log_dist_station"
-
-log_dist_vertebrates <- log(dist_vertebrates+1)
-names(log_dist_vertebrates) <- "log_dist_vertebrates"
 
 # Stack covariates & save version w/o bias cov
-covs_no_bias <- c(TWI, sqrt_slope, northness, log_dist_seasonal_water, summer_temp, wind)
-covs <- c(TWI, sqrt_slope, northness, log_dist_seasonal_water, summer_temp, wind)
+covs <- c(TWI, sqrt_slope, northness, summer_temp,  wind)
 
 # Make sure that if any predictors are NA, all become NA
 
 # Here we're just exploiting the fact that sum will by default return NA when any layer has an NA
-covs_no_bias <- terra::mask(covs_no_bias, sum(covs_no_bias))
 covs <- terra::mask(covs, sum(covs))
-
-
-
-# Select background points ------------------------------------------------
-
-background_domain <- ice_free.EastAnt
-
-# Buffer 1km around record locations
-dist.near <- 1000
-
-# Buffer records by the maximum distance of record locations
-domain.mask <- st_buffer(PO.sf, dist.near) %>% 
-  st_union() %>% 
-  st_cast("POLYGON") 
-
-bio_buffer_mask <- terra::mask(ice_free.EastAnt, vect(domain.mask)) 
-
-# Make buffer areas 1
-bio_buffer_mask <- ifel(not.na(bio_buffer_mask), 1, NA)
-
-# Ice-free domain (for background selection only) become areas not in the buffer of the records
-background_domain <- terra::mask(ice_free.EastAnt, bio_buffer_mask, maskvalue = 1) 
-
-# Make domain areas 1
-background_domain <- ifel(not.na(background_domain), 1, NA)
-
-
-# Background sampling -----------------------------------------------------
-
-# Count number of non-NA cells in the ice-free raster
-global(background_domain, fun = "notNA")
-
-
-# Set the location and number of background points
-
-nbackground <- 3000
-
-background <- predicts::backgroundSample(mask = background_domain, 
-                                         n = nbackground,
-                                         tryf = 500)
-
-background <- vect(background, crs = "EPSG:3031")
-
-# Convert background points (SpatVector) to data frame
-background_df <- as.data.frame(geom(background))
-
-
-# Add presences and background --------------------------------------------
-
-background_df <- background_df[,c("x", "y")] %>% 
-  mutate(Presence = 0)
-
-pr_bg <- rbind(PO, background_df)
-
-# reset rownames for spatial tuning
-rownames(pr_bg) <- NULL
 
 
 # Extract enviro. covs for training ---------------------------------------
 
-train_PB_covs <- terra::extract(covs, pr_bg[,c("x", "y")], xy = T)
-train_PB_covs <- cbind(train_PB_covs, pr_bg["Presence"])
+train_PB_covs <- terra::extract(covs, PA[,c("x", "y")], xy = T)
+train_PB_covs <- cbind(train_PB_covs, PA["Presence"])
 
 # Remove rows where there's values missing from at least one covariate
 
@@ -273,7 +239,6 @@ print(paste0("RECORDS FROM ", nrow(pred_cur_covs) - sum(complete.cases(pred_cur_
 pred_cur_covs <- pred_cur_covs[complete.cases(pred_cur_covs), ]
 # Reset the row IDs to adjust for removed rows
 rownames(pred_cur_covs) <- NULL
-
 
 
 # Plot environmental conditions  ----------------------------------------------
@@ -327,6 +292,7 @@ for (v in cov_names) {
 }
 
 
+
 ############################################
 # ALL - Calculating the case weights (down-weighting)  --------------------------
 ############################################
@@ -336,40 +302,6 @@ for (v in cov_names) {
 prNum <- as.numeric(table(train_PB_covs$Presence)["1"]) # number of presences
 bgNum <- as.numeric(table(train_PB_covs$Presence)["0"]) # number of backgrounds
 wt <- ifelse(train_PB_covs$Presence == 1, 1, prNum / bgNum) # down-weighting
-
-
-############################################
-# ALL - Maxent default ----------------------------------------------------------
-############################################
-
-#*Downloaded Maxent 17th March 2025*
-
-# Set model type
-mod.type = "Maxent"
-
-# Make folder:
-
-dir.create(file.path(outpath, "Maxent_outputs"), showWarnings = F)
-
-
-# x is a dataframe with the covariates, each row is a PB point
-# p is the occurrences, 0s or 1s for each PB point
-
-maxent.mod <- NULL
-maxent.mod <- dismo::maxent(x = train_PB_covs[, cov_names],
-                            p = train_PB_covs[["Presence"]],
-                            removeDuplicates = FALSE,
-                            path = file.path(outpath, "Maxent_outputs"),
-                            args = c("nothreshold", "responsecurves=true"))
-
-
-# Current prediction
-pred_cur.mxt <- dismo::predict(maxent.mod, pred_cur_covs, args = "doclamp=false")
-pred_cur.mxt <- cbind(pred_cur_covs, pred_cur.mxt)
-colnames(pred_cur.mxt)[grepl("pred", colnames(pred_cur.mxt))] <- "pred"
-pred_cur.mxt.rast <- rast(pred_cur.mxt[, c("x", "y", "pred")], type = "xyz", crs = "EPSG:3031")
-
-writeRaster(pred_cur.mxt.rast, here(outpath, "Maxent_outputs", paste0("Prediction_East_Antarctica.tif")), overwrite = T)
 
 
 ############################################
@@ -495,7 +427,7 @@ dir.create(file.path(outpath, "GAM_outputs"), showWarnings = F)
 # Building GAM formula (adjust k for smooth complexity per covariate)
 myform <- paste(
   "Presence ~",
-  paste(paste0("s(", cov_names, ", k = 10)"), collapse = " + ")
+  paste(paste0("s(", cov_names, ", k = 5)"), collapse = " + ")
 )
 
 gam <- mgcv::gam(formula = as.formula(myform), 
@@ -744,9 +676,7 @@ if(is.null(brt)) {
 # ALL - Ensemble of all model predictions ---------------------------------------
 ############################################
 
-pred_cur_ensemble <- data.frame(maxent = scales::rescale(pred_cur.mxt[["pred"]], to = c(0,1)),
-                                # maxent.tune = scales::rescale(pred_cur.mxttune[["pred"]], to = c(0,1)),
-                                lasso = scales::rescale(pred_cur.lasso[["pred"]], to = c(0,1)), 
+pred_cur_ensemble <- data.frame(lasso = scales::rescale(pred_cur.lasso[["pred"]], to = c(0,1)), 
                                 gam = scales::rescale(pred_cur.gam[["pred"]], to = c(0,1)),
                                 brt = scales::rescale(pred_cur.brt[["pred"]], to = c(0,1)),
                                 rf = scales::rescale(pred_cur.rf[["pred"]], to = c(0,1))) %>% 
@@ -763,58 +693,31 @@ writeRaster(pred_cur_ensemble.rast, here(outpath, paste0("Prediction_ensemble_Ea
 
 
 ############################################
-# Evaluate the ensemble predictions on VESTFOLD PA dataset ----------------
+# Evaluate the ensemble fit on PA data used for fitting ------------------
 ############################################
 
 source(here("Scripts/Helper_functions_ISDM.R"))
 
 colnames(pred_cur_ensemble)[grepl("pred", colnames(pred_cur_ensemble))] <- "pred"
 
+# Extract locations of PO data to match the prediction raster grid cells
+PA_covs <- terra::extract(covs, PA[, c("x", "y")], xy = T)
+PA_covs <- cbind(PA_covs, PA["Presence"])
 
-# Load the presence-absence records ---------------------------------------
+# Match predictions to PO training data locations
+pred_with_fit_PA <- dplyr::left_join(PA_covs, pred_cur_ensemble[, c("x", "y", "pred")], by = c("x", "y"))
 
-PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
-
-PA_Vestfold_Veg_df <- PA_Vestfold_Veg_sf %>% 
-  st_coordinates() %>%
-  as.data.frame() %>% 
-  bind_cols(st_drop_geometry(PA_Vestfold_Veg_sf)) %>% 
-  rename(x = X, y = Y)
-
-if(group == "Moss") {
-  
-  PA_vestfold <- PA_Vestfold_Veg_df %>% 
-    dplyr::select(x, y, srfc_ms) %>% 
-    rename(presence = srfc_ms)
-  
-}
-
-if(group == "Lichen") {
-  
-  PA_vestfold <- PA_Vestfold_Veg_df %>% 
-    dplyr::select(x, y, srfc_lc) %>% 
-    rename(presence = srfc_lc)
-}
-
-PA_vestfold_covs <- terra::extract(covs, PA_vestfold[, c("x", "y")], xy = T)
-PA_vestfold_covs <- cbind(PA_vestfold_covs, PA_vestfold["presence"])
-PA_vestfold_covs <- PA_vestfold_covs %>% 
-  rename(Presence = presence)
-
-# Match predictions to PA locations
-pred_with_PA <- dplyr::left_join(PA_vestfold_covs, pred_cur_ensemble[, c("x", "y", "pred")], by = c("x", "y"))
-
-# # Subset randomly to just 65
-# pred_with_PA <- pred_with_PA %>% 
-#   sample_n(65)
-
+# Remove a couple of NAs
+pred_with_fit_PA <- pred_with_fit_PA %>% 
+  filter(!is.na(pred))
 
 # Evaluate prediction on test set
-eval <- evaluate_prediction_ensemble(pred_with_PA)
+fit <- evaluate_fit_PA_ensemble(x = pred_with_fit_PA)
 
 eval_df.ens <- data.frame(model = "Ensemble",
-                          validation_dataset = "Vestfold",
-                          eval[["eval_df"]])
+                          validation_dataset = "Training data",
+                          fit[["fit_df"]])
+
 
 
 ############################################
@@ -855,6 +758,10 @@ PA_bunger23_covs <- PA_bunger23_covs %>%
 # Match predictions to PA locations
 pred_with_PA <- dplyr::left_join(PA_bunger23_covs, pred_cur_ensemble[, c("x", "y", "pred")], by = c("x", "y"))
 
+# Remove a couple of NAs
+pred_with_PA <- pred_with_PA %>% 
+  filter(!is.na(pred))
+
 # Evaluate prediction on test set
 eval <- evaluate_prediction_ensemble(pred_with_PA)
 
@@ -873,7 +780,7 @@ vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.
 bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
 
 p1 <- pred_cur_ensemble.rast %>% 
-  crop(ext(bunger_boundary)) %>% 
+  crop(ext(vestfold_boundary)) %>% 
   as.data.frame(xy = T) %>%
   ggplot() +
   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
@@ -894,7 +801,7 @@ ggsave(paste0(outpath, "/VESTFOLD_Probability_prediction_plot.png"), p1,
        width = 10, height = 6, dpi = 300)
 
 p2 <- pred_cur_ensemble.rast %>% 
-  crop(ext(vestfold_boundary)) %>% 
+  crop(ext(bunger_boundary)) %>% 
   as.data.frame(xy = T) %>%
   ggplot() +
   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
