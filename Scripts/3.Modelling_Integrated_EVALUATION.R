@@ -1,4 +1,12 @@
 
+# Set up for running on HPC
+
+# Set the library for packages
+# lib_loc <- paste(dirname(getwd()),"/r_lib",sep="")
+
+# Non-HPC version
+lib_loc = .libPaths()
+
 # Load packages -----------------------------------------------------------
 
 library(here)
@@ -27,22 +35,60 @@ source(here("Scripts/Helper_functions_ISDM.R"))
 
 # Set group ---------------------------------------------------------------
 
-group <- "Lichen"
-# group <- "Moss"
+# group <- "Lichen"
+ group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "TEST"
+scenario = "500m_ALL_DATASETS"
 
 
-# Set outpath -------------------------------------------------------------
+# Load model predictions (no GRF) --------------------------------------------------
 
-outpath <- here("Outputs", "Integrated", group, scenario)
+# inpath <- paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated/", group, "/", scenario )
+# outpath <-  paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated/", group, "/", scenario )
 
-if(!dir.exists(outpath)) {
-  dir.create(outpath, showWarnings = FALSE)
-} 
+inpath <- paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/", group, "/", scenario )
+outpath <-  paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/", group, "/", scenario )
+
+m.PA <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.PA_median.tif")))
+m.PO <- list(preds.prob = rast(paste0(inpath, "/Probability_prediction_m.PO_median.tif")))
+m.PO.bias <- list(preds.prob = rast(paste0(inpath, "/Probability_prediction_m.PO.bias_median.tif")))
+m.PO.Plantarctica <- list(preds.prob.Bunger = rast(paste0(inpath, "/Probability_prediction_m.PO.Plantarctica_median.tif")))
+m.int.occ.VH <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.int.occ.VH_median.tif")))
+# m.int.occ.VH.bias <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.int.occ.VH.bias_median.tif")))
+# m.int.Plantarctica.VH <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Intensity_prediction_plot_m.int.Plantarctica.VH.tif")))
+# m.int.occ.Plantarctica.VH <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Intensity_prediction_plot_m.int.occ.Plantarctica.VH.tif")))
+
+
+# List them all
+mod.list <- list(m.PA = m.PA,
+                 m.PO = m.PO,
+                 m.PO.bias = m.PO.bias,
+                 m.PO.Plantarctica = m.PO.Plantarctica,
+                 m.int.occ.VH = m.int.occ.VH)
+
+# Load model predictions (w GRF) --------------------------------------------------
+
+# inpath <- paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated/", group, "/", scenario )
+# outpath <-  paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated/", group, "/", scenario )
+# 
+# m.PA.GRF <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.PA.GRF_median.tif")))
+# m.PO.GRF <- list(preds.prob = rast(paste0(inpath, "/Probability_prediction_m.PO.GRF_median.tif")))
+# m.PO.bias <- list(preds.prob = rast(paste0(inpath, "/Probability_prediction_m.PO.bias_median.tif")))
+# m.int <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.int_median.tif")))
+# m.int.bias <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.int.bias_median.tif")))
+# 
+# # List them all
+# mod.list <- list(m.PA = m.PA,
+#                  m.PO = m.PO,
+#                  m.PO.bias = m.PO.bias,
+#                  m.int = m.int,
+#                  m.int.bias = m.int.bias)
+
+
+
 
 ############################################
 # Evaluate the ensemble predictions on BUNGER PA dataset ----------------
@@ -81,28 +127,11 @@ PA_bunger23 <- PA_bunger23 %>%
   rename(Presence = presence)
 
 
-# Load model predictions --------------------------------------------------
-
-inpath <- paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated/", group)
-outpath <-  paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated/", group)
-
-m.PA <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.PA_median.tif")))
-m.PO <- list(preds.prob = rast(paste0(inpath, "/Probability_prediction_m.PO_median.tif")))
-m.PO.bias <- list(preds.prob = rast(paste0(inpath, "/Probability_prediction_m.PO.bias_median.tif")))
-m.int <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.int_median.tif")))
-m.int.bias <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.int.bias_median.tif")))
-
-# List them all
-mod.list <- list(m.PA = m.PA,
-                 m.PO = m.PO,
-                 m.PO.bias = m.PO.bias,
-                 m.int = m.int,
-                 m.int.bias = m.int.bias)
-
-
 # Evaluate the predictions on the Bunger PA dataset ----------------------
 
 eval_df <- evaluate_prediction_raster_isdm(mod.list = mod.list,
                                            outpath = outpath)
 
 write.csv(eval_df, file = paste0(outpath, "/RISDM_eval_df.csv"))
+
+
