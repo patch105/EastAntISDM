@@ -46,16 +46,12 @@ here::here()
 # writeRaster(ice_free_union, here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"), overwrite = T)
 
 # Load the ice-free areas
-# ice_free <- rast(here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"))
-ice_free <- rast(here("Data/Environmental_predictors/ice_free_upsamp_1km.tif"))
+ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_union_EastAnt_500m.tif"))
 
 # Load the Antarctic Conservation Biogeographic Regions, filter to East Antarctica
 ACBRS <- st_read(here("Data/Environmental_predictors/ACBRs_v2_2016.shp"), crs = 3031) %>% filter(ACBR_Name == "East Antarctica")
 ACBRS_SPVE <- vect(ACBRS)
 
-
-# Also trim ice-free land to just East Antarctica
-ice_free.EastAnt <- terra::crop(ice_free, ext(ACBRS_SPVE))
 
 
 
@@ -570,7 +566,7 @@ veg.east.ant <- vect(rbind(GBIF_east_ant.sf, ICEFREE_east_ant.sf))
 
 # Save the PO records -----------------------------------------------------
 
-st_write(veg.east.ant.sf, here("Data/Biological_records", "PO_Veg_East_Ant.shp"))
+st_write(veg.east.ant.sf, here("Data/Biological_records", "PO_Veg_East_Ant.shp"), append = F)
 
 
 #####################################################################
@@ -587,7 +583,7 @@ vestfold_sf <- st_as_sf(vestfold,
 
 vestfold_sf <- st_transform(vestfold_sf, 3031) #project to WGS_1984 Antarctic Polar Stereographic
 
-st_write(vestfold_sf, here("Data/Biological_records", "PA_Veg_vestfold.shp"))
+st_write(vestfold_sf, here("Data/Biological_records", "PA_Veg_vestfold.shp"), append = F)
 
 
 vestfold_df <- vestfold_sf %>% 
@@ -789,6 +785,8 @@ bunger23_df <- bunger23_sf %>%
   bind_cols(st_drop_geometry(bunger23_sf)) %>% 
   rename(x = X, y = Y) 
 
+count(bunger23_df, surface_moss)
+count(bunger23_df, surface_lichen)
 
 #####################################################################
 ############ Presence-absence survey - Bunger Hills Leishman #########
