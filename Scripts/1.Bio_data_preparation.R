@@ -585,6 +585,11 @@ vestfold_sf <- st_transform(vestfold_sf, 3031) #project to WGS_1984 Antarctic Po
 
 st_write(vestfold_sf, here("Data/Biological_records", "PA_Veg_vestfold.shp"), append = F)
 
+# Save a version with just the 2019/20 data
+vestfold_sf_subset <- vestfold_sf %>% 
+  filter(Season == "SEASON_19")
+
+st_write(vestfold_sf_subset, here("Data/Biological_records", "PA_Veg_vestfold_19.shp"), append = F)
 
 vestfold_df <- vestfold_sf %>% 
   st_coordinates() %>%
@@ -592,8 +597,8 @@ vestfold_df <- vestfold_sf %>%
   bind_cols(st_drop_geometry(vestfold_sf)) %>% 
   rename(x = X, y = Y) 
 
-count(vestfold_df, surface_moss)
-count(vestfold_df, surface_lichen)
+count(vestfold_sf_subset, surface_moss)
+count(vestfold_sf_subset, surface_lichen)
 
 ########################################################################
 ## Presence-absence survey - Bunger Hills 23  PLOT LEVEL OBSERVATIONS #####
