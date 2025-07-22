@@ -101,7 +101,8 @@ PO_moss_df <- terra::extract(EastAnt, PO_moss_vect, xy = FALSE, na.rm = TRUE) %>
 
 # PA RECORDS
 
-PA_Vestfold_vect <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
+PA_Vestfold_vect <- st_read(here("Data/Biological_records", "PA_Veg_vestfold_19.shp"))
+# PA_Vestfold_vect <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
 
 PA_Vestfold_df <- terra::extract(EastAnt, PA_Vestfold_vect, xy = FALSE, na.rm = TRUE) %>% 
   dplyr::select(-ID) %>% 

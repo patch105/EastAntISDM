@@ -73,7 +73,7 @@ model_types <- list("LASSO", "GAM", "RF", "BRT")
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "PA_Ensemble_Jul_16"
+scenario = "PA_Ensemble_19_DATASET"
 
 
 # Set outpath -------------------------------------------------------------
@@ -105,7 +105,9 @@ ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_union_East
 
 # Load the presence-absence records ---------------------------------------
 
-PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
+PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold_19.shp"))
+#PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
+
 
 PA_Vestfold_Veg_df <- PA_Vestfold_Veg_sf %>% 
   st_coordinates() %>%
@@ -194,7 +196,7 @@ summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirI
 names(summer_temp) <- "summer_temp"
 
 wind <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
-names(wind_speed) <- "wind"
+names(wind) <- "wind"
 
 
 # Apply some transformations
@@ -225,7 +227,7 @@ print(paste0("RECORDS FROM ", nrow(train_PB_covs) - sum(complete.cases(train_PB_
 
 train_PB_covs <- train_PB_covs[complete.cases(train_PB_covs), ] 
 # Reset the row IDs to adjust for removed rows
-rownames(train_PB_covs) <- NULL
+rownames(train_PB_covs19) <- NULL
 train_PB_covs <- dplyr::select(train_PB_covs, -ID)
 
 
@@ -712,7 +714,8 @@ pred_with_fit_PA <- pred_with_fit_PA %>%
   filter(!is.na(pred))
 
 # Evaluate prediction on test set
-fit <- evaluate_fit_PA_ensemble(x = pred_with_fit_PA)
+fit <- evaluate_fit_PA_ensemble(x = pred_with_fit_PA,
+                                outpath = outpath)
 
 eval_df.ens <- data.frame(model = "Ensemble",
                           validation_dataset = "Training data",

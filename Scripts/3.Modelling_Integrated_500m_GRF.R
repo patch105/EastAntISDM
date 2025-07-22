@@ -41,12 +41,12 @@ group <- "Lichen"
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "GRF_500m"
+scenario = "500m_ALL_DATASETS_linear"
 
 
 # Set outpath -------------------------------------------------------------
 
-outpath <- here("Outputs", "Integrated", group, scenario)
+outpath <- here("Outputs", "Integrated_ALL_DATA", group, scenario)
 
 if(!dir.exists(outpath)) {
   dir.create(outpath, showWarnings = FALSE)
@@ -76,9 +76,57 @@ PO_East_Ant_Veg_df <- PO_East_Ant_Veg_sf %>%
   rename(x = X, y = Y) 
 
 
+# Load the Plantarctica records ------------------------------------------
+
+veg_map <- st_read(here("Data/Biological_records/PlantarcticaVegetationMap.shp")) %>%
+  vect()
+
+vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp"))
+bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
+
+# Crop to East Antarctica
+veg_map <- terra::crop(veg_map, ext(ACBRS_SPVE))
+
+veg_map <- centroids(veg_map)
+
+Plantarctica_sf <- st_as_sf(veg_map)
+
+Plantarctica_df <- Plantarctica_sf %>% 
+  st_coordinates() %>%
+  as.data.frame() %>% 
+  bind_cols(st_drop_geometry(Plantarctica_sf)) %>% 
+  rename(x = X, y = Y) 
+
+
+if(group == "Moss") {
+  
+  PO_Plantarctica <- Plantarctica_df %>% 
+    filter(Vegetation == "Vegetation") %>% 
+    dplyr::select(x, y) %>% 
+    mutate(Presence = 1)
+  
+  PO_Plantarctica.sf <- Plantarctica_sf %>% 
+    filter(Vegetation == "Vegetation") %>% 
+    mutate(Presence = 1)
+}
+
+if(group == "Lichen") {
+  
+  PO_Plantarctica <- Plantarctica_df %>% 
+    filter(Vegetation == "Lichen") %>%
+    dplyr::select(x, y) %>% 
+    mutate(Presence = 1)
+  
+  PO_Plantarctica.sf <- Plantarctica_sf %>% 
+    filter(Vegetation == "Lichen") %>%
+    mutate(Presence = 1)
+}
+
+
 # Load the presence-absence records ---------------------------------------
 
 PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
+# PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold_19.shp"))
 
 PA_Vestfold_Veg_df <- PA_Vestfold_Veg_sf %>% 
   st_coordinates() %>%
@@ -110,6 +158,9 @@ if(group == "Moss") {
   PO.sf <- PO_East_Ant_Veg_sf %>% 
     filter(vegtype == "Moss")
   
+  PO_Plantarctica <- PO_Plantarctica %>% 
+    dplyr::select(x, y)
+  
   PA_vestfold <- PA_Vestfold_Veg_df %>% 
     dplyr::select(x, y, srfc_ms) %>% 
     rename(presence = srfc_ms)
@@ -134,6 +185,9 @@ if(group == "Lichen") {
   
   PO.sf <- PO_East_Ant_Veg_sf %>% 
     filter(vegtype == "Lichen")
+  
+  PO_Plantarctica <- PO_Plantarctica %>% 
+    dplyr::select(x, y)
   
   PA_vestfold <- PA_Vestfold_Veg_df %>% 
     dplyr::select(x, y, srfc_lc) %>% 
@@ -192,13 +246,9 @@ PA_bunger23 <- PA_bunger23 %>% mutate(area = 100)
 
 TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
 names(TWI) <- "TWI"
-
 slope <- rast(here("Data/Environmental_predictors/slope_500m_IceFree_EastAnt.tif"))
-names(slope) <- "slope"
-
 northness <- rast(here("Data/Environmental_predictors/northness_500m_IceFree_EastAnt.tif"))
 names(northness) <- "northness"
-
 aspect <- rast(here("Data/Environmental_predictors/aspect_500m_IceFree_EastAnt.tif"))
 names(aspect) <- "aspect"
 
@@ -211,7 +261,7 @@ names(dist_seasonal_water) <- "dist_seasonal_water"
 summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"))
 names(summer_temp) <- "summer_temp"
 
-wind <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_500m.tif"))
+wind <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
 names(wind) <- "wind"
 
 # Bias covariate
@@ -312,71 +362,111 @@ my.control.GRF <- list(coord.names = c("x", "y"),
                        addRandom = TRUE) # With random effect
 
 # Distribution formula
-distributionFormula <- ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(northness, 2) + poly(summer_temp, 2)
+# distributionFormula <- ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(northness, 2) + poly(summer_temp, 2) + poly(wind, 2)
+distributionFormula <- ~0 + sqrt_slope + TWI + northness + summer_temp + wind
 
 
 # Presence-Absence Model Fitting ------------------------------------------
 
 m.PA.GRF <- isdm(observationList = list(PAdat = PA_vestfold),
-             covars = covs,
-             mesh = mesh.range.10km.cutoff.50,
-             responseNames = c(PA = "presence"),
-             sampleAreaNames = c(PA = "area"),
-             distributionFormula = distributionFormula, 
-             biasFormula = NULL, #Intercept only
-             artefactFormulas = list(PA = ~1), # Intercept only
-             control = my.control.GRF)
+                 covars = covs,
+                 mesh = mesh.range.10km.cutoff.50,
+                 responseNames = c(PA = "presence"),
+                 sampleAreaNames = c(PA = "area"),
+                 distributionFormula = distributionFormula, 
+                 biasFormula = NULL, #Intercept only
+                 artefactFormulas = list(PA = ~1), # Intercept only
+                 control = my.control.GRF)
 
 
 
 # Presence-Only Model Fitting ----------------------------------------------
 
 
-m.PO.GRF <- isdm(observationList = list(POdat = PO), 
-             covars = covs,
-             mesh = mesh.range.10km.cutoff.50,
-             responseNames = NULL,
-             sampleAreaNames = NULL,
-             distributionFormula = distributionFormula, 
-             biasFormula = ~1,
-             artefactFormulas = NULL,
-             control = my.control.GRF)
+m.PO.GRF <- isdm(observationList = list(POdat = PO),
+                 covars = covs,
+                 mesh = mesh.range.10km.cutoff.50,
+                 responseNames = NULL,
+                 sampleAreaNames = NULL,
+                 distributionFormula = distributionFormula,
+                 biasFormula = ~1,
+                 artefactFormulas = NULL,
+                 control = my.control.GRF)
 
-m.PO.bias.GRF <- isdm(observationList = list(POdat = PO), 
-                  covars = covs,
-                  mesh = mesh.range.10km.cutoff.50,
-                  responseNames = NULL,
-                  sampleAreaNames = NULL,
-                  distributionFormula = distributionFormula, 
-                  biasFormula = ~1 + log_dist_station,
-                  artefactFormulas = NULL,
-                  control = my.control.GRF)
+m.PO.bias.GRF <- isdm(observationList = list(POdat = PO),
+                      covars = covs,
+                      mesh = mesh.range.10km.cutoff.50,
+                      responseNames = NULL,
+                      sampleAreaNames = NULL,
+                      distributionFormula = distributionFormula,
+                      biasFormula = ~1 + log_dist_station,
+                      artefactFormulas = NULL,
+                      control = my.control.GRF)
 
+# Presence-only model fitting Plantarctica --------------------------------
+
+m.PO.Plantarctica.GRF <- isdm(observationList = list(POdat = PO_Plantarctica),
+                              covars = covs,
+                              mesh = mesh.range.10km.cutoff.50,
+                              responseNames = NULL,
+                              sampleAreaNames = NULL,
+                              distributionFormula = distributionFormula,
+                              biasFormula = ~1,
+                              artefactFormulas = NULL,
+                              control = my.control.GRF)
 
 # Integrated Model Fitting ------------------------------------------------
 
-m.int.GRF <- isdm(observationList = list(POdat = PO,
-                                     PAdat = PA_vestfold),
-              covars = covs,
-              mesh = mesh.range.10km.cutoff.50,
-              responseNames = c(PO = NULL, PA = "presence"),
-              sampleAreaNames = c(PO = NULL, PA = "area"),
-              distributionFormula = distributionFormula, 
-              biasFormula = ~1, 
-              artefactFormulas = list(PA = ~1), # Intercept only
-              control = my.control.GRF) 
+# Integrated with PO and PA
+m.int.occ.VH.GRF <- isdm(observationList = list(POdat = PO,
+                                                PAdat = PA_vestfold),
+                         covars = covs,
+                         mesh = mesh.range.10km.cutoff.50,
+                         responseNames = c(PO = NULL, PA = "presence"),
+                         sampleAreaNames = c(PO = NULL, PA = "area"),
+                         distributionFormula = distributionFormula, 
+                         biasFormula = ~1, 
+                         artefactFormulas = list(PA = ~1), # Intercept only
+                         control = my.control.GRF) 
 
-m.int.bias.GRF <- isdm(observationList = list(POdat = PO,
-                                          PAdat = PA_vestfold),
-                   covars = covs,
-                   mesh = mesh.range.10km.cutoff.50,
-                   responseNames = c(PO = NULL, PA = "presence"),
-                   sampleAreaNames = c(PO = NULL, PA = "area"),
-                   distributionFormula = distributionFormula, 
-                   biasFormula = ~1 + log_dist_station, 
-                   artefactFormulas = list(PA = ~1), # Intercept only
-                   control = my.control.GRF) 
+m.int.occ.VH.bias.GRF <- isdm(observationList = list(POdat = PO,
+                                                     PAdat = PA_vestfold),
+                              covars = covs,
+                              mesh = mesh.range.10km.cutoff.50,
+                              responseNames = c(PO = NULL, PA = "presence"),
+                              sampleAreaNames = c(PO = NULL, PA = "area"),
+                              distributionFormula = distributionFormula, 
+                              biasFormula = ~1 + log_dist_station, 
+                              artefactFormulas = list(PA = ~1), # Intercept only
+                              control = my.control.GRF) 
 
+# Integrated with Plantarctica and PA
+
+m.int.Plantarctica.VH.GRF <- isdm(observationList = list(POdat = PO_Plantarctica,
+                                                         PAdat = PA_vestfold),
+                                  covars = covs,
+                                  mesh = mesh.range.10km.cutoff.50,
+                                  responseNames = c(PO = NULL, PA = "presence"),
+                                  sampleAreaNames = c(PO = NULL, PA = "area"),
+                                  distributionFormula = distributionFormula, 
+                                  biasFormula = ~1, 
+                                  artefactFormulas = list(PA = ~1), # Intercept only
+                                  control = my.control.GRF) 
+
+# COMBINE the two PO sources 
+# Integrated with both PO datasets
+PO_combined <- rbind(PO, PO_Plantarctica)
+
+m.int.occ.Plantarctica.VH.GRF <- isdm(observationList = list(POdat = PO_combined,
+                                                             PAdat = PA_vestfold),
+                                      covars = covs,
+                                      mesh = mesh.range.10km.cutoff.50,
+                                      responseNames = c(PO = NULL, PA = "presence"),
+                                      sampleAreaNames = c(PO = NULL, PA = "area"),
+                                      distributionFormula = distributionFormula, 
+                                      biasFormula = ~1, 
+                                      artefactFormulas = list(PA = ~1), # Intercept only
+                                      control = my.control.GRF) 
 
 
 # Save all models to a list -----------------------------------------------
@@ -384,8 +474,17 @@ m.int.bias.GRF <- isdm(observationList = list(POdat = PO,
 mod.list <- list(m.PA.GRF = m.PA.GRF,
                  m.PO.GRF = m.PO.GRF,
                  m.PO.bias.GRF = m.PO.bias.GRF,
-                 m.int.GRF = m.int.GRF,
-                 m.int.bias.GRF = m.int.bias.GRF)
+                 m.PO.Plantarctica.GRF = m.PO.Plantarctica.GRF,
+                 m.int.occ.VH.GRF = m.int.occ.VH.GRF,
+                 m.int.occ.VH.bias.GRF = m.int.occ.VH.bias.GRF,
+                 m.int.Plantarctica.VH.GRF = m.int.Plantarctica.VH.GRF,
+                 m.int.occ.Plantarctica.VH.GRF = m.int.occ.Plantarctica.VH.GRF)
+
+# mod.list <- list(m.PA = m.PA,
+#                  m.int.occ.VH = m.int.occ.VH,
+#                  m.int.occ.VH.bias = m.int.occ.VH.bias,
+#                  m.int.Plantarctica.VH = m.int.Plantarctica.VH,
+#                  m.int.occ.Plantarctica.VH = m.int.occ.Plantarctica.VH)
 
 
 # 3. EXTRACT MODEL RESULTS ------------------------------------------------
@@ -408,200 +507,333 @@ covs$sampAreaPA_Vestfold <- mask(rast(covs[[1]], vals=80), covs[[1]])
 covs$sampAreaPA_Bunger <- mask(rast(covs[[1]], vals=100), covs[[1]])
 
 m.PA.GRF$preds.INT.Vestfold <- predict(m.PA.GRF, 
-                                   covars = covs,
-                                   habitatArea="sampAreaPA_Vestfold",
-                                   S = 500,
-                                   intercept.terms = "PA_Intercept",
-                                   type = "intensity",
-                                   includeRandom = F,
-                                   includeFixed = T)
+                                       covars = covs,
+                                       habitatArea="sampAreaPA_Vestfold",
+                                       S = 500,
+                                       intercept.terms = "PA_Intercept",
+                                       type = "intensity",
+                                       includeRandom = T,
+                                       includeFixed = T)
 
 m.PA.GRF$preds.INT.Bunger <- predict(m.PA.GRF, 
-                                 covars = covs,
-                                 habitatArea="sampAreaPA_Bunger",
-                                 S = 500,
-                                 intercept.terms = "PA_Intercept",
-                                 type = "intensity",
-                                 includeRandom = F,
-                                 includeFixed = T)
+                                     covars = covs,
+                                     habitatArea="sampAreaPA_Bunger",
+                                     S = 500,
+                                     intercept.terms = "PA_Intercept",
+                                     type = "intensity",
+                                     includeRandom = T,
+                                     includeFixed = T)
 
 m.PA.GRF$preds.prob.Vestfold <- predict(m.PA.GRF, 
-                                    covars = covs,
-                                    habitatArea="sampAreaPA_Vestfold",
-                                    S = 500,
-                                    intercept.terms = "PA_Intercept",
-                                    type = "probability",
-                                    includeRandom = F,
-                                    includeFixed = T)
+                                        covars = covs,
+                                        habitatArea="sampAreaPA_Vestfold",
+                                        S = 500,
+                                        intercept.terms = "PA_Intercept",
+                                        type = "probability",
+                                        includeRandom = T,
+                                        includeFixed = T)
 
 m.PA.GRF$preds.prob.Bunger <- predict(m.PA.GRF, 
-                                  covars = covs,
-                                  habitatArea="sampAreaPA_Bunger",
-                                  S = 500,
-                                  intercept.terms = "PA_Intercept",
-                                  type = "probability",
-                                  includeRandom = F,
-                                  includeFixed = T)
+                                      covars = covs,
+                                      habitatArea="sampAreaPA_Bunger",
+                                      S = 500,
+                                      intercept.terms = "PA_Intercept",
+                                      type = "probability",
+                                      includeRandom = T,
+                                      includeFixed = T)
 
 m.PA.GRF$preds.GRF <- predict(m.PA.GRF,
                               covars = covs,
+                              habitatArea="sampAreaPA_Bunger",
                               S = 500, 
-                              intercept.terms = NULL,
-                              type = "intensity",
+                              intercept.terms = "PA_Intercept",
+                              type = "probability",
                               includeRandom = T,
                               includeFixed = F) # No fixed effect
 
 # Presence-only models -------------------------------------------------
 
-m.PO.GRF$preds.INT <- predict(m.PO.GRF, 
-                          covars = covs,
-                          S = 500,
-                          intercept.terms = "PO_Intercept",
-                          type = "intensity",
-                          includeRandom = F,
-                          includeFixed = T)
+m.PO.GRF$preds.INT <- predict(m.PO.GRF,
+                              covars = covs,
+                              S = 500,
+                              intercept.terms = "PO_Intercept",
+                              type = "intensity",
+                              includeRandom = T,
+                              includeFixed = T)
 
-m.PO.GRF$preds.prob <- predict(m.PO.GRF, 
-                           covars = covs,
-                           S = 500,
-                           intercept.terms = "PO_Intercept",
-                           type = "probability",
-                           includeRandom = F,
-                           includeFixed = T)
-
-m.PO.bias.GRF$preds.INT <- predict(m.PO.bias.GRF, 
+m.PO.GRF$preds.prob <- predict(m.PO.GRF,
                                covars = covs,
                                S = 500,
                                intercept.terms = "PO_Intercept",
-                               type = "intensity",
-                               includeRandom = F,
+                               type = "probability",
+                               includeRandom = T,
                                includeFixed = T)
 
-m.PO.bias.GRF$preds.prob <- predict(m.PO.bias.GRF, 
-                                covars = covs,
-                                S = 500,
-                                intercept.terms = "PO_Intercept",
-                                type = "probability",
-                                includeRandom = F,
-                                includeFixed = T)
-
-# GRF predictions
 m.PO.GRF$preds.GRF <- predict(m.PO.GRF,
                               covars = covs,
-                              S = 500, 
-                              intercept.terms = NULL,
-                              type = "intensity",
+                              S = 500,
+                              intercept.terms = "PO_Intercept",
+                              type = "probability",
                               includeRandom = T,
                               includeFixed = F) # No fixed effect
 
-m.PO.bias.GRF$preds.GRF <- predict(m.PO.bias.GRF,
-                              covars = covs,
-                              S = 500, 
-                              intercept.terms = NULL,
-                              type = "intensity",
-                              includeRandom = T,
-                              includeFixed = F) # No fixed effect
-
-
-# Integrated models -------------------------------------------------------
-
-m.int.GRF$preds.INT.Vestfold <- predict(m.int.GRF, 
-                                    covars = covs,
-                                    habitatArea = "sampAreaPA_Vestfold",
-                                    S = 500,
-                                    intercept.terms = "PA_Intercept",
-                                    type = "intensity",
-                                    includeRandom = F,
-                                    includeFixed = T)
-
-m.int.GRF$preds.INT.Bunger <- predict(m.int.GRF, 
-                                  covars = covs,
-                                  habitatArea = "sampAreaPA_Bunger",
-                                  S = 500,
-                                  intercept.terms = "PA_Intercept",
-                                  type = "intensity",
-                                  includeRandom = F,
-                                  includeFixed = T)
-
-m.int.GRF$preds.prob.Vestfold <- predict(m.int.GRF, 
-                                     covars = covs,
-                                     habitatArea = "sampAreaPA_Vestfold",
-                                     S = 500,
-                                     intercept.terms = "PA_Intercept",
-                                     type = "probability",
-                                     includeRandom = F,
-                                     includeFixed = T)
-
-m.int.GRF$preds.prob.Bunger <- predict(m.int.GRF, 
+m.PO.bias.GRF$preds.INT <- predict(m.PO.bias.GRF,
                                    covars = covs,
-                                   habitatArea = "sampAreaPA_Bunger",
                                    S = 500,
-                                   intercept.terms = "PA_Intercept",
-                                   type = "probability",
-                                   includeRandom = F,
+                                   intercept.terms = "PO_Intercept",
+                                   type = "intensity",
+                                   includeRandom = T,
                                    includeFixed = T)
 
-m.int.bias.GRF$preds.INT.Vestfold <- predict(m.int.bias.GRF, 
-                                         covars = covs,
-                                         habitatArea = "sampAreaPA_Vestfold",
-                                         S = 500,
-                                         intercept.terms = "PA_Intercept",
-                                         type = "intensity",
-                                         includeRandom = F,
-                                         includeFixed = T)
+m.PO.bias.GRF$preds.prob <- predict(m.PO.bias.GRF,
+                                    covars = covs,
+                                    S = 500,
+                                    intercept.terms = "PO_Intercept",
+                                    type = "probability",
+                                    includeRandom = T,
+                                    includeFixed = T)
 
-m.int.bias.GRF$preds.INT.Bunger <- predict(m.int.bias.GRF, 
-                                       covars = covs,
-                                       habitatArea = "sampAreaPA_Bunger",
-                                       S = 500,
-                                       intercept.terms = "PA_Intercept",
-                                       type = "intensity",
-                                       includeRandom = F,
-                                       includeFixed = T)
-
-m.int.bias.GRF$preds.prob.Vestfold <- predict(m.int.bias.GRF, 
-                                          covars = covs,
-                                          habitatArea = "sampAreaPA_Vestfold",
-                                          S = 500,
-                                          intercept.terms = "PA_Intercept",
-                                          type = "probability",
-                                          includeRandom = F,
-                                          includeFixed = T)
-
-m.int.bias.GRF$preds.prob.Bunger <- predict(m.int.bias.GRF, 
-                                        covars = covs,
-                                        habitatArea = "sampAreaPA_Bunger",
-                                        S = 500,
-                                        intercept.terms = "PA_Intercept",
-                                        type = "probability",
-                                        includeRandom = F,
-                                        includeFixed = T)
-
-# GRF predictions
-m.int.GRF$preds.GRF <- predict(m.int.GRF,
+m.PO.bias.GRF$preds.GRF <- predict(m.PO.bias.GRF,
                                    covars = covs,
-                                   S = 500, 
-                                   intercept.terms = NULL,
-                                   type = "intensity",
+                                   S = 500,
+                                   intercept.terms = "PO_Intercept",
+                                   type = "probability",
                                    includeRandom = T,
                                    includeFixed = F) # No fixed effect
 
-m.int.bias.GRF$preds.GRF <- predict(m.int.bias.GRF,
-                               covars = covs,
-                               S = 500, 
-                               intercept.terms = NULL,
-                               type = "intensity",
-                               includeRandom = T,
-                               includeFixed = F) # No fixed effect
+# Presence-only Plantarctica models ------------------------------------------
 
+m.PO.Plantarctica.GRF$preds.INT <- predict(m.PO.Plantarctica.GRF,
+                                           covars = covs,
+                                           S = 500,
+                                           intercept.terms = "PO_Intercept",
+                                           type = "intensity",
+                                           includeRandom = T,
+                                           includeFixed = T)
+
+m.PO.Plantarctica.GRF$preds.prob <- predict(m.PO.Plantarctica.GRF,
+                                            covars = covs,
+                                            S = 500,
+                                            intercept.terms = "PO_Intercept",
+                                            type = "probability",
+                                            includeRandom = T,
+                                            includeFixed = T)
+
+m.PO.Plantarctica.GRF$preds.GRF <- predict(m.PO.Plantarctica.GRF,
+                                           covars = covs,
+                                           S = 500,
+                                           intercept.terms = "PO_Intercept",
+                                           type = "probability",
+                                           includeRandom = T,
+                                           includeFixed = F) # No fixed effect
+
+# Integrated models -------------------------------------------------------
+
+# Integrated PO + PA model
+
+m.int.occ.VH.GRF$preds.INT.Vestfold <- predict(m.int.occ.VH.GRF, 
+                                               covars = covs,
+                                               habitatArea = "sampAreaPA_Vestfold",
+                                               S = 500,
+                                               intercept.terms = "PA_Intercept",
+                                               type = "intensity",
+                                               includeRandom = T,
+                                               includeFixed = T)
+
+m.int.occ.VH.GRF$preds.INT.Bunger <- predict(m.int.occ.VH.GRF,
+                                             covars = covs,
+                                             habitatArea = "sampAreaPA_Bunger",
+                                             S = 500,
+                                             intercept.terms = "PA_Intercept",
+                                             type = "intensity",
+                                             includeRandom = T,
+                                             includeFixed = T)
+
+m.int.occ.VH.GRF$preds.prob.Vestfold <- predict(m.int.occ.VH.GRF, 
+                                                covars = covs,
+                                                habitatArea = "sampAreaPA_Vestfold",
+                                                S = 500,
+                                                intercept.terms = "PA_Intercept",
+                                                type = "probability",
+                                                includeRandom = T,
+                                                includeFixed = T)
+
+m.int.occ.VH.GRF$preds.prob.Bunger <- predict(m.int.occ.VH.GRF,
+                                              covars = covs,
+                                              habitatArea = "sampAreaPA_Bunger",
+                                              S = 500,
+                                              intercept.terms = "PA_Intercept",
+                                              type = "probability",
+                                              includeRandom = T,
+                                              includeFixed = T)
+
+m.int.occ.VH.GRF$preds.GRF <- predict(m.int.occ.VH.GRF,
+                                      covars = covs,
+                                      habitatArea = "sampAreaPA_Bunger",
+                                      S = 500,
+                                      intercept.terms = "PA_Intercept",
+                                      type = "probability",
+                                      includeRandom = T,
+                                      includeFixed = F)
+
+# Integrated PO + PA model with bias
+
+m.int.occ.VH.bias.GRF$preds.INT.Vestfold <- predict(m.int.occ.VH.bias.GRF, 
+                                                    covars = covs,
+                                                    habitatArea = "sampAreaPA_Vestfold",
+                                                    S = 500,
+                                                    intercept.terms = "PA_Intercept",
+                                                    type = "intensity",
+                                                    includeRandom = T,
+                                                    includeFixed = T)
+
+m.int.occ.VH.bias.GRF$preds.INT.Bunger <- predict(m.int.occ.VH.bias.GRF,
+                                                  covars = covs,
+                                                  habitatArea = "sampAreaPA_Bunger",
+                                                  S = 500,
+                                                  intercept.terms = "PA_Intercept",
+                                                  type = "intensity",
+                                                  includeRandom = T,
+                                                  includeFixed = T)
+
+m.int.occ.VH.bias.GRF$preds.prob.Vestfold <- predict(m.int.occ.VH.bias.GRF, 
+                                                     covars = covs,
+                                                     habitatArea = "sampAreaPA_Vestfold",
+                                                     S = 500,
+                                                     intercept.terms = "PA_Intercept",
+                                                     type = "probability",
+                                                     includeRandom = T,
+                                                     includeFixed = T)
+
+m.int.occ.VH.bias.GRF$preds.prob.Bunger <- predict(m.int.occ.VH.bias.GRF,
+                                                   covars = covs,
+                                                   habitatArea = "sampAreaPA_Bunger",
+                                                   S = 500,
+                                                   intercept.terms = "PA_Intercept",
+                                                   type = "probability",
+                                                   includeRandom = T,
+                                                   includeFixed = T)
+
+m.int.occ.VH.bias.GRF$preds.GRF <- predict(m.int.occ.VH.bias.GRF,
+                                           covars = covs,
+                                           habitatArea = "sampAreaPA_Bunger",
+                                           S = 500,
+                                           intercept.terms = "PA_Intercept",
+                                           type = "probability",
+                                           includeRandom = T,
+                                           includeFixed = F)
+
+
+# Integrated with Plantarctica and PA
+
+m.int.Plantarctica.VH.GRF$preds.INT.Vestfold <- predict(m.int.Plantarctica.VH.GRF, 
+                                                        covars = covs,
+                                                        habitatArea = "sampAreaPA_Vestfold",
+                                                        S = 500,
+                                                        intercept.terms = "PA_Intercept",
+                                                        type = "intensity",
+                                                        includeRandom = T,
+                                                        includeFixed = T)
+
+m.int.Plantarctica.VH.GRF$preds.INT.Bunger <- predict(m.int.Plantarctica.VH.GRF,
+                                                      covars = covs,
+                                                      habitatArea = "sampAreaPA_Bunger",
+                                                      S = 500,
+                                                      intercept.terms = "PA_Intercept",
+                                                      type = "intensity",
+                                                      includeRandom = T,
+                                                      includeFixed = T)
+
+m.int.Plantarctica.VH.GRF$preds.prob.Vestfold <- predict(m.int.Plantarctica.VH.GRF, 
+                                                         covars = covs,
+                                                         habitatArea = "sampAreaPA_Vestfold",
+                                                         S = 500,
+                                                         intercept.terms = "PA_Intercept",
+                                                         type = "probability",
+                                                         includeRandom = T,
+                                                         includeFixed = T)
+
+m.int.Plantarctica.VH.GRF$preds.prob.Bunger <- predict(m.int.Plantarctica.VH.GRF,
+                                                       covars = covs,
+                                                       habitatArea = "sampAreaPA_Bunger",
+                                                       S = 500,
+                                                       intercept.terms = "PA_Intercept",
+                                                       type = "probability",
+                                                       includeRandom = T,
+                                                       includeFixed = T)
+
+m.int.Plantarctica.VH.GRF$preds.GRF <- predict(m.int.Plantarctica.VH.GRF,
+                                               covars = covs,
+                                               habitatArea = "sampAreaPA_Bunger",
+                                               S = 500,
+                                               intercept.terms = "PA_Intercept",
+                                               type = "probability",
+                                               includeRandom = T,
+                                               includeFixed = F)
+
+# Integrated with both PO datasets
+
+m.int.occ.Plantarctica.VH.GRF$preds.INT.Vestfold <- predict(m.int.occ.Plantarctica.VH.GRF, 
+                                                            covars = covs,
+                                                            habitatArea = "sampAreaPA_Vestfold",
+                                                            S = 500,
+                                                            intercept.terms = "PA_Intercept",
+                                                            type = "intensity",
+                                                            includeRandom = T,
+                                                            includeFixed = T)
+
+m.int.occ.Plantarctica.VH.GRF$preds.INT.Bunger <- predict(m.int.occ.Plantarctica.VH.GRF,
+                                                          covars = covs,
+                                                          habitatArea = "sampAreaPA_Bunger",
+                                                          S = 500,
+                                                          intercept.terms = "PA_Intercept",
+                                                          type = "intensity",
+                                                          includeRandom = T,
+                                                          includeFixed = T)
+
+m.int.occ.Plantarctica.VH.GRF$preds.prob.Vestfold <- predict(m.int.occ.Plantarctica.VH.GRF, 
+                                                             covars = covs,
+                                                             habitatArea = "sampAreaPA_Vestfold",
+                                                             S = 500,
+                                                             intercept.terms = "PA_Intercept",
+                                                             type = "probability",
+                                                             includeRandom = T,
+                                                             includeFixed = T)
+
+m.int.occ.Plantarctica.VH.GRF$preds.prob.Bunger <- predict(m.int.occ.Plantarctica.VH.GRF,
+                                                           covars = covs,
+                                                           habitatArea = "sampAreaPA_Bunger",
+                                                           S = 500,
+                                                           intercept.terms = "PA_Intercept",
+                                                           type = "probability",
+                                                           includeRandom = T,
+                                                           includeFixed = T)
+
+m.int.occ.Plantarctica.VH.GRF$preds.GRF <- predict(m.int.occ.Plantarctica.VH.GRF,
+                                                   covars = covs,
+                                                   habitatArea = "sampAreaPA_Bunger",
+                                                   S = 500,
+                                                   intercept.terms = "PA_Intercept",
+                                                   type = "probability",
+                                                   includeRandom = T,
+                                                   includeFixed = F)
 
 # Save all models to a list again-----------------------------------------
 
 mod.list <- list(m.PA.GRF = m.PA.GRF,
                  m.PO.GRF = m.PO.GRF,
                  m.PO.bias.GRF = m.PO.bias.GRF,
-                 m.int.GRF = m.int.GRF,
-                 m.int.bias.GRF = m.int.bias.GRF)
+                 m.PO.Plantarctica.GRF = m.PO.Plantarctica.GRF,
+                 m.int.occ.VH.GRF = m.int.occ.VH.GRF,
+                 m.int.occ.VH.bias.GRF = m.int.occ.VH.bias.GRF,
+                 m.int.Plantarctica.VH.GRF = m.int.Plantarctica.VH.GRF,
+                 m.int.occ.Plantarctica.VH.GRF = m.int.occ.Plantarctica.VH.GRF)
+
+# mod.list <- list(m.PA = m.PA,
+#                  m.int.occ.VH = m.int.occ.VH,
+#                  m.int.occ.VH.bias = m.int.occ.VH.bias,
+#                  m.int.Plantarctica.VH = m.int.Plantarctica.VH,
+#                  m.int.occ.Plantarctica.VH = m.int.occ.Plantarctica.VH)
 
 
 # Plotting predictions ----------------------------------------------------
@@ -626,6 +858,7 @@ partial_dependence_func(mod.list = mod.list,
                         covs_no_bias = covs_no_bias,
                         outpath = outpath,
                         ice_free.EastAnt = ice_free.EastAnt)
+
 
 # ############################################
 # # Evaluate the ensemble predictions on BUNGER PA dataset ----------------
@@ -669,3 +902,4 @@ partial_dependence_func(mod.list = mod.list,
 #                                     outpath = outpath)
 # 
 # write.csv(eval_df, file = paste0(outpath, "/RISDM_eval_df.csv"))
+

@@ -58,7 +58,7 @@ PO_ensemble_lichen_pred <- rast(here(inpath, scenario, "Prediction_ensemble_East
 
 # Ensemble Plantarctica
 
-scenario = "Plantarctica_Ensemble_Jul_16"
+scenario = "Plantarctica_Ensemble_Jul_17"
 
 inpath <- here("Outputs/Ensemble_Plantarctica/Lichen")
 
@@ -69,7 +69,7 @@ Plantarctica_ensemble_lichen_pred <- rast(here(inpath, scenario, "Prediction_ens
 
 # Ensemble PA 
 
-scenario = "PA_Ensemble_Jul_16"
+scenario = "PA_Ensemble_Jul_17"
 
 inpath <- here("Outputs/Ensemble/Lichen")
 
@@ -88,7 +88,7 @@ PA_ensemble_lichen_pred <- rast(here(inpath, scenario, "Prediction_ensemble_East
 
 # Poisson point process PO 
 
-scenario = "500m_ALL_DATASETS"
+scenario = "500m_ALL_DATASETS_linear"
 
 PO_PPP_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
   filter(model == "m.PO") %>% 
@@ -100,7 +100,7 @@ PO_PPP_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DA
 
 # Poisson point process Plantarctica
 
-scenario = "500m_ALL_DATASETS"
+scenario = "500m_ALL_DATASETS_linear"
 
 Plantarctica_PPP_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv"))%>% 
   filter(model == "m.PO.Plantarctica") %>% 
@@ -112,7 +112,7 @@ Plantarctica_PPP_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integra
 
 # Poisson point process PA 
 
-scenario = "500m_ALL_DATASETS"
+scenario = "500m_ALL_DATASETS_linear"
 
 PA_PPP_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
   filter(model == "m.PA") %>% 
@@ -384,7 +384,7 @@ Bunger_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
                            common.legend = TRUE, legend = "bottom")
 
 # Save
-ggsave(paste0(outpath, "/Single_dataset_prediction_plot_lichen_BUNGER.png"), Bunger_plot,
+ggsave(paste0(outpath, "/Single_dataset_prediction_plot_lichen_BUNGER_LINEAR.png"), Bunger_plot,
        width = 20, height = 13, , unit = "cm", dpi = 400)
 
 
@@ -407,7 +407,7 @@ PO_ensemble_moss_pred <- rast(here(inpath, scenario, "Prediction_ensemble_East_A
 
 # Ensemble Plantarctica
 
-scenario = "Plantarctica_Ensemble_Jul_16"
+scenario = "Plantarctica_Ensemble_Jul_17"
 
 inpath <- here("Outputs/Ensemble_Plantarctica/Moss")
 
@@ -418,7 +418,7 @@ Plantarctica_ensemble_moss_pred <- rast(here(inpath, scenario, "Prediction_ensem
 
 # PA 
 
-scenario = "PA_Ensemble_Jul_16"
+scenario = "PA_Ensemble_Jul_17"
 
 inpath <- here("Outputs/Ensemble/Moss")
 
@@ -437,7 +437,7 @@ PA_ensemble_moss_pred <- rast(here(inpath, scenario, "Prediction_ensemble_East_A
 
 # Poisson point process PO 
 
-scenario = "500m_ALL_DATASETS"
+scenario = "500m_ALL_DATASETS_linear"
 
 PO_PPP_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
   filter(model == "m.PO") %>% 
@@ -449,7 +449,7 @@ PO_PPP_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA
 
 # Poisson point process Plantarctica
 
-scenario = "500m_ALL_DATASETS"
+scenario = "500m_ALL_DATASETS_linear"
 
 Plantarctica_PPP_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv"))%>% 
   filter(model == "m.PO.Plantarctica") %>% 
@@ -461,7 +461,7 @@ Plantarctica_PPP_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrate
 
 # Poisson point process PA 
 
-scenario = "500m_ALL_DATASETS"
+scenario = "500m_ALL_DATASETS_linear"
 
 PA_PPP_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
   filter(model == "m.PA") %>% 
@@ -488,7 +488,7 @@ single_dataset_moss_eval_df <- bind_rows(
   arrange(validation_dataset)  
 
 write.csv(single_dataset_moss_eval_df,
-          file = here(outpath, "Single_dataset_moss_eval_df.csv"),
+          file = here(outpath, "Single_dataset_moss_eval_df_LINEAR.csv"),
           row.names = FALSE)
 
 # Figure x. Single dataset approaches - moss ----------------------------
@@ -730,8 +730,501 @@ Bunger_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
                          common.legend = TRUE, legend = "bottom")
 
 # Save
-ggsave(paste0(outpath, "/Single_dataset_prediction_plot_moss_BUNGER.png"), Bunger_plot,
+ggsave(paste0(outpath, "/Single_dataset_prediction_plot_moss_BUNGER_LINEAR.png"), Bunger_plot,
        width = 20, height = 13, , unit = "cm", dpi = 400)
 
 
+
+
+####################################################################
+# 2. INTEGRATED APPROACHES - LICHEN -----------------------------------
+###################################################################
+
+
+# PO + PA
+
+scenario = "500m_ALL_DATASETS"
+
+PO_PA_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
+  filter(model == "m.int.occ.VH") %>% 
+  mutate(validation_dataset = "Bunger23") %>% 
+  relocate(validation_dataset, .after = model)
+
+PO_PA_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/BUNGER_Probability_prediction_m.int.occ.VH_median.tif"))
+
+
+# PO bias + PA
+
+scenario = "500m_ALL_DATASETS"
+
+PO_PA_bias_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
+  filter(model == "m.int.occ.VH.bias") %>% 
+  mutate(validation_dataset = "Bunger23") %>% 
+  relocate(validation_dataset, .after = model)
+
+PO_PA_bias_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/BUNGER_Probability_prediction_m.int.occ.VH.bias_median.tif"))
+
+
+# Plantarctica + PA
+
+scenario = "500m_ALL_DATASETS"
+
+Plantarctica_PA_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
+  filter(model == "m.int.Plantarctica.VH") %>% 
+  mutate(validation_dataset = "Bunger23") %>% 
+  relocate(validation_dataset, .after = model)
+
+Plantarctica_PA_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/BUNGER_Probability_prediction_m.int.Plantarctica.VH_median.tif"))
+
+
+# PO + Plantarctica + PA
+
+scenario = "500m_ALL_DATASETS"
+
+PO_Plantarctica_PA_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
+  filter(model == "m.int.occ.Plantarctica.VH") %>% 
+  mutate(validation_dataset = "Bunger23") %>% 
+  relocate(validation_dataset, .after = model)
+
+PO_Plantarctica_PA_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/BUNGER_Probability_prediction_m.int.occ.Plantarctica.VH_median.tif"))
+
+
+
+
+# Table x. Integrated approaches - LICHEN---------------------------------
+
+#ordered by validation dataset
+integrated_lichen_eval_df <- bind_rows(
+  PO_PA_lichen_eval_df %>% mutate(model = "PO + PA"),
+  PO_PA_bias_lichen_eval_df %>% mutate(model = "PO bias + PA"),
+  Plantarctica_PA_lichen_eval_df %>% mutate(model = "Satellite + PA"),
+  PO_Plantarctica_PA_lichen_eval_df %>% mutate(model = "PO + Satellite + PA"))
+
+# ) %>% 
+#   mutate(validation_dataset = factor(validation_dataset, levels = c("Training data","Vestfold", "Bunger23"))) %>% 
+#   arrange(validation_dataset) 
+
+write.csv(integrated_lichen_eval_df,
+          file = here(outpath, "Integrated_lichen_eval_df.csv"),
+          row.names = FALSE)
+
+
+# Figure x. Integrated approaches - LICHEN ----------------------------
+
+# Vestfold plot
+
+p1 <- PO_PA_lichen_pred %>%
+  crop(ext(vestfold_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Lichen - PO + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+p2 <- PO_PA_bias_lichen_pred %>%
+  crop(ext(vestfold_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Lichen - PO bias + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+p3 <- Plantarctica_PA_lichen_pred %>%
+  crop(ext(vestfold_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Lichen - Satellite + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+p4 <- PO_Plantarctica_PA_lichen_pred %>%
+  crop(ext(vestfold_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Lichen - PO + Satellite + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+
+Vestfold_plot <- ggarrange(p1, p2, p3, p4,
+                           ncol = 2, nrow = 2,
+                           common.legend = TRUE, legend = "bottom")
+
+# Save
+ggsave(paste0(outpath, "/Integrated_prediction_plot_lichen_VESTFOLD.png"), Vestfold_plot,
+       width = 20, height = 13, , unit = "cm", dpi = 400)
+
+
+
+######
+####### Bunger plot
+######
+
+p1 <- PO_PA_lichen_pred %>%
+  crop(ext(bunger_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Lichen - PO + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+p2 <- PO_PA_bias_lichen_pred %>%
+  crop(ext(bunger_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Lichen - PO bias + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+p3 <- Plantarctica_PA_lichen_pred %>%
+  crop(ext(bunger_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Lichen - Satellite + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+p4 <- PO_Plantarctica_PA_lichen_pred %>%
+  crop(ext(bunger_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Lichen - PO + Satellite + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+
+bunger_plot <- ggarrange(p1, p2, p3, p4,
+                           ncol = 2, nrow = 2,
+                           common.legend = TRUE, legend = "bottom")
+
+# Save
+ggsave(paste0(outpath, "/Integrated_prediction_plot_lichen_BUNGER.png"), bunger_plot,
+       width = 20, height = 13, , unit = "cm", dpi = 400)
+
+
+
+####################################################################
+# 2. INTEGRATED APPROACHES - MOSS -----------------------------------
+###################################################################
+
+
+# PO + PA
+
+scenario = "500m_ALL_DATASETS"
+
+PO_PA_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
+  filter(model == "m.int.occ.VH") %>% 
+  mutate(validation_dataset = "Bunger23") %>% 
+  relocate(validation_dataset, .after = model)
+
+PO_PA_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/BUNGER_Probability_prediction_m.int.occ.VH_median.tif"))
+
+
+# PO bias + PA
+
+scenario = "500m_ALL_DATASETS"
+
+PO_PA_bias_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
+  filter(model == "m.int.occ.VH.bias") %>% 
+  mutate(validation_dataset = "Bunger23") %>% 
+  relocate(validation_dataset, .after = model)
+
+PO_PA_bias_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/BUNGER_Probability_prediction_m.int.occ.VH.bias_median.tif"))
+
+
+# Plantarctica + PA
+
+scenario = "500m_ALL_DATASETS"
+
+Plantarctica_PA_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
+  filter(model == "m.int.Plantarctica.VH") %>% 
+  mutate(validation_dataset = "Bunger23") %>% 
+  relocate(validation_dataset, .after = model)
+
+Plantarctica_PA_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/BUNGER_Probability_prediction_m.int.Plantarctica.VH_median.tif"))
+
+
+# PO + Plantarctica + PA
+
+scenario = "500m_ALL_DATASETS"
+
+PO_Plantarctica_PA_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
+  filter(model == "m.int.occ.Plantarctica.VH") %>% 
+  mutate(validation_dataset = "Bunger23") %>% 
+  relocate(validation_dataset, .after = model)
+
+PO_Plantarctica_PA_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/BUNGER_Probability_prediction_m.int.occ.Plantarctica.VH_median.tif"))
+
+
+
+
+# Table x. Integrated approaches - LICHEN---------------------------------
+
+#ordered by validation dataset
+integrated_moss_eval_df <- bind_rows(
+  PO_PA_moss_eval_df %>% mutate(model = "PO + PA"),
+  PO_PA_bias_moss_eval_df %>% mutate(model = "PO bias + PA"),
+  Plantarctica_PA_moss_eval_df %>% mutate(model = "Satellite + PA"),
+  PO_Plantarctica_PA_moss_eval_df %>% mutate(model = "PO + Satellite + PA"))
+
+# ) %>% 
+#   mutate(validation_dataset = factor(validation_dataset, levels = c("Training data","Vestfold", "Bunger23"))) %>% 
+#   arrange(validation_dataset) 
+
+write.csv(integrated_moss_eval_df,
+          file = here(outpath, "Integrated_moss_eval_df.csv"),
+          row.names = FALSE)
+
+
+# Figure x. Integrated approaches - moss ----------------------------
+
+# Vestfold plot
+
+p1 <- PO_PA_moss_pred %>%
+  crop(ext(vestfold_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Moss - PO + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+p2 <- PO_PA_bias_moss_pred %>%
+  crop(ext(vestfold_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Moss - PO bias + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+p3 <- Plantarctica_PA_moss_pred %>%
+  crop(ext(vestfold_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Moss - Satellite + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+p4 <- PO_Plantarctica_PA_moss_pred %>%
+  crop(ext(vestfold_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Moss - PO + Satellite + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+
+Vestfold_plot <- ggarrange(p1, p2, p3, p4,
+                           ncol = 2, nrow = 2,
+                           common.legend = TRUE, legend = "bottom")
+
+# Save
+ggsave(paste0(outpath, "/Integrated_prediction_plot_moss_VESTFOLD.png"), Vestfold_plot,
+       width = 20, height = 13, , unit = "cm", dpi = 400)
+
+
+
+######
+####### Bunger plot
+######
+
+p1 <- PO_PA_moss_pred %>%
+  crop(ext(bunger_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Moss - PO + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+p2 <- PO_PA_bias_moss_pred %>%
+  crop(ext(bunger_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Moss - PO bias + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+p3 <- Plantarctica_PA_moss_pred %>%
+  crop(ext(bunger_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Moss - Satellite + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+p4 <- PO_Plantarctica_PA_moss_pred %>%
+  crop(ext(bunger_boundary)) %>%
+  as.data.frame(xy = T) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Median)) +
+  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+                     name = "Probability") +
+  coord_fixed() +
+  labs(title = "Moss - PO + Satellite + PA") +
+  theme_bw() +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+
+bunger_plot <- ggarrange(p1, p2, p3, p4,
+                         ncol = 2, nrow = 2,
+                         common.legend = TRUE, legend = "bottom")
+
+# Save
+ggsave(paste0(outpath, "/Integrated_prediction_plot_moss_BUNGER.png"), bunger_plot,
+       width = 20, height = 13, , unit = "cm", dpi = 400)
 

@@ -67,8 +67,8 @@ model_types <- list("Maxent", "LASSO", "GAM", "RF", "BRT")
 
 # Set group ---------------------------------------------------------------
 
- #group <- "Lichen"
- group <- "Moss"
+group <- "Lichen"
+# group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
@@ -194,7 +194,7 @@ summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirI
 names(summer_temp) <- "summer_temp"
 
 wind <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
-names(wind_speed) <- "wind"
+names(wind) <- "wind"
 
 # Bias covariate
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_500m.tif"))
@@ -823,7 +823,8 @@ pred_with_PO <- pred_with_PO %>%
 
 # Evaluate prediction on test set
 fit <- evaluate_fit_PO_ensemble(x = pred_with_PO,
-                             pred_cur_ensemble = pred_cur_ensemble)
+                             pred_cur_ensemble = pred_cur_ensemble,
+                             outpath = outpath)
 
 eval_df.ens <- data.frame(model = "Ensemble",
                           validation_dataset = "Training data",

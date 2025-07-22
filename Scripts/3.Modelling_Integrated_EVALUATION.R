@@ -35,8 +35,9 @@ source(here("Scripts/Helper_functions_ISDM.R"))
 
 # Set group ---------------------------------------------------------------
 
-# group <- "Lichen"
- group <- "Moss"
+group <- "Lichen"
+
+# group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
@@ -52,22 +53,36 @@ scenario = "500m_ALL_DATASETS"
 inpath <- paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/", group, "/", scenario )
 outpath <-  paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/", group, "/", scenario )
 
-m.PA <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.PA_median.tif")))
-m.PO <- list(preds.prob = rast(paste0(inpath, "/Probability_prediction_m.PO_median.tif")))
-m.PO.bias <- list(preds.prob = rast(paste0(inpath, "/Probability_prediction_m.PO.bias_median.tif")))
-m.PO.Plantarctica <- list(preds.prob.Bunger = rast(paste0(inpath, "/Probability_prediction_m.PO.Plantarctica_median.tif")))
-m.int.occ.VH <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.int.occ.VH_median.tif")))
-# m.int.occ.VH.bias <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.int.occ.VH.bias_median.tif")))
-# m.int.Plantarctica.VH <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Intensity_prediction_plot_m.int.Plantarctica.VH.tif")))
-# m.int.occ.Plantarctica.VH <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Intensity_prediction_plot_m.int.occ.Plantarctica.VH.tif")))
+m.PA.Bunger <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.PA_median.tif")))
+m.PA.Vestfold <- list(preds.prob.Vestfold = rast(paste0(inpath, "/VESTFOLD_Probability_prediction_m.PA_median.tif")))
 
+m.PO <- list(preds.prob = rast(paste0(inpath, "/Probability_prediction_m.PO_median.tif")))
+
+m.PO.bias <- list(preds.prob = rast(paste0(inpath, "/Probability_prediction_m.PO.bias_median.tif")))
+
+m.PO.Plantarctica <- list(preds.prob = rast(paste0(inpath, "/Probability_prediction_m.PO.Plantarctica_median.tif")))
+
+m.int.occ.VH.Bunger <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.int.occ.VH_median.tif")))
+m.int.occ.VH.Vestfold <- list(preds.prob.Vestfold = rast(paste0(inpath, "/VESTFOLD_Probability_prediction_m.int.occ.VH_median.tif")))
+
+m.int.occ.VH.bias.Bunger <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.int.occ.VH.bias_median.tif")))
+m.int.occ.VH.bias.Vestfold <- list(preds.prob.Vestfold = rast(paste0(inpath, "/VESTFOLD_Probability_prediction_m.int.occ.VH.bias_median.tif")))
+
+m.int.Plantarctica.VH.Bunger <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.int.Plantarctica.VH_median.tif")))
+m.int.Plantarctica.VH.Vestfold <- list(preds.prob.Vestfold = rast(paste0(inpath, "/VESTFOLD_Probability_prediction_m.int.Plantarctica.VH_median.tif")))
+
+m.int.occ.Plantarctica.VH.Bunger <- list(preds.prob.Bunger = rast(paste0(inpath, "/BUNGER_Probability_prediction_m.int.occ.Plantarctica.VH_median.tif")))
+m.int.occ.Plantarctica.VH.Vestfold <- list(preds.prob.Vestfold = rast(paste0(inpath, "/VESTFOLD_Probability_prediction_m.int.occ.Plantarctica.VH_median.tif")))
 
 # List them all
-mod.list <- list(m.PA = m.PA,
+mod.list <- list(m.PA = m.PA.Bunger,
                  m.PO = m.PO,
                  m.PO.bias = m.PO.bias,
                  m.PO.Plantarctica = m.PO.Plantarctica,
-                 m.int.occ.VH = m.int.occ.VH)
+                 m.int.occ.VH = m.int.occ.VH.Bunger,
+                 m.int.occ.VH.bias = m.int.occ.VH.bias.Bunger,
+                 m.int.Plantarctica.VH = m.int.Plantarctica.VH.Bunger,
+                 m.int.occ.Plantarctica.VH = m.int.occ.Plantarctica.VH.Bunger)
 
 # Load model predictions (w GRF) --------------------------------------------------
 
@@ -91,7 +106,7 @@ mod.list <- list(m.PA = m.PA,
 
 
 ############################################
-# Evaluate the ensemble predictions on BUNGER PA dataset ----------------
+# Evaluate the predictions on BUNGER PA dataset ----------------
 ############################################
 
 # Load the presence-absence records ---------------------------------------
@@ -130,8 +145,171 @@ PA_bunger23 <- PA_bunger23 %>%
 # Evaluate the predictions on the Bunger PA dataset ----------------------
 
 eval_df <- evaluate_prediction_raster_isdm(mod.list = mod.list,
-                                           outpath = outpath)
+                                           outpath = outpath,
+                                           eval_dataset = PA_bunger23)
 
 write.csv(eval_df, file = paste0(outpath, "/RISDM_eval_df.csv"))
 
+
+
+
+############################################
+# Evaluate the MODEL FIT (PA & INTEGRATED) on VESTFOLD PA dataset  ---------
+############################################
+
+mod.list <- list(m.PA = m.PA.Vestfold,
+                 m.int.occ.VH = m.int.occ.VH.Vestfold,
+                 m.int.occ.VH.bias = m.int.occ.VH.bias.Vestfold,
+                 m.int.Plantarctica.VH = m.int.Plantarctica.VH.Vestfold,
+                 m.int.occ.Plantarctica.VH = m.int.occ.Plantarctica.VH.Vestfold)
+
+# Load the presence-absence records ---------------------------------------
+
+PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold_19.shp"))
+#PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
+
+
+PA_Vestfold_Veg_df <- PA_Vestfold_Veg_sf %>% 
+  st_coordinates() %>%
+  as.data.frame() %>% 
+  bind_cols(st_drop_geometry(PA_Vestfold_Veg_sf)) %>% 
+  rename(x = X, y = Y)
+
+
+# Format for modelling  ----------------------------------------------------
+
+if(group == "Moss") {
+  
+  PA_Vestfold <- PA_Vestfold_Veg_df %>% 
+    dplyr::select(x, y, srfc_ms) %>% 
+    rename(Presence = srfc_ms)
+  
+}
+
+if(group == "Lichen") {
+  
+  PA_Vestfold <- PA_Vestfold_Veg_df %>% 
+    dplyr::select(x, y, srfc_lc) %>% 
+    rename(Presence = srfc_lc)
+  
+}
+
+
+
+# Evaluate the predictions on the Vestfold PA dataset  -------------------
+
+eval_df <- evaluate_fit_PA_raster_isdm(mod.list = mod.list,
+                                       outpath = outpath,
+                                       eval_dataset = PA_Vestfold)
+
+write.csv(eval_df, file = paste0(outpath, "/RISDM_eval_PA_fit_df.csv"))
+
+
+
+
+############################################
+# Evaluate the MODEL FIT (PO) on PO dataset  ----------------------------
+############################################
+
+mod.list <- list(m.PO = m.PO,
+                 m.PO.bias = m.PO.bias)
+
+# Load the presence records -------------------------------------
+
+PO_East_Ant_Veg_sf <- st_read(here("Data/Biological_records", "PO_Veg_East_Ant.shp"))
+
+PO_East_Ant_Veg_df <- PO_East_Ant_Veg_sf %>% 
+  st_coordinates() %>%
+  as.data.frame() %>% 
+  bind_cols(st_drop_geometry(PO_East_Ant_Veg_sf)) %>% 
+  rename(x = X, y = Y) 
+
+if(group == "Moss") {
+  
+  PO <- PO_East_Ant_Veg_df %>% 
+    filter(vegtype == "Moss") %>% 
+    dplyr::select(x, y) %>% 
+    mutate(Presence = 1)
+  
+}
+
+if(group == "Lichen") {
+  
+  PO <- PO_East_Ant_Veg_df %>% 
+    filter(vegtype == "Lichen") %>% 
+    dplyr::select(x, y) %>% 
+    mutate(Presence = 1)
+  
+}
+
+
+# Evaluate the predictions on the PO records ---------
+
+eval_df <- evaluate_fit_PO_raster_isdm(mod.list = mod.list,
+                                       outpath = outpath,
+                                       PO = PO,
+                                       type = "PO")
+
+write.csv(eval_df, file = paste0(outpath, "/RISDM_eval_PO_fit_df.csv"))
+
+
+
+
+############################################
+# Evaluate the MODEL FIT (Plantarctica) on Plantarctica dataset  -------------
+############################################
+
+mod.list <- list(m.PO.Plantarctica = m.PO.Plantarctica)
+
+# Load the presence-only records ------------------------------------------
+
+ACBRS <- st_read(here("Data/Environmental_predictors/ACBRs_v2_2016.shp"), crs = 3031) %>% filter(ACBR_Name == "East Antarctica")
+ACBRS_SPVE <- vect(ACBRS)
+
+veg_map <- st_read(here("Data/Biological_records/PlantarcticaVegetationMap.shp")) %>%
+  vect()
+
+vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp"))
+bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
+
+# Crop to East Antarctica
+veg_map <- terra::crop(veg_map, ext(ACBRS_SPVE))
+
+veg_map <- centroids(veg_map)
+
+PO_East_Ant_Veg_sf <- st_as_sf(veg_map)
+
+PO_East_Ant_Veg_df <- PO_East_Ant_Veg_sf %>% 
+  st_coordinates() %>%
+  as.data.frame() %>% 
+  bind_cols(st_drop_geometry(PO_East_Ant_Veg_sf)) %>% 
+  rename(x = X, y = Y) 
+
+
+if(group == "Moss") {
+  
+  Plantarctica <- PO_East_Ant_Veg_df %>% 
+    filter(Vegetation == "Vegetation") %>% 
+    dplyr::select(x, y) %>% 
+    mutate(Presence = 1)
+  
+}
+
+if(group == "Lichen") {
+  
+  Plantarctica <- PO_East_Ant_Veg_df %>% 
+    filter(Vegetation == "Lichen") %>%
+    dplyr::select(x, y) %>% 
+    mutate(Presence = 1)
+
+}
+
+# Evaluate the predictions on the PO records ---------
+
+eval_df <- evaluate_fit_PO_raster_isdm(mod.list = mod.list,
+                                       outpath = outpath,
+                                       PO = Plantarctica,
+                                       type = "Plantarctica")
+
+write.csv(eval_df, file = paste0(outpath, "/RISDM_eval_PO_fit_df.csv"))
 

@@ -41,7 +41,7 @@ group <- "Lichen"
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "500m_ALL_DATASETS"
+scenario = "500m_ALL_DATASETS_linear"
 
 
 # Set outpath -------------------------------------------------------------
@@ -125,7 +125,8 @@ if(group == "Lichen") {
 
 # Load the presence-absence records ---------------------------------------
 
-PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
+PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold_19.shp"))
+#PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
 
 PA_Vestfold_Veg_df <- PA_Vestfold_Veg_sf %>% 
   st_coordinates() %>%
@@ -261,7 +262,7 @@ summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirI
 names(summer_temp) <- "summer_temp"
 
 wind <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
-names(wind_speed) <- "wind"
+names(wind) <- "wind"
 
 # Bias covariate
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_500m.tif"))
@@ -361,7 +362,8 @@ my.control.GRF <- list(coord.names = c("x", "y"),
                        addRandom = TRUE) # With random effect
 
 # Distribution formula
-distributionFormula <- ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(northness, 2) + poly(summer_temp, 2) + poly(wind, 2)
+#distributionFormula <- ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(northness, 2) + poly(summer_temp, 2) + poly(wind, 2)
+distributionFormula <- ~0 + sqrt_slope + TWI + northness + summer_temp + wind
 
 
 # Presence-Absence Model Fitting ------------------------------------------
@@ -381,34 +383,34 @@ m.PA <- isdm(observationList = list(PAdat = PA_vestfold),
 # Presence-Only Model Fitting ----------------------------------------------
 
 
-m.PO <- isdm(observationList = list(POdat = PO), 
+m.PO <- isdm(observationList = list(POdat = PO),
              covars = covs,
              mesh = mesh.range.10km.cutoff.50,
              responseNames = NULL,
              sampleAreaNames = NULL,
-             distributionFormula = distributionFormula, 
+             distributionFormula = distributionFormula,
              biasFormula = ~1,
              artefactFormulas = NULL,
              control = my.control)
 
-m.PO.bias <- isdm(observationList = list(POdat = PO), 
+m.PO.bias <- isdm(observationList = list(POdat = PO),
                   covars = covs,
                   mesh = mesh.range.10km.cutoff.50,
                   responseNames = NULL,
                   sampleAreaNames = NULL,
-                  distributionFormula = distributionFormula, 
+                  distributionFormula = distributionFormula,
                   biasFormula = ~1 + log_dist_station,
                   artefactFormulas = NULL,
                   control = my.control)
 
 # Presence-only model fitting Plantarctica --------------------------------
 
-m.PO.Plantarctica <- isdm(observationList = list(POdat = PO_Plantarctica), 
+m.PO.Plantarctica <- isdm(observationList = list(POdat = PO_Plantarctica),
                           covars = covs,
                           mesh = mesh.range.10km.cutoff.50,
                           responseNames = NULL,
                           sampleAreaNames = NULL,
-                          distributionFormula = distributionFormula, 
+                          distributionFormula = distributionFormula,
                           biasFormula = ~1,
                           artefactFormulas = NULL,
                           control = my.control)
@@ -478,6 +480,12 @@ mod.list <- list(m.PA = m.PA,
                  m.int.Plantarctica.VH = m.int.Plantarctica.VH,
                  m.int.occ.Plantarctica.VH = m.int.occ.Plantarctica.VH)
 
+# mod.list <- list(m.PA = m.PA,
+#                  m.int.occ.VH = m.int.occ.VH,
+#                  m.int.occ.VH.bias = m.int.occ.VH.bias,
+#                  m.int.Plantarctica.VH = m.int.Plantarctica.VH,
+#                  m.int.occ.Plantarctica.VH = m.int.occ.Plantarctica.VH)
+
 
 # 3. EXTRACT MODEL RESULTS ------------------------------------------------
 
@@ -536,7 +544,7 @@ m.PA$preds.prob.Bunger <- predict(m.PA,
 
 # Presence-only models -------------------------------------------------
 
-m.PO$preds.INT <- predict(m.PO, 
+m.PO$preds.INT <- predict(m.PO,
                           covars = covs,
                           S = 500,
                           intercept.terms = "PO_Intercept",
@@ -544,7 +552,7 @@ m.PO$preds.INT <- predict(m.PO,
                           includeRandom = F,
                           includeFixed = T)
 
-m.PO$preds.prob <- predict(m.PO, 
+m.PO$preds.prob <- predict(m.PO,
                            covars = covs,
                            S = 500,
                            intercept.terms = "PO_Intercept",
@@ -552,7 +560,7 @@ m.PO$preds.prob <- predict(m.PO,
                            includeRandom = F,
                            includeFixed = T)
 
-m.PO.bias$preds.INT <- predict(m.PO.bias, 
+m.PO.bias$preds.INT <- predict(m.PO.bias,
                                covars = covs,
                                S = 500,
                                intercept.terms = "PO_Intercept",
@@ -560,7 +568,7 @@ m.PO.bias$preds.INT <- predict(m.PO.bias,
                                includeRandom = F,
                                includeFixed = T)
 
-m.PO.bias$preds.prob <- predict(m.PO.bias, 
+m.PO.bias$preds.prob <- predict(m.PO.bias,
                                 covars = covs,
                                 S = 500,
                                 intercept.terms = "PO_Intercept",
@@ -570,7 +578,7 @@ m.PO.bias$preds.prob <- predict(m.PO.bias,
 
 # Presence-only Plantarctica models ------------------------------------------
 
-m.PO.Plantarctica$preds.INT <- predict(m.PO.Plantarctica, 
+m.PO.Plantarctica$preds.INT <- predict(m.PO.Plantarctica,
                                        covars = covs,
                                        S = 500,
                                        intercept.terms = "PO_Intercept",
@@ -578,7 +586,7 @@ m.PO.Plantarctica$preds.INT <- predict(m.PO.Plantarctica,
                                        includeRandom = F,
                                        includeFixed = T)
 
-m.PO.Plantarctica$preds.prob <- predict(m.PO.Plantarctica, 
+m.PO.Plantarctica$preds.prob <- predict(m.PO.Plantarctica,
                                         covars = covs,
                                         S = 500,
                                         intercept.terms = "PO_Intercept",
@@ -753,6 +761,12 @@ mod.list <- list(m.PA = m.PA,
                  m.int.Plantarctica.VH = m.int.Plantarctica.VH,
                  m.int.occ.Plantarctica.VH = m.int.occ.Plantarctica.VH)
 
+# mod.list <- list(m.PA = m.PA,
+#                  m.int.occ.VH = m.int.occ.VH,
+#                  m.int.occ.VH.bias = m.int.occ.VH.bias,
+#                  m.int.Plantarctica.VH = m.int.Plantarctica.VH,
+#                  m.int.occ.Plantarctica.VH = m.int.occ.Plantarctica.VH)
+
 
 # Plotting predictions ----------------------------------------------------
 
@@ -776,6 +790,7 @@ partial_dependence_func(mod.list = mod.list,
                         covs_no_bias = covs_no_bias,
                         outpath = outpath,
                         ice_free.EastAnt = ice_free.EastAnt)
+
 
 # ############################################
 # # Evaluate the ensemble predictions on BUNGER PA dataset ----------------
