@@ -35,14 +35,14 @@ source(here("Scripts/Helper_functions_ISDM.R"))
 
 # Set group ---------------------------------------------------------------
 
-group <- "Lichen"
+# group <- "Lichen"
 
-# group <- "Moss"
+ group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "500m_ALL_DATASETS"
+scenario = "500m_ALL_DATASETS_SEASON19"
 
 
 # Load model predictions (no GRF) --------------------------------------------------
@@ -151,6 +151,53 @@ eval_df <- evaluate_prediction_raster_isdm(mod.list = mod.list,
 write.csv(eval_df, file = paste0(outpath, "/RISDM_eval_df.csv"))
 
 
+
+
+############################################
+# Evaluate the presence-only predictions on VESTFOLD PA dataset ----------------
+############################################
+
+mod.list <- list(m.PO = m.PO,
+                 m.PO.bias = m.PO.bias,
+                 m.PO.Plantarctica = m.PO.Plantarctica)
+
+# Load the presence-absence records ---------------------------------------
+
+PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold_19.shp"))
+#PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
+
+
+PA_Vestfold_Veg_df <- PA_Vestfold_Veg_sf %>% 
+  st_coordinates() %>%
+  as.data.frame() %>% 
+  bind_cols(st_drop_geometry(PA_Vestfold_Veg_sf)) %>% 
+  rename(x = X, y = Y)
+
+
+# Format for modelling  ----------------------------------------------------
+
+if(group == "Moss") {
+  
+  PA_Vestfold <- PA_Vestfold_Veg_df %>% 
+    dplyr::select(x, y, srfc_ms) %>% 
+    rename(Presence = srfc_ms)
+  
+}
+
+if(group == "Lichen") {
+  
+  PA_Vestfold <- PA_Vestfold_Veg_df %>% 
+    dplyr::select(x, y, srfc_lc) %>% 
+    rename(Presence = srfc_lc)
+  
+}
+
+
+eval_df <- evaluate_prediction_raster_isdm(mod.list = mod.list,
+                                           outpath = outpath,
+                                           eval_dataset = PA_Vestfold)
+
+write.csv(eval_df, file = paste0(outpath, "/RISDM_PO_models_VESTFOLD_eval_df.csv"))
 
 
 ############################################
@@ -311,5 +358,5 @@ eval_df <- evaluate_fit_PO_raster_isdm(mod.list = mod.list,
                                        PO = Plantarctica,
                                        type = "Plantarctica")
 
-write.csv(eval_df, file = paste0(outpath, "/RISDM_eval_PO_fit_df.csv"))
+write.csv(eval_df, file = paste0(outpath, "/RISDM_eval_Plantarctica_fit_df.csv"))
 

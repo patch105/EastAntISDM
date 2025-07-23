@@ -861,7 +861,7 @@ colnames(pred_cur_ensemble)[grepl("pred", colnames(pred_cur_ensemble))] <- "pred
 
 # Load the presence-absence records ---------------------------------------
 
-PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
+PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold_19.shp"))
 
 PA_Vestfold_Veg_df <- PA_Vestfold_Veg_sf %>% 
   st_coordinates() %>%

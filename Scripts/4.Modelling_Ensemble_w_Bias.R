@@ -67,13 +67,13 @@ model_types <- list("Maxent", "LASSO", "GAM", "RF", "BRT")
 
 # Set group ---------------------------------------------------------------
 
-group <- "Lichen"
-# group <- "Moss"
+#group <- "Lichen"
+ group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "PO_Ensemble_Jul_16"
+scenario = "PO_Ensemble_Jul_22"
 
 
 # Set outpath -------------------------------------------------------------
@@ -839,7 +839,7 @@ eval_df.ens <- data.frame(model = "Ensemble",
 
 # Load the presence-absence records ---------------------------------------
 
-PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
+PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold_19.shp"))
 
 PA_Vestfold_Veg_df <- PA_Vestfold_Veg_sf %>% 
   st_coordinates() %>%

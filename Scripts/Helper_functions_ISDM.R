@@ -1469,13 +1469,28 @@ evaluate_fit_PO_ensemble <- function(x,
                        partialROC = NA,
                        brier = NA) 
   
-  p <- x %>% 
+  ##########
+  pred_with_PO <- x %>% 
+    dplyr::select(x, y, Presence, pred) %>% 
+    relocate(Presence, .after = pred)
+  
+  pred_cur_ensemble <- pred_cur_ensemble %>% 
+    dplyr::select(x, y, pred) 
+  
+  
+  # Combine presence and background points
+  background <- anti_join(pred_cur_ensemble, pred_with_PO, by = c("x", "y")) %>% 
+    mutate(Presence = 0) # Background points
+  
+  pred_with_PO_background <- rbind(pred_with_PO, background)
+  
+  p <- pred_with_PO_background %>% 
     mutate(Presence2 = ifelse(Presence == 1, "Present", "Background")) %>%
     ggplot(aes(x = Presence2, y = pred)) +
     geom_violin(fill = "gray30", alpha = 0.2, trim = TRUE, width = 0.7, color = NA) +
     geom_boxplot(fill = "gray30", alpha = 0.4, width = 0.1, outlier.shape = NA) +
     #geom_jitter(width = 0.05, alpha = 0.01, size = 0.5, color = "purple") +
-    labs(x = NULL, y = "Probability of presence", title = name) +
+    labs(x = NULL, y = "Probability of presence", title = "PO") +
     #ylim(0, 250) +
     theme_classic(base_size = 12) +
     theme(legend.position = "none",
@@ -1537,7 +1552,7 @@ evaluate_fit_PA_ensemble <- function(x,
     geom_violin(fill = "gray30", alpha = 0.2, trim = TRUE, width = 0.7, color = NA) +
     geom_boxplot(fill = "gray30", alpha = 0.4, width = 0.1, outlier.shape = NA) +
     #geom_jitter(width = 0.05, alpha = 0.01, size = 0.5, color = "purple") +
-    labs(x = NULL, y = "Probability of presence", title = name) +
+    labs(x = NULL, y = "Probability of presence", title = "PA") +
     #ylim(0, 250) +
     theme_classic(base_size = 12) +
     theme(legend.position = "none",
