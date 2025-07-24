@@ -184,7 +184,7 @@ Plantarctica_PPP_lichen_eval_df <- Plantarctica_PPP_lichen_eval_df %>%
 Plantarctica_PPP_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/Probability_prediction_m.PO.Plantarctica_median.tif"))
 
 
-# Poisson point process PA 
+# Poisson point process PA (VESTFOLD)
 
 scenario = "500m_ALL_DATASETS_SEASON19"
 
@@ -208,6 +208,29 @@ PA_PPP_lichen_eval_df <- PA_PPP_lichen_eval_df %>%
 PA_PPP_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/BUNGER_Probability_prediction_m.PA_median.tif"))
 
 
+# Poisson point process PA (BUNGER)
+
+scenario = "500m_ALL_DATASETS_BUNGER_linear"
+
+PA_PPP_BUNGER_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
+  filter(model == "m.PA") %>% 
+  mutate(validation_dataset = "Vestfold") %>% 
+  relocate(validation_dataset, .after = model)
+
+fit <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_PA_fit_df.csv")) [1,]
+
+PA_PPP_BUNGER_lichen_eval_df <- PA_PPP_BUNGER_lichen_eval_df %>% 
+  add_row(X = 3,
+          model = "m.PA",
+          validation_dataset = "Training data",
+          ROC = fit$ROC,
+          PRG = fit$PRG,
+          boyce = fit$boyce,
+          partialROC = fit$partialROC,
+          brier = fit$brier)
+
+PA_PPP_BUNGER_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/VESTFOLD_Probability_prediction_m.PA_median.tif"))
+
 
 # Table x. Single dataset approaches - LICHEN---------------------------------
 
@@ -219,7 +242,8 @@ single_dataset_lichen_eval_df <- bind_rows(
   PA_ensemble_BUNGER_lichen_eval_df %>% mutate(model = "PA Ensemble"),
   PO_PPP_lichen_eval_df %>% mutate(model = "PO PPP"),
   Plantarctica_PPP_lichen_eval_df %>% mutate(model = "Plantarctica PPP"),
-  PA_PPP_lichen_eval_df %>% mutate(model = "PA PPP")
+  PA_PPP_lichen_eval_df %>% mutate(model = "PA PPP"),
+  PA_PPP_BUNGER_lichen_eval_df %>% mutate(model = "PA PPP") 
 ) %>% 
   mutate(validation_dataset = factor(validation_dataset, levels = c("Training data","Vestfold", "Bunger23"))) %>% 
   arrange(validation_dataset) 
@@ -397,7 +421,7 @@ p1 <- PO_ensemble_lichen_pred %>%
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -425,7 +449,7 @@ p2 <- Plantarctica_ensemble_lichen_pred %>%
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -450,7 +474,7 @@ p3 <- PA_ensemble_BUNGER_lichen_pred %>%
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -475,7 +499,7 @@ p4 <- PO_PPP_lichen_pred %>%
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -500,7 +524,7 @@ p5 <- Plantarctica_PPP_lichen_pred %>%
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -515,7 +539,7 @@ p5 <- Plantarctica_PPP_lichen_pred %>%
         axis.ticks.y = element_blank(),
         panel.grid = element_blank())
 
-p6 <- PA_PPP_lichen_pred %>%
+p6 <- PA_PPP_BUNGER_lichen_pred %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
@@ -525,7 +549,7 @@ p6 <- PA_PPP_lichen_pred %>%
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -687,7 +711,7 @@ p1b <- PO_ensemble_lichen_pred %>%
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -714,7 +738,7 @@ p2b <- Plantarctica_ensemble_lichen_pred %>%
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -740,7 +764,7 @@ p3b <- PA_ensemble_lichen_pred %>%
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -766,7 +790,7 @@ p4b <- PO_PPP_lichen_pred %>%
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -791,7 +815,7 @@ p5b <- Plantarctica_PPP_lichen_pred %>%
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -816,7 +840,7 @@ p6b <- PA_PPP_lichen_pred %>%
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -883,7 +907,7 @@ Plantarctica_ensemble_moss_eval_df <- read.csv(file = here(inpath, scenario, "En
 Plantarctica_ensemble_moss_pred <- rast(here(inpath, scenario, "Prediction_ensemble_East_Antarctica.tif"))
 
 
-# PA 
+# PA ensemble (VESTFOLD)
 
 scenario = "PA_Ensemble_19_DATASET"
 
@@ -900,6 +924,25 @@ PA_ensemble_moss_eval_df <- read.csv(file = here(inpath, scenario, "Ensemble_eva
           brier = NA)
 
 PA_ensemble_moss_pred <- rast(here(inpath, scenario, "Prediction_ensemble_East_Antarctica.tif"))
+
+
+# PA ensemble (BUNGER)
+
+scenario = "PA_Ensemble_BUNGER"
+
+inpath <- here("Outputs/Ensemble/Moss")
+
+PA_ensemble_BUNGER_moss_eval_df <- read.csv(file = here(inpath, scenario, "Ensemble_eval_df.csv")) %>% 
+  add_row(X = 3,
+          model = "Ensemble",
+          validation_dataset = "Bunger",
+          ROC = NA,
+          PRG = NA,
+          boyce = NA,
+          partialROC = NA,
+          brier = NA)
+
+PA_ensemble_BUNGER_moss_pred <- rast(here(inpath, scenario, "Prediction_ensemble_East_Antarctica.tif"))
 
 
 # Poisson point process PO 
@@ -974,7 +1017,7 @@ Plantarctica_PPP_moss_eval_df <- Plantarctica_PPP_moss_eval_df %>%
 Plantarctica_PPP_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/Probability_prediction_m.PO.Plantarctica_median.tif"))
 
 
-# Poisson point process PA 
+# Poisson point process PA (VESTFOLD)
 
 scenario = "500m_ALL_DATASETS_SEASON19"
 
@@ -998,6 +1041,28 @@ PA_PPP_moss_eval_df <- PA_PPP_moss_eval_df %>%
 PA_PPP_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/BUNGER_Probability_prediction_m.PA_median.tif"))
 
 
+# Poisson point process PA (BUNGER)
+
+scenario = "500m_ALL_DATASETS_BUNGER_linear"
+
+PA_PPP_BUNGER_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
+  filter(model == "m.PA") %>% 
+  mutate(validation_dataset = "Vestfold") %>% 
+  relocate(validation_dataset, .after = model)
+
+fit <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_PA_fit_df.csv")) [1,]
+
+PA_PPP_BUNGER_moss_eval_df <- PA_PPP_BUNGER_moss_eval_df %>% 
+  add_row(X = 3,
+          model = "m.PA",
+          validation_dataset = "Training data",
+          ROC = fit$ROC,
+          PRG = fit$PRG,
+          boyce = fit$boyce,
+          partialROC = fit$partialROC,
+          brier = fit$brier)
+
+PA_PPP_BUNGER_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/VESTFOLD_Probability_prediction_m.PA_median.tif"))
 
 
 # Table x. Single dataset approaches - MOSS---------------------------------
@@ -1007,9 +1072,11 @@ single_dataset_moss_eval_df <- bind_rows(
   PO_ensemble_moss_eval_df %>% mutate(model = "PO Ensemble"),
   Plantarctica_ensemble_moss_eval_df %>% mutate(model = "Plantarctica Ensemble"),
   PA_ensemble_moss_eval_df %>% mutate(model = "PA Ensemble"),
+  PA_ensemble_BUNGER_moss_eval_df %>% mutate(model = "PA Ensemble"),
   PO_PPP_moss_eval_df %>% mutate(model = "PO PPP"),
   Plantarctica_PPP_moss_eval_df %>% mutate(model = "Plantarctica PPP"),
-  PA_PPP_moss_eval_df %>% mutate(model = "PA PPP")
+  PA_PPP_moss_eval_df %>% mutate(model = "PA PPP"),
+  PA_PPP_BUNGER_moss_eval_df %>% mutate(model = "PA PPP")
 ) %>% 
   mutate(validation_dataset = factor(validation_dataset, levels = c("Training data","Vestfold", "Bunger23"))) %>% 
   arrange(validation_dataset)  
@@ -1182,7 +1249,7 @@ p1 <- PO_ensemble_moss_pred  %>%
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -1210,7 +1277,7 @@ p2 <- Plantarctica_ensemble_moss_pred  %>%
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -1225,7 +1292,7 @@ p2 <- Plantarctica_ensemble_moss_pred  %>%
         axis.ticks.y = element_blank(),
         panel.grid = element_blank())
 
-p3 <- PA_ensemble_moss_pred  %>%
+p3 <- PA_ensemble_BUNGER_moss_pred  %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
@@ -1235,7 +1302,7 @@ p3 <- PA_ensemble_moss_pred  %>%
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -1260,7 +1327,7 @@ p4 <- PO_PPP_moss_pred  %>%
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -1285,7 +1352,7 @@ p5 <- Plantarctica_PPP_moss_pred  %>%
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -1300,7 +1367,7 @@ p5 <- Plantarctica_PPP_moss_pred  %>%
         axis.ticks.y = element_blank(),
         panel.grid = element_blank())
 
-p6 <- PA_PPP_moss_pred  %>%
+p6 <- PA_PPP_BUNGER_moss_pred  %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
@@ -1310,7 +1377,7 @@ p6 <- PA_PPP_moss_pred  %>%
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -1469,7 +1536,7 @@ p1b <- PO_ensemble_moss_pred  %>%
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -1496,7 +1563,7 @@ p2b <- Plantarctica_ensemble_moss_pred  %>%
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -1521,7 +1588,7 @@ p3b <- PA_ensemble_moss_pred  %>%
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -1546,7 +1613,7 @@ p4b <- PO_PPP_moss_pred  %>%
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -1571,7 +1638,7 @@ p5b <- Plantarctica_PPP_moss_pred  %>%
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -1596,7 +1663,7 @@ p6b <- PA_PPP_moss_pred  %>%
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
              shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
                      name = NULL,
                      guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
@@ -2134,4 +2201,4 @@ ggsave(filename = paste0(outpath, "/FIGURE_5_", scenario_all, ".png"), Figure_5[
 
 # ARCHIVE COLOUR FOR PRESENCE - ABSENCE VIRIDIS ---------------------------
 
-# c("Presence" = "red", "Absence" = "black")
+# c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1])

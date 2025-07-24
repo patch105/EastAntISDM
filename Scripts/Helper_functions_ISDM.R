@@ -1322,7 +1322,8 @@ evaluate_prediction_isdm <- function(mod.list,
 
 evaluate_prediction_raster_isdm <- function(mod.list,
                                             outpath,
-                                            eval_dataset) { 
+                                            eval_dataset,
+                                            type) { 
   
   mod_names <- names(mod.list)
   
@@ -1335,14 +1336,28 @@ evaluate_prediction_raster_isdm <- function(mod.list,
     name <- mod_names[i] 
     
     # If the model name contains PA or Integrated, pull out Bunger predictions
-    if(grepl("PA", name, fixed = T) | grepl("int", name, fixed = T)) {
+    if(grepl("PA", name, fixed = T) | grepl("int", name, fixed = T)) { 
       
-      # Match predictions to PA locations
-      eval_dataset$pred <- terra::extract(Model$preds.prob.Bunger$Median, eval_dataset[, c("x", "y")])[,2]
+      if(type == "Vestfold") { #If predicting from VH data
+        
+        # Match predictions to PA locations
+        eval_dataset$pred <- terra::extract(Model$preds.prob.Bunger$Median, eval_dataset[, c("x", "y")])[,2]
+        
+        pred_with_PA <- eval_dataset
+        
+      }
       
-      pred_with_PA <- eval_dataset
-      
+      if(type == "Bunger") { #If predicting from BH data
+        
+        # Match predictions to PA locations
+        eval_dataset$pred <- terra::extract(Model$preds.prob.Vestfold$Median, eval_dataset[, c("x", "y")])[,2]
+        
+        pred_with_PA <- eval_dataset
+        
+      }
     }
+    
+
     
     # If PO, there's only one prediction
     if(grepl("PO", name, fixed = T)) {
@@ -1578,7 +1593,8 @@ evaluate_fit_PA_ensemble <- function(x,
 
 evaluate_fit_PA_raster_isdm <- function(mod.list,
                                         outpath,
-                                        eval_dataset) { 
+                                        eval_dataset,
+                                        type = NA) { 
   
   mod_names <- names(mod.list)
   
@@ -1595,10 +1611,23 @@ evaluate_fit_PA_raster_isdm <- function(mod.list,
     # If the model name contains PA or Integrated, pull out Bunger predictions
     if(grepl("PA", name, fixed = T) | grepl("int", name, fixed = T)) {
       
-      # Match predictions to PA locations
-      eval_dataset$pred <- terra::extract(Model$preds.prob.Vestfold$Median, eval_dataset[, c("x", "y")])[,2]
+      if(type == "Vestfold") { # If models fit with VH data
+        
+        # Match predictions to PA locations
+        eval_dataset$pred <- terra::extract(Model$preds.prob.Vestfold$Median, eval_dataset[, c("x", "y")])[,2]
+        
+        pred_with_PA <- eval_dataset 
+        
+      }
       
-      pred_with_PA <- eval_dataset
+      if(type == "Bunger") { # If models fit with BH data
+        
+        # Match predictions to PA locations
+        eval_dataset$pred <- terra::extract(Model$preds.prob.Bunger$Median, eval_dataset[, c("x", "y")])[,2]
+        
+        pred_with_PA <- eval_dataset 
+        
+      }
       
     }
     

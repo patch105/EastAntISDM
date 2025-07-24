@@ -146,7 +146,8 @@ PA_bunger23 <- PA_bunger23 %>%
 
 eval_df <- evaluate_prediction_raster_isdm(mod.list = mod.list,
                                            outpath = outpath,
-                                           eval_dataset = PA_bunger23)
+                                           eval_dataset = PA_bunger23,
+                                           type = "Vestfold")
 
 write.csv(eval_df, file = paste0(outpath, "/RISDM_eval_df.csv"))
 
@@ -195,7 +196,8 @@ if(group == "Lichen") {
 
 eval_df <- evaluate_prediction_raster_isdm(mod.list = mod.list,
                                            outpath = outpath,
-                                           eval_dataset = PA_Vestfold)
+                                           eval_dataset = PA_Vestfold,
+                                           type = NA)
 
 write.csv(eval_df, file = paste0(outpath, "/RISDM_PO_models_VESTFOLD_eval_df.csv"))
 
@@ -247,7 +249,8 @@ if(group == "Lichen") {
 
 eval_df <- evaluate_fit_PA_raster_isdm(mod.list = mod.list,
                                        outpath = outpath,
-                                       eval_dataset = PA_Vestfold)
+                                       eval_dataset = PA_Vestfold,
+                                       type = "Vestfold")
 
 write.csv(eval_df, file = paste0(outpath, "/RISDM_eval_PA_fit_df.csv"))
 
