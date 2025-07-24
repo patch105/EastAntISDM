@@ -842,17 +842,17 @@ ggsave(paste0(outpath, "/Single_dataset_prediction_plot_lichen_BUNGER_W_DATA_", 
 
 
 ###########################
-### FIGURE 3
+### FIGURE 4
 ###########################
 
-Figure_3 <- ggarrange(p1b, p2b, p3b, p4b, p5b, p6b,
+Figure_4 <- ggarrange(p1b, p2b, p3b, p4b, p5b, p6b,
                       p1, p2, p3, p4, p5, p6,
                       ncol = 3,
                       nrow = 4,
                       common.legend = T,
                       legend.position = "bottom")
 
-ggsave(filename = paste0(outpath, "/FIGURE_3_", scenario_all, ".png"), Figure_3[[1]],
+ggsave(filename = paste0(outpath, "/FIGURE_4_", scenario_all, ".png"), Figure_4[[1]],
        width = 20, height = 30, unit = "cm", dpi = 400)
 
 
@@ -1622,17 +1622,17 @@ ggsave(paste0(outpath, "/Single_dataset_prediction_plot_moss_BUNGER_W_DATA_", sc
 
 
 ###########################
-### FIGURE 4
+### FIGURE 5
 ###########################
 
-Figure_4 <- ggarrange(p1b, p2b, p3b, p4b, p5b, p6b,
+Figure_5 <- ggarrange(p1b, p2b, p3b, p4b, p5b, p6b,
                       p1, p2, p3, p4, p5, p6,
                       ncol = 3,
                       nrow = 4,
                       common.legend = T,
                       legend.position = "bottom")
 
-ggsave(filename = paste0(outpath, "/FIGURE_4_", scenario_all, ".png"), Figure_4[[1]],
+ggsave(filename = paste0(outpath, "/FIGURE_5_", scenario_all, ".png"), Figure_5[[1]],
        width = 20, height = 30, unit = "cm", dpi = 400)
 
 # 
