@@ -41,7 +41,7 @@ group <- "Lichen"
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "500m_ALL_DATASETS_linear"
+scenario = "500m_ALL_DATASETS_BUNGER_linear"
 
 
 # Set outpath -------------------------------------------------------------
@@ -125,6 +125,7 @@ if(group == "Lichen") {
 
 # Load the presence-absence records ---------------------------------------
 
+
 PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold_19.shp"))
 #PA_Vestfold_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_vestfold.shp"))
 
@@ -134,7 +135,6 @@ PA_Vestfold_Veg_df <- PA_Vestfold_Veg_sf %>%
   bind_cols(st_drop_geometry(PA_Vestfold_Veg_sf)) %>% 
   rename(x = X, y = Y)
 
-
 PA_Bunger23_Veg_sf <- st_read(here("Data/Biological_records", "PA_Veg_bunger23.shp"))
 
 PA_Bunger23_Veg_df <- PA_Bunger23_Veg_sf %>% 
@@ -142,7 +142,6 @@ PA_Bunger23_Veg_df <- PA_Bunger23_Veg_sf %>%
   as.data.frame() %>% 
   bind_cols(st_drop_geometry(PA_Bunger23_Veg_sf)) %>% 
   rename(x = X, y = Y)
-
 
 
 
@@ -362,13 +361,13 @@ my.control.GRF <- list(coord.names = c("x", "y"),
                        addRandom = TRUE) # With random effect
 
 # Distribution formula
-#distributionFormula <- ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(northness, 2) + poly(summer_temp, 2) + poly(wind, 2)
+# distributionFormula <- ~0 + poly(sqrt_slope, 2) + poly(TWI, 2) + poly(northness, 2) + poly(summer_temp, 2) + poly(wind, 2)
 distributionFormula <- ~0 + sqrt_slope + TWI + northness + summer_temp + wind
 
 
 # Presence-Absence Model Fitting ------------------------------------------
 
-m.PA <- isdm(observationList = list(PAdat = PA_vestfold),
+m.PA <- isdm(observationList = list(PAdat = PA_bunger23),
              covars = covs,
              mesh = mesh.range.10km.cutoff.50,
              responseNames = c(PA = "presence"),
@@ -419,7 +418,7 @@ m.PO.Plantarctica <- isdm(observationList = list(POdat = PO_Plantarctica),
 
 # Integrated with PO and PA
 m.int.occ.VH <- isdm(observationList = list(POdat = PO,
-                                           PAdat = PA_vestfold),
+                                           PAdat = PA_bunger23),
                     covars = covs,
                     mesh = mesh.range.10km.cutoff.50,
                     responseNames = c(PO = NULL, PA = "presence"),
@@ -430,7 +429,7 @@ m.int.occ.VH <- isdm(observationList = list(POdat = PO,
                     control = my.control) 
 
 m.int.occ.VH.bias <- isdm(observationList = list(POdat = PO,
-                                                PAdat = PA_vestfold),
+                                                PAdat = PA_bunger23),
                          covars = covs,
                          mesh = mesh.range.10km.cutoff.50,
                          responseNames = c(PO = NULL, PA = "presence"),
@@ -443,7 +442,7 @@ m.int.occ.VH.bias <- isdm(observationList = list(POdat = PO,
 # Integrated with Plantarctica and PA
 
 m.int.Plantarctica.VH <- isdm(observationList = list(POdat = PO_Plantarctica,
-                                           PAdat = PA_vestfold),
+                                           PAdat = PA_bunger23),
                     covars = covs,
                     mesh = mesh.range.10km.cutoff.50,
                     responseNames = c(PO = NULL, PA = "presence"),
@@ -458,7 +457,7 @@ m.int.Plantarctica.VH <- isdm(observationList = list(POdat = PO_Plantarctica,
 PO_combined <- rbind(PO, PO_Plantarctica)
 
 m.int.occ.Plantarctica.VH <- isdm(observationList = list(POdat = PO_combined,
-                                                         PAdat = PA_vestfold),
+                                                         PAdat = PA_bunger23),
                                   covars = covs,
                                   mesh = mesh.range.10km.cutoff.50,
                                   responseNames = c(PO = NULL, PA = "presence"),
