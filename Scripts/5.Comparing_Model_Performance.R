@@ -73,7 +73,7 @@ Plantarctica_ensemble_lichen_eval_df <- read.csv(file = here(inpath, scenario, "
 Plantarctica_ensemble_lichen_pred <- rast(here(inpath, scenario, "Prediction_ensemble_East_Antarctica.tif"))
 
 
-# Ensemble PA 
+# Ensemble PA (VESTFOLD DATA)
 
 scenario = "PA_Ensemble_19_DATASET"
 
@@ -90,6 +90,26 @@ PA_ensemble_lichen_eval_df <- read.csv(file = here(inpath, scenario, "Ensemble_e
           brier = NA)
 
 PA_ensemble_lichen_pred <- rast(here(inpath, scenario, "Prediction_ensemble_East_Antarctica.tif"))
+
+
+# Ensemble PA (BUNGER DATA)
+
+scenario = "PA_Ensemble_BUNGER"
+
+inpath <- here("Outputs/Ensemble/Lichen")
+
+PA_ensemble_BUNGER_lichen_eval_df <- read.csv(file = here(inpath, scenario, "Ensemble_eval_df.csv")) %>% 
+  add_row(X = 3,
+          model = "Ensemble",
+          validation_dataset = "Bunger",
+          ROC = NA,
+          PRG = NA,
+          boyce = NA,
+          partialROC = NA,
+          brier = NA)
+
+PA_ensemble_BUNGER_lichen_pred <- rast(here(inpath, scenario, "Prediction_ensemble_East_Antarctica.tif"))
+
 
 
 # Poisson point process PO 
@@ -196,6 +216,7 @@ single_dataset_lichen_eval_df <- bind_rows(
   PO_ensemble_lichen_eval_df %>% mutate(model = "PO Ensemble"),
   Plantarctica_ensemble_lichen_eval_df %>% mutate(model = "Plantarctica Ensemble"),
   PA_ensemble_lichen_eval_df %>% mutate(model = "PA Ensemble"),
+  PA_ensemble_BUNGER_lichen_eval_df %>% mutate(model = "PA Ensemble") %>% 
   PO_PPP_lichen_eval_df %>% mutate(model = "PO PPP"),
   Plantarctica_PPP_lichen_eval_df %>% mutate(model = "Plantarctica PPP"),
   PA_PPP_lichen_eval_df %>% mutate(model = "PA PPP")
@@ -282,7 +303,7 @@ p2 <- Plantarctica_ensemble_lichen_pred %>%
         axis.ticks.x = element_blank(),
         axis.ticks.y = element_blank())
 
-p3 <- PA_ensemble_lichen_pred %>%
+p3 <- PA_ensemble_BUNGER_lichen_pred %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
@@ -414,7 +435,7 @@ p2 <- Plantarctica_ensemble_lichen_pred %>%
         axis.ticks.x = element_blank(),
         axis.ticks.y = element_blank())
 
-p3 <- PA_ensemble_lichen_pred %>%
+p3 <- PA_ensemble_BUNGER_lichen_pred %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
