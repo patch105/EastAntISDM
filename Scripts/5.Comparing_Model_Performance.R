@@ -216,7 +216,7 @@ single_dataset_lichen_eval_df <- bind_rows(
   PO_ensemble_lichen_eval_df %>% mutate(model = "PO Ensemble"),
   Plantarctica_ensemble_lichen_eval_df %>% mutate(model = "Plantarctica Ensemble"),
   PA_ensemble_lichen_eval_df %>% mutate(model = "PA Ensemble"),
-  PA_ensemble_BUNGER_lichen_eval_df %>% mutate(model = "PA Ensemble") %>% 
+  PA_ensemble_BUNGER_lichen_eval_df %>% mutate(model = "PA Ensemble"),
   PO_PPP_lichen_eval_df %>% mutate(model = "PO PPP"),
   Plantarctica_PPP_lichen_eval_df %>% mutate(model = "Plantarctica PPP"),
   PA_PPP_lichen_eval_df %>% mutate(model = "PA PPP")
@@ -261,128 +261,128 @@ PA_bunger23 <- PA_Bunger23_Veg_df %>%
  
   
 
-
-
-# Vestfold plot (w/out data)
-
-p1 <- PO_ensemble_lichen_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = TRUE) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PO Ensemble") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-
-
-p2 <- Plantarctica_ensemble_lichen_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - Plantarctica") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p3 <- PA_ensemble_BUNGER_lichen_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PA Ensemble") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p4 <- PO_PPP_lichen_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PO PPP") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p5 <- Plantarctica_PPP_lichen_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - Plantarctica PPP") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p6 <- PA_PPP_lichen_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PA PPP") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-
-Vestfold_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
-                           ncol = 3, nrow = 2,
-                           common.legend = TRUE, legend = "bottom")
-
-# Save
-ggsave(paste0(outpath, "/Single_dataset_prediction_plot_lichen_VESTFOLD_", scenario_all, ".png"), Vestfold_plot,
-       width = 20, height = 13, , unit = "cm", dpi = 400)
+# 
+# 
+# # Vestfold plot (w/out data)
+# 
+# p1 <- PO_ensemble_lichen_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = TRUE) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PO Ensemble") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# 
+# 
+# p2 <- Plantarctica_ensemble_lichen_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - Plantarctica") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p3 <- PA_ensemble_BUNGER_lichen_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PA Ensemble") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p4 <- PO_PPP_lichen_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PO PPP") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p5 <- Plantarctica_PPP_lichen_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - Plantarctica PPP") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p6 <- PA_PPP_lichen_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PA PPP") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# 
+# Vestfold_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
+#                            ncol = 3, nrow = 2,
+#                            common.legend = TRUE, legend = "bottom")
+# 
+# # Save
+# ggsave(paste0(outpath, "/Single_dataset_prediction_plot_lichen_VESTFOLD_", scenario_all, ".png"), Vestfold_plot,
+#        width = 20, height = 13, , unit = "cm", dpi = 400)
 
 #####################################
 # Vestfold plot (WITH DATA)
@@ -391,24 +391,27 @@ p1 <- PO_ensemble_lichen_pred %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Lichen - PO Ensemble") +
-  theme_bw() +
+  labs(title = "PO Ensemble") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
+        legend.text = element_text(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
 
 
@@ -416,116 +419,126 @@ p2 <- Plantarctica_ensemble_lichen_pred %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Lichen - Plantarctica") +
-  theme_bw() +
+  labs(title = "Satellite Ensemble") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
 
 p3 <- PA_ensemble_BUNGER_lichen_pred %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Lichen - PA Ensemble") +
-  theme_bw() +
+  labs(title = "PA Ensemble") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
 
 p4 <- PO_PPP_lichen_pred %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Lichen - PO PPP") +
-  theme_bw() +
+  labs(title = "PO PPP") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
 
 p5 <- Plantarctica_PPP_lichen_pred %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Lichen - Plantarctica PPP") +
-  theme_bw() +
+  labs(title = "Satellite PPP") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
 
 p6 <- PA_PPP_lichen_pred %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Lichen - PA PPP") +
-  theme_bw() +
+  labs(title = "PA PPP") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
 
 
 Vestfold_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
@@ -537,275 +550,289 @@ ggsave(paste0(outpath, "/Single_dataset_prediction_plot_lichen_VESTFOLD_W_DATA_"
        width = 20, height = 13, , unit = "cm", dpi = 400)
 
 
-
-######
-####### Bunger plot w/out data
-######
-
-p1 <- PO_ensemble_lichen_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PO Ensemble") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p2 <- Plantarctica_ensemble_lichen_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - Plantarctica") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p3 <- PA_ensemble_lichen_pred %>% 
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PA Ensemble") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-
-p4 <- PO_PPP_lichen_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PO PPP") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p5 <- Plantarctica_PPP_lichen_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - Plantarctica PPP") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p6 <- PA_PPP_lichen_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PA PPP") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-
-Bunger_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
-                         ncol = 3, nrow = 2,
-                         common.legend = TRUE, legend = "bottom")
-
-# Save
-ggsave(paste0(outpath, "/Single_dataset_prediction_plot_lichen_BUNGER_", scenario_all, ".png"), Bunger_plot,
-       width = 20, height = 13, , unit = "cm", dpi = 400)
+# 
+# ######
+# ####### Bunger plot w/out data
+# ######
+# 
+# p1 <- PO_ensemble_lichen_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PO Ensemble") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p2 <- Plantarctica_ensemble_lichen_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - Plantarctica") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p3 <- PA_ensemble_lichen_pred %>% 
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PA Ensemble") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# 
+# p4 <- PO_PPP_lichen_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PO PPP") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p5 <- Plantarctica_PPP_lichen_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - Plantarctica PPP") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p6 <- PA_PPP_lichen_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PA PPP") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# 
+# Bunger_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
+#                          ncol = 3, nrow = 2,
+#                          common.legend = TRUE, legend = "bottom")
+# 
+# # Save
+# ggsave(paste0(outpath, "/Single_dataset_prediction_plot_lichen_BUNGER_", scenario_all, ".png"), Bunger_plot,
+#        width = 20, height = 13, , unit = "cm", dpi = 400)
 
 
 #####################################
 # BUNGER plot (WITH DATA)
 
-p1 <- PO_ensemble_lichen_pred %>%
+p1b <- PO_ensemble_lichen_pred %>%
   crop(ext(bunger_boundary)) %>%
   as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Lichen - PO Ensemble") +
-  theme_bw() +
+  labs(title = "PO Ensemble") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
 
 
-p2 <- Plantarctica_ensemble_lichen_pred %>%
+p2b <- Plantarctica_ensemble_lichen_pred %>%
   crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
+  as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Lichen - Plantarctica") +
-  theme_bw() +
+  labs(title = "Satellite Ensemble") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
-p3 <- PA_ensemble_lichen_pred %>%
+
+p3b <- PA_ensemble_lichen_pred %>%
   crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
+  as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Lichen - PA Ensemble") +
-  theme_bw() +
+  labs(title = "PA Ensemble") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
-p4 <- PO_PPP_lichen_pred %>%
+
+p4b <- PO_PPP_lichen_pred %>%
   crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
+  as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Lichen - PO PPP") +
-  theme_bw() +
+  labs(title = "PO PPP") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
-p5 <- Plantarctica_PPP_lichen_pred %>%
+p5b <- Plantarctica_PPP_lichen_pred %>%
   crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
+  as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Lichen - Plantarctica PPP") +
-  theme_bw() +
+  labs(title = "Satellite PPP") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
-p6 <- PA_PPP_lichen_pred %>%
+p6b <- PA_PPP_lichen_pred %>%
   crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
+  as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Lichen - PA PPP") +
-  theme_bw() +
+  labs(title = "PA PPP") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
 
-Bunger_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
+Bunger_plot <- ggarrange(p1b, p2b, p3b, p4b, p5b, p6b,
                            ncol = 3, nrow = 2,
                            common.legend = TRUE, legend = "bottom")
 
@@ -814,7 +841,19 @@ ggsave(paste0(outpath, "/Single_dataset_prediction_plot_lichen_BUNGER_W_DATA_", 
        width = 20, height = 13, , unit = "cm", dpi = 400)
 
 
+###########################
+### FIGURE 3
+###########################
 
+Figure_3 <- ggarrange(p1b, p2b, p3b, p4b, p5b, p6b,
+                      p1, p2, p3, p4, p5, p6,
+                      ncol = 3,
+                      nrow = 4,
+                      common.legend = T,
+                      legend.position = "bottom")
+
+ggsave(filename = paste0(outpath, "/FIGURE_3_", scenario_all, ".png"), Figure_3[[1]],
+       width = 20, height = 30, unit = "cm", dpi = 400)
 
 
 ####################################################################
@@ -1009,126 +1048,126 @@ PA_bunger23 <- PA_Bunger23_Veg_df %>%
   rename(Presence = srfc_ms) %>% 
   mutate(Presence = ifelse(Presence == 1, "Presence", "Absence"))
 
-
-######################
-# Vestfold plot (NO DATA)
-
-p1 <- PO_ensemble_moss_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PO Ensemble") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p2 <- Plantarctica_ensemble_moss_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - Plantarctica ensemble") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p3 <- PA_ensemble_moss_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PA Ensemble") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p4 <- PO_PPP_moss_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PO PPP") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p5 <- Plantarctica_PPP_moss_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - Plantarctica PPP") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p6 <- PA_PPP_moss_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PA PPP") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-
-Vestfold_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
-                           ncol = 3, nrow = 2,
-                           common.legend = TRUE, legend = "bottom")
-
-# Save
-ggsave(paste0(outpath, "/Single_dataset_prediction_plot_moss_VESTFOLD_", scenario_all, ".png"), Vestfold_plot,
-       width = 20, height = 13, , unit = "cm", dpi = 400)
+# 
+# ######################
+# # Vestfold plot (NO DATA)
+# 
+# p1 <- PO_ensemble_moss_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PO Ensemble") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p2 <- Plantarctica_ensemble_moss_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - Plantarctica ensemble") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p3 <- PA_ensemble_moss_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PA Ensemble") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p4 <- PO_PPP_moss_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PO PPP") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p5 <- Plantarctica_PPP_moss_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - Plantarctica PPP") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p6 <- PA_PPP_moss_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PA PPP") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# 
+# Vestfold_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
+#                            ncol = 3, nrow = 2,
+#                            common.legend = TRUE, legend = "bottom")
+# 
+# # Save
+# ggsave(paste0(outpath, "/Single_dataset_prediction_plot_moss_VESTFOLD_", scenario_all, ".png"), Vestfold_plot,
+#        width = 20, height = 13, , unit = "cm", dpi = 400)
 
 #####################################
 # Vestfold plot (WITH DATA)
@@ -1137,24 +1176,27 @@ p1 <- PO_ensemble_moss_pred  %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Moss - PO Ensemble") +
-  theme_bw() +
+  labs(title = "PO Ensemble") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
+        legend.text = element_text(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
 
 
@@ -1162,116 +1204,126 @@ p2 <- Plantarctica_ensemble_moss_pred  %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Moss - Plantarctica") +
-  theme_bw() +
+  labs(title = "Satellite Ensemble") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
 
 p3 <- PA_ensemble_moss_pred  %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Moss - PA Ensemble") +
-  theme_bw() +
+  labs(title = "PA Ensemble") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
 
 p4 <- PO_PPP_moss_pred  %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Moss - PO PPP") +
-  theme_bw() +
+  labs(title = "PO PPP") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
 
 p5 <- Plantarctica_PPP_moss_pred  %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Moss - Plantarctica PPP") +
-  theme_bw() +
+  labs(title = "Satellite PPP") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
 
 p6 <- PA_PPP_moss_pred  %>%
   crop(ext(vestfold_boundary)) %>%
   as.data.frame(xy = T) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_Vestfold, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Moss - PA PPP") +
-  theme_bw() +
+  labs(title = "PA PPP") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())
 
 
 Vestfold_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
@@ -1282,770 +1334,804 @@ Vestfold_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
 ggsave(paste0(outpath, "/Single_dataset_prediction_plot_moss_VESTFOLD_W_DATA_", scenario_all, ".png"), Vestfold_plot,
        width = 20, height = 13, , unit = "cm", dpi = 400)
 
-
-######
-####### Bunger plot (w/o data)
-######
-
-p1 <- PO_ensemble_moss_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PO Ensemble") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p2 <- Plantarctica_ensemble_moss_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - Plantarctica ensemble") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p3 <- PA_ensemble_moss_pred %>% 
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PA Ensemble") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p4 <- PO_PPP_moss_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PO PPP") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p5 <- Plantarctica_PPP_moss_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - Plantarctica PPP") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p6 <- PA_PPP_moss_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PA PPP") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-
-Bunger_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
-                         ncol = 3, nrow = 2,
-                         common.legend = TRUE, legend = "bottom")
-
-# Save
-ggsave(paste0(outpath, "/Single_dataset_prediction_plot_moss_BUNGER_", scenario_all, ".png"), Bunger_plot,
-       width = 20, height = 13, , unit = "cm", dpi = 400)
+# 
+# ######
+# ####### Bunger plot (w/o data)
+# ######
+# 
+# p1 <- PO_ensemble_moss_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PO Ensemble") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p2 <- Plantarctica_ensemble_moss_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - Plantarctica ensemble") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p3 <- PA_ensemble_moss_pred %>% 
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PA Ensemble") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p4 <- PO_PPP_moss_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PO PPP") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p5 <- Plantarctica_PPP_moss_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - Plantarctica PPP") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p6 <- PA_PPP_moss_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PA PPP") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# 
+# Bunger_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
+#                          ncol = 3, nrow = 2,
+#                          common.legend = TRUE, legend = "bottom")
+# 
+# # Save
+# ggsave(paste0(outpath, "/Single_dataset_prediction_plot_moss_BUNGER_", scenario_all, ".png"), Bunger_plot,
+#        width = 20, height = 13, , unit = "cm", dpi = 400)
 
 #####################################
 # Bunger plot (WITH DATA)
 
-p1 <- PO_ensemble_moss_pred  %>%
+p1b <- PO_ensemble_moss_pred  %>%
   crop(ext(bunger_boundary)) %>%
   as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Moss - PO Ensemble") +
-  theme_bw() +
+  labs(title = "PO Ensemble") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
 
 
-p2 <- Plantarctica_ensemble_moss_pred  %>%
+p2b <- Plantarctica_ensemble_moss_pred  %>%
   crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
+  as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Moss - Plantarctica") +
-  theme_bw() +
+  labs(title = "Satellite Ensemble") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
-p3 <- PA_ensemble_moss_pred  %>%
+p3b <- PA_ensemble_moss_pred  %>%
   crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
+  as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = pred_cur_ensemble), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Moss - PA Ensemble") +
-  theme_bw() +
+  labs(title = "PA Ensemble") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
-p4 <- PO_PPP_moss_pred  %>%
+p4b <- PO_PPP_moss_pred  %>%
   crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
+  as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Moss - PO PPP") +
-  theme_bw() +
+  labs(title = "PO PPP") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
-p5 <- Plantarctica_PPP_moss_pred  %>%
+p5b <- Plantarctica_PPP_moss_pred  %>%
   crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
+  as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Moss - Plantarctica PPP") +
-  theme_bw() +
+  labs(title = "Satellite PPP") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
-p6 <- PA_PPP_moss_pred  %>%
+p6b <- PA_PPP_moss_pred  %>%
   crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
+  as.data.frame(xy = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.6) +
+  geom_tile(aes(x = x, y = y, fill = Median), alpha = 0.75) +
   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
                      name = "Probability") +
   geom_point(data = PA_bunger23, 
              aes(x = x, y = y, color = Presence),
-             shape = 1, size = 0.5, stroke = 0.4) +  # shape = 1 is open circle
-  scale_color_manual(values = c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1]),
-                     name = NULL) +
+             shape = 1, size = 0.7, stroke = 0.4) +  # shape = 1 is open circle
+  scale_color_manual(values = c("Presence" = "red", "Absence" = "black"),
+                     name = NULL,
+                     guide = guide_legend(override.aes = list(size = 2))) +
   coord_fixed() +
-  labs(title = "Moss - PA PPP") +
-  theme_bw() +
+  labs(title = "PA PPP") +
+  theme_minimal(base_size = 12) +
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.ticks = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank()) # remove grid lines
 
 
-Bunger_plot <- ggarrange(p1, p2, p3, p4, p5, p6,
-                           ncol = 3, nrow = 2,
-                           common.legend = TRUE, legend = "bottom")
+Bunger_plot <- ggarrange(p1b, p2b, p3b, p4b, p5b, p6b,
+                         ncol = 3, nrow = 2,
+                         common.legend = TRUE, legend = "bottom")
 
 # Save
 ggsave(paste0(outpath, "/Single_dataset_prediction_plot_moss_BUNGER_W_DATA_", scenario_all, ".png"), Bunger_plot,
        width = 20, height = 13, , unit = "cm", dpi = 400)
 
 
-####################################################################
-# 2. INTEGRATED APPROACHES - LICHEN -----------------------------------
-###################################################################
-
-
-# PO + PA
-
-scenario = "500m_ALL_DATASETS"
-
-PO_PA_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
-  filter(model == "m.int.occ.VH") %>% 
-  mutate(validation_dataset = "Bunger23") %>% 
-  relocate(validation_dataset, .after = model)
-
-PO_PA_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/BUNGER_Probability_prediction_m.int.occ.VH_median.tif"))
-
-
-# PO bias + PA
-
-scenario = "500m_ALL_DATASETS"
-
-PO_PA_bias_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
-  filter(model == "m.int.occ.VH.bias") %>% 
-  mutate(validation_dataset = "Bunger23") %>% 
-  relocate(validation_dataset, .after = model)
-
-PO_PA_bias_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/BUNGER_Probability_prediction_m.int.occ.VH.bias_median.tif"))
-
-
-# Plantarctica + PA
-
-scenario = "500m_ALL_DATASETS"
-
-Plantarctica_PA_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
-  filter(model == "m.int.Plantarctica.VH") %>% 
-  mutate(validation_dataset = "Bunger23") %>% 
-  relocate(validation_dataset, .after = model)
-
-Plantarctica_PA_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/BUNGER_Probability_prediction_m.int.Plantarctica.VH_median.tif"))
-
-
-# PO + Plantarctica + PA
-
-scenario = "500m_ALL_DATASETS"
-
-PO_Plantarctica_PA_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
-  filter(model == "m.int.occ.Plantarctica.VH") %>% 
-  mutate(validation_dataset = "Bunger23") %>% 
-  relocate(validation_dataset, .after = model)
-
-PO_Plantarctica_PA_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/BUNGER_Probability_prediction_m.int.occ.Plantarctica.VH_median.tif"))
-
-
-
-
-# Table x. Integrated approaches - LICHEN---------------------------------
-
-#ordered by validation dataset
-integrated_lichen_eval_df <- bind_rows(
-  PO_PA_lichen_eval_df %>% mutate(model = "PO + PA"),
-  PO_PA_bias_lichen_eval_df %>% mutate(model = "PO bias + PA"),
-  Plantarctica_PA_lichen_eval_df %>% mutate(model = "Satellite + PA"),
-  PO_Plantarctica_PA_lichen_eval_df %>% mutate(model = "PO + Satellite + PA"))
-
-# ) %>% 
-#   mutate(validation_dataset = factor(validation_dataset, levels = c("Training data","Vestfold", "Bunger23"))) %>% 
-#   arrange(validation_dataset) 
-
-write.csv(integrated_lichen_eval_df,
-          file = here(outpath, "Integrated_lichen_eval_df.csv"),
-          row.names = FALSE)
-
-
-# Figure x. Integrated approaches - LICHEN ----------------------------
-
-# Vestfold plot
-
-p1 <- PO_PA_lichen_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PO + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p2 <- PO_PA_bias_lichen_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PO bias + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p3 <- Plantarctica_PA_lichen_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - Satellite + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p4 <- PO_Plantarctica_PA_lichen_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PO + Satellite + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-
-Vestfold_plot <- ggarrange(p1, p2, p3, p4,
-                           ncol = 2, nrow = 2,
-                           common.legend = TRUE, legend = "bottom")
-
-# Save
-ggsave(paste0(outpath, "/Integrated_prediction_plot_lichen_VESTFOLD.png"), Vestfold_plot,
-       width = 20, height = 13, , unit = "cm", dpi = 400)
-
-
-
-######
-####### Bunger plot
-######
-
-p1 <- PO_PA_lichen_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PO + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p2 <- PO_PA_bias_lichen_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PO bias + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p3 <- Plantarctica_PA_lichen_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - Satellite + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p4 <- PO_Plantarctica_PA_lichen_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Lichen - PO + Satellite + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-
-bunger_plot <- ggarrange(p1, p2, p3, p4,
-                         ncol = 2, nrow = 2,
-                         common.legend = TRUE, legend = "bottom")
-
-# Save
-ggsave(paste0(outpath, "/Integrated_prediction_plot_lichen_BUNGER.png"), bunger_plot,
-       width = 20, height = 13, , unit = "cm", dpi = 400)
-
-
-
-####################################################################
-# 2. INTEGRATED APPROACHES - MOSS -----------------------------------
-###################################################################
-
-
-# PO + PA
-
-scenario = "500m_ALL_DATASETS"
-
-PO_PA_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
-  filter(model == "m.int.occ.VH") %>% 
-  mutate(validation_dataset = "Bunger23") %>% 
-  relocate(validation_dataset, .after = model)
-
-PO_PA_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/BUNGER_Probability_prediction_m.int.occ.VH_median.tif"))
-
-
-# PO bias + PA
-
-scenario = "500m_ALL_DATASETS"
-
-PO_PA_bias_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
-  filter(model == "m.int.occ.VH.bias") %>% 
-  mutate(validation_dataset = "Bunger23") %>% 
-  relocate(validation_dataset, .after = model)
-
-PO_PA_bias_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/BUNGER_Probability_prediction_m.int.occ.VH.bias_median.tif"))
-
-
-# Plantarctica + PA
-
-scenario = "500m_ALL_DATASETS"
-
-Plantarctica_PA_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
-  filter(model == "m.int.Plantarctica.VH") %>% 
-  mutate(validation_dataset = "Bunger23") %>% 
-  relocate(validation_dataset, .after = model)
-
-Plantarctica_PA_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/BUNGER_Probability_prediction_m.int.Plantarctica.VH_median.tif"))
-
-
-# PO + Plantarctica + PA
-
-scenario = "500m_ALL_DATASETS"
-
-PO_Plantarctica_PA_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
-  filter(model == "m.int.occ.Plantarctica.VH") %>% 
-  mutate(validation_dataset = "Bunger23") %>% 
-  relocate(validation_dataset, .after = model)
-
-PO_Plantarctica_PA_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/BUNGER_Probability_prediction_m.int.occ.Plantarctica.VH_median.tif"))
-
-
-
-
-# Table x. Integrated approaches - LICHEN---------------------------------
-
-#ordered by validation dataset
-integrated_moss_eval_df <- bind_rows(
-  PO_PA_moss_eval_df %>% mutate(model = "PO + PA"),
-  PO_PA_bias_moss_eval_df %>% mutate(model = "PO bias + PA"),
-  Plantarctica_PA_moss_eval_df %>% mutate(model = "Satellite + PA"),
-  PO_Plantarctica_PA_moss_eval_df %>% mutate(model = "PO + Satellite + PA"))
-
-# ) %>% 
-#   mutate(validation_dataset = factor(validation_dataset, levels = c("Training data","Vestfold", "Bunger23"))) %>% 
-#   arrange(validation_dataset) 
-
-write.csv(integrated_moss_eval_df,
-          file = here(outpath, "Integrated_moss_eval_df.csv"),
-          row.names = FALSE)
-
-
-# Figure x. Integrated approaches - moss ----------------------------
-
-# Vestfold plot
-
-p1 <- PO_PA_moss_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PO + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p2 <- PO_PA_bias_moss_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PO bias + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p3 <- Plantarctica_PA_moss_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - Satellite + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p4 <- PO_Plantarctica_PA_moss_pred %>%
-  crop(ext(vestfold_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PO + Satellite + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-
-Vestfold_plot <- ggarrange(p1, p2, p3, p4,
-                           ncol = 2, nrow = 2,
-                           common.legend = TRUE, legend = "bottom")
-
-# Save
-ggsave(paste0(outpath, "/Integrated_prediction_plot_moss_VESTFOLD.png"), Vestfold_plot,
-       width = 20, height = 13, , unit = "cm", dpi = 400)
-
-
-
-######
-####### Bunger plot
-######
-
-p1 <- PO_PA_moss_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PO + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p2 <- PO_PA_bias_moss_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PO bias + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p3 <- Plantarctica_PA_moss_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - Satellite + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-p4 <- PO_Plantarctica_PA_moss_pred %>%
-  crop(ext(bunger_boundary)) %>%
-  as.data.frame(xy = T) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = Median)) +
-  scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
-                     name = "Probability") +
-  coord_fixed() +
-  labs(title = "Moss - PO + Satellite + PA") +
-  theme_bw() +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-
-
-bunger_plot <- ggarrange(p1, p2, p3, p4,
-                         ncol = 2, nrow = 2,
-                         common.legend = TRUE, legend = "bottom")
-
-# Save
-ggsave(paste0(outpath, "/Integrated_prediction_plot_moss_BUNGER.png"), bunger_plot,
-       width = 20, height = 13, , unit = "cm", dpi = 400)
-
+###########################
+### FIGURE 4
+###########################
+
+Figure_4 <- ggarrange(p1b, p2b, p3b, p4b, p5b, p6b,
+                      p1, p2, p3, p4, p5, p6,
+                      ncol = 3,
+                      nrow = 4,
+                      common.legend = T,
+                      legend.position = "bottom")
+
+ggsave(filename = paste0(outpath, "/FIGURE_4_", scenario_all, ".png"), Figure_4[[1]],
+       width = 20, height = 30, unit = "cm", dpi = 400)
+
+# 
+# ####################################################################
+# # 2. INTEGRATED APPROACHES - LICHEN -----------------------------------
+# ###################################################################
+# 
+# 
+# # PO + PA
+# 
+# scenario = "500m_ALL_DATASETS"
+# 
+# PO_PA_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
+#   filter(model == "m.int.occ.VH") %>% 
+#   mutate(validation_dataset = "Bunger23") %>% 
+#   relocate(validation_dataset, .after = model)
+# 
+# PO_PA_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/BUNGER_Probability_prediction_m.int.occ.VH_median.tif"))
+# 
+# 
+# # PO bias + PA
+# 
+# scenario = "500m_ALL_DATASETS"
+# 
+# PO_PA_bias_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
+#   filter(model == "m.int.occ.VH.bias") %>% 
+#   mutate(validation_dataset = "Bunger23") %>% 
+#   relocate(validation_dataset, .after = model)
+# 
+# PO_PA_bias_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/BUNGER_Probability_prediction_m.int.occ.VH.bias_median.tif"))
+# 
+# 
+# # Plantarctica + PA
+# 
+# scenario = "500m_ALL_DATASETS"
+# 
+# Plantarctica_PA_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
+#   filter(model == "m.int.Plantarctica.VH") %>% 
+#   mutate(validation_dataset = "Bunger23") %>% 
+#   relocate(validation_dataset, .after = model)
+# 
+# Plantarctica_PA_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/BUNGER_Probability_prediction_m.int.Plantarctica.VH_median.tif"))
+# 
+# 
+# # PO + Plantarctica + PA
+# 
+# scenario = "500m_ALL_DATASETS"
+# 
+# PO_Plantarctica_PA_lichen_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/RISDM_eval_df.csv")) %>% 
+#   filter(model == "m.int.occ.Plantarctica.VH") %>% 
+#   mutate(validation_dataset = "Bunger23") %>% 
+#   relocate(validation_dataset, .after = model)
+# 
+# PO_Plantarctica_PA_lichen_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Lichen/", scenario, "/BUNGER_Probability_prediction_m.int.occ.Plantarctica.VH_median.tif"))
+# 
+# 
+# 
+# 
+# # Table x. Integrated approaches - LICHEN---------------------------------
+# 
+# #ordered by validation dataset
+# integrated_lichen_eval_df <- bind_rows(
+#   PO_PA_lichen_eval_df %>% mutate(model = "PO + PA"),
+#   PO_PA_bias_lichen_eval_df %>% mutate(model = "PO bias + PA"),
+#   Plantarctica_PA_lichen_eval_df %>% mutate(model = "Satellite + PA"),
+#   PO_Plantarctica_PA_lichen_eval_df %>% mutate(model = "PO + Satellite + PA"))
+# 
+# # ) %>% 
+# #   mutate(validation_dataset = factor(validation_dataset, levels = c("Training data","Vestfold", "Bunger23"))) %>% 
+# #   arrange(validation_dataset) 
+# 
+# write.csv(integrated_lichen_eval_df,
+#           file = here(outpath, "Integrated_lichen_eval_df.csv"),
+#           row.names = FALSE)
+# 
+# 
+# # Figure x. Integrated approaches - LICHEN ----------------------------
+# 
+# # Vestfold plot
+# 
+# p1 <- PO_PA_lichen_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PO + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p2 <- PO_PA_bias_lichen_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PO bias + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p3 <- Plantarctica_PA_lichen_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - Satellite + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p4 <- PO_Plantarctica_PA_lichen_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PO + Satellite + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# 
+# Vestfold_plot <- ggarrange(p1, p2, p3, p4,
+#                            ncol = 2, nrow = 2,
+#                            common.legend = TRUE, legend = "bottom")
+# 
+# # Save
+# ggsave(paste0(outpath, "/Integrated_prediction_plot_lichen_VESTFOLD.png"), Vestfold_plot,
+#        width = 20, height = 13, , unit = "cm", dpi = 400)
+# 
+# 
+# 
+# ######
+# ####### Bunger plot
+# ######
+# 
+# p1 <- PO_PA_lichen_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PO + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p2 <- PO_PA_bias_lichen_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PO bias + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p3 <- Plantarctica_PA_lichen_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - Satellite + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p4 <- PO_Plantarctica_PA_lichen_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Lichen - PO + Satellite + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# 
+# bunger_plot <- ggarrange(p1, p2, p3, p4,
+#                          ncol = 2, nrow = 2,
+#                          common.legend = TRUE, legend = "bottom")
+# 
+# # Save
+# ggsave(paste0(outpath, "/Integrated_prediction_plot_lichen_BUNGER.png"), bunger_plot,
+#        width = 20, height = 13, , unit = "cm", dpi = 400)
+# 
+# 
+# 
+# ####################################################################
+# # 2. INTEGRATED APPROACHES - MOSS -----------------------------------
+# ###################################################################
+# 
+# 
+# # PO + PA
+# 
+# scenario = "500m_ALL_DATASETS"
+# 
+# PO_PA_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
+#   filter(model == "m.int.occ.VH") %>% 
+#   mutate(validation_dataset = "Bunger23") %>% 
+#   relocate(validation_dataset, .after = model)
+# 
+# PO_PA_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/BUNGER_Probability_prediction_m.int.occ.VH_median.tif"))
+# 
+# 
+# # PO bias + PA
+# 
+# scenario = "500m_ALL_DATASETS"
+# 
+# PO_PA_bias_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
+#   filter(model == "m.int.occ.VH.bias") %>% 
+#   mutate(validation_dataset = "Bunger23") %>% 
+#   relocate(validation_dataset, .after = model)
+# 
+# PO_PA_bias_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/BUNGER_Probability_prediction_m.int.occ.VH.bias_median.tif"))
+# 
+# 
+# # Plantarctica + PA
+# 
+# scenario = "500m_ALL_DATASETS"
+# 
+# Plantarctica_PA_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
+#   filter(model == "m.int.Plantarctica.VH") %>% 
+#   mutate(validation_dataset = "Bunger23") %>% 
+#   relocate(validation_dataset, .after = model)
+# 
+# Plantarctica_PA_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/BUNGER_Probability_prediction_m.int.Plantarctica.VH_median.tif"))
+# 
+# 
+# # PO + Plantarctica + PA
+# 
+# scenario = "500m_ALL_DATASETS"
+# 
+# PO_Plantarctica_PA_moss_eval_df <- read.csv(file = paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/RISDM_eval_df.csv")) %>% 
+#   filter(model == "m.int.occ.Plantarctica.VH") %>% 
+#   mutate(validation_dataset = "Bunger23") %>% 
+#   relocate(validation_dataset, .after = model)
+# 
+# PO_Plantarctica_PA_moss_pred <- rast(paste0("Z:/ISDM/EastAntISDM/Outputs/Integrated_ALL_DATA/Moss/", scenario, "/BUNGER_Probability_prediction_m.int.occ.Plantarctica.VH_median.tif"))
+# 
+# 
+# 
+# 
+# # Table x. Integrated approaches - LICHEN---------------------------------
+# 
+# #ordered by validation dataset
+# integrated_moss_eval_df <- bind_rows(
+#   PO_PA_moss_eval_df %>% mutate(model = "PO + PA"),
+#   PO_PA_bias_moss_eval_df %>% mutate(model = "PO bias + PA"),
+#   Plantarctica_PA_moss_eval_df %>% mutate(model = "Satellite + PA"),
+#   PO_Plantarctica_PA_moss_eval_df %>% mutate(model = "PO + Satellite + PA"))
+# 
+# # ) %>% 
+# #   mutate(validation_dataset = factor(validation_dataset, levels = c("Training data","Vestfold", "Bunger23"))) %>% 
+# #   arrange(validation_dataset) 
+# 
+# write.csv(integrated_moss_eval_df,
+#           file = here(outpath, "Integrated_moss_eval_df.csv"),
+#           row.names = FALSE)
+# 
+# 
+# # Figure x. Integrated approaches - moss ----------------------------
+# 
+# # Vestfold plot
+# 
+# p1 <- PO_PA_moss_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PO + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p2 <- PO_PA_bias_moss_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PO bias + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p3 <- Plantarctica_PA_moss_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - Satellite + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p4 <- PO_Plantarctica_PA_moss_pred %>%
+#   crop(ext(vestfold_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PO + Satellite + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# 
+# Vestfold_plot <- ggarrange(p1, p2, p3, p4,
+#                            ncol = 2, nrow = 2,
+#                            common.legend = TRUE, legend = "bottom")
+# 
+# # Save
+# ggsave(paste0(outpath, "/Integrated_prediction_plot_moss_VESTFOLD.png"), Vestfold_plot,
+#        width = 20, height = 13, , unit = "cm", dpi = 400)
+# 
+# 
+# 
+# ######
+# ####### Bunger plot
+# ######
+# 
+# p1 <- PO_PA_moss_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PO + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p2 <- PO_PA_bias_moss_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PO bias + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p3 <- Plantarctica_PA_moss_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - Satellite + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# p4 <- PO_Plantarctica_PA_moss_pred %>%
+#   crop(ext(bunger_boundary)) %>%
+#   as.data.frame(xy = T) %>%
+#   ggplot() +
+#   geom_tile(aes(x = x, y = y, fill = Median)) +
+#   scale_fill_viridis(guide = guide_colorbar(barwidth = 7, barheight = 1),
+#                      name = "Probability") +
+#   coord_fixed() +
+#   labs(title = "Moss - PO + Satellite + PA") +
+#   theme_bw() +
+#   theme(axis.title.x = element_blank(),
+#         axis.title.y = element_blank(),
+#         legend.ticks = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.text.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         axis.ticks.y = element_blank())
+# 
+# 
+# bunger_plot <- ggarrange(p1, p2, p3, p4,
+#                          ncol = 2, nrow = 2,
+#                          common.legend = TRUE, legend = "bottom")
+# 
+# # Save
+# ggsave(paste0(outpath, "/Integrated_prediction_plot_moss_BUNGER.png"), bunger_plot,
+#        width = 20, height = 13, , unit = "cm", dpi = 400)
+# 
+
+
+
+
+# ARCHIVE COLOUR FOR PRESENCE - ABSENCE VIRIDIS ---------------------------
+
+# c("Presence" = "red", "Absence" = "black")
