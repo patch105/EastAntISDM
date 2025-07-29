@@ -596,7 +596,7 @@ extrap_plot_lichen <- lichen_extrap %>%
   geom_boxplot(fill = "gray30", alpha = 0.6, width = 0.2, outlier.shape = NA) +
   #geom_jitter(width = 0.05, alpha = 0.01, size = 0.5, color = "purple") +
   labs(x = NULL, y = "Environmental distance", title = "Lichen") +
-  ylim(0, 250) +
+  coord_cartesian(ylim = c(0, 250)) +
   theme_classic(base_size = 12) +
   theme(legend.position = "none",
         plot.title = element_text(size = 12))
@@ -640,7 +640,7 @@ extrap_plot_moss <- moss_extrap %>%
   geom_boxplot(fill = "gray30", alpha = 0.6, width = 0.2, outlier.shape = NA) +
   #geom_jitter(width = 0.05, alpha = 0.01, size = 0.5, color = "purple") +
   labs(x = NULL, y = "Environmental distance", title = "Moss") +
-  ylim(0, 250) +
+  coord_cartesian(ylim = c(0, 250)) +
   theme_classic(base_size = 12) +
   theme(legend.position = "none",
         plot.title = element_text(size = 12))

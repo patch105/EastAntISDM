@@ -587,7 +587,7 @@ extrap_plot_lichen <- lichen_extrap %>%
   geom_boxplot(fill = "gray30", alpha = 0.6, width = 0.2, outlier.shape = NA) +
   #geom_jitter(width = 0.05, alpha = 0.01, size = 0.5, color = "purple") +
   labs(x = NULL, y = "Environmental distance", title = "Lichen") +
-  ylim(0, 250) +
+  coord_cartesian(ylim = c(0, 250)) +
   theme_classic(base_size = 12) +
   theme(legend.position = "none",
         plot.title = element_text(size = 12))
@@ -630,8 +630,8 @@ extrap_plot_moss <- moss_extrap %>%
   geom_violin(fill = "gray30", alpha = 0.2, trim = TRUE, width = 0.7, color = NA) +
   geom_boxplot(fill = "gray30", alpha = 0.6, width = 0.2, outlier.shape = NA) +
   #geom_jitter(width = 0.05, alpha = 0.01, size = 0.5, color = "purple") +
-  labs(x = NULL, y = "Environmental distance", title = "Moss") +
-  ylim(0, 250) +
+  labs(x = NULL, y = "Environmental distance ", title = "Moss") +
+  coord_cartesian(ylim = c(0, 250)) +
   theme_classic(base_size = 12) +
   theme(legend.position = "none",
         plot.title = element_text(size = 12))
@@ -953,6 +953,6 @@ combined_extrap_spatial <- ggarrange(lichen_row, moss_row, ncol = 1, heights = c
 
 ggsave(here("Outputs/Figures", "Combined_extrap_Vestfold_plot_500m.png"),
        plot = combined_extrap_spatial,
-       width = 18, height = 18, units = "cm", dpi = 600)
+       width = 18, height = 15, units = "cm", dpi = 600)
 
 
