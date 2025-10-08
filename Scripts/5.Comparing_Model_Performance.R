@@ -2965,7 +2965,7 @@ combined_plot <- ggarrange(
 
 ggsave(filename = paste0(outpath, "/FIGURE_X_combined", scenario_all, ".png"), 
        combined_plot,
-       width = 20, height = 22.5, unit = "cm", dpi = 600, bg = "white")
+       width = 20, height = 21.5, unit = "cm", dpi = 600, bg = "white")
 
 
 
