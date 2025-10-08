@@ -2630,6 +2630,348 @@ ggsave(filename = paste0(outpath, "/FIGURE_6_", scenario_all, ".png"), Figure_6[
        width = 20, height = 30, unit = "cm", dpi = 600, bg = "white")
 
 
+
+#########################
+#### FIGURE PLOTTING ALL RESULTS (single-dataset and integrated)
+#########################
+
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+
+##########################################
+# OVERALL SCENARIO NAME
+scenario_all <- "Jul_23_linear"
+
+outpath <- here("Outputs/Results")
+##########################################
+
+# Thresholds for plotting:
+# Define moderate and high performance thresholds
+moderate_thresholds <- list(
+  ROC = 0.7,      # AUC > 0.7 is often considered acceptable/moderate
+  boyce = 0.5,    # Boyce index > 0.5 indicates moderate performance
+  brier = 0.25    # Lower is better; 0.25 is a common threshold
+)
+
+high_thresholds <- list(
+  ROC = 0.9,      # AUC > 0.9 is excellent
+  boyce = 0.75,   # Boyce index > 0.75 indicates high performance
+  brier = 0.15    # Lower is better; < 0.15 is high performance
+)
+
+
+single_moss_df <- read.csv(file = here(outpath, paste0("Single_dataset_moss_eval_df_", scenario_all, ".csv"))) %>% 
+  mutate(group = "moss")
+single_lichen_df <- read.csv(file = here(outpath, paste0("Single_dataset_lichen_eval_df_", scenario_all, ".csv"))) %>% 
+  mutate(group = "lichen")
+
+integrated_moss_df <- read.csv(file = here(outpath, paste0("Integrated_moss_eval_df_", scenario_all, ".csv"))) %>% 
+  mutate(group = "moss")
+integrated_lichen_df <- read.csv(file = here(outpath, paste0("Integrated_lichen_eval_df_", scenario_all, ".csv"))) %>% 
+  mutate(group = "lichen")
+
+evaluation_df_all <- rbind(single_moss_df, single_lichen_df, integrated_moss_df, integrated_lichen_df) %>% 
+  filter(!is.na(validation_dataset))
+
+
+evaluation_df_single <- rbind(single_moss_df, single_lichen_df) %>% 
+  filter(!is.na(validation_dataset))
+
+evaluation_df_single <- evaluation_df_single %>%
+  mutate(
+    # split into dataset and variant
+    dataset = str_extract(model, "PA|PO|Plantarctica"),
+    variant = case_when(
+      str_detect(model, "PPP") ~ "ppm",
+      str_detect(model, "Ensemble") ~ "Ensemble",
+      TRUE ~ "Other"
+    )
+  ) 
+
+
+
+# Prepare data with renamed factors
+evaluation_df_single <- evaluation_df_single %>%
+  mutate(
+    validation_dataset = factor(validation_dataset,
+                                levels = c("Training data", "Vestfold", "Bunger23"),
+                                labels = c("Training data", "Prediction - Vestfold Hills", "Prediction - Bunger Hills")),
+    dataset = factor(dataset,
+                     levels = c("PA", "PO", "Plantarctica"),
+                     labels = c("Structured surveys", "Occurrence database", "Satellite-derived detections"))
+  )
+
+
+evaluation_df_single <- evaluation_df_single %>% 
+  mutate(
+    boyce = ifelse(dataset == "Structured surveys" & validation_dataset == "Training data", NA, boyce), 
+    brier = ifelse(dataset == "Structured surveys" & validation_dataset == "Training data", NA, brier)
+  )
+
+## LICHEN
+
+
+
+
+base_plot <- function(metric_name, metric_label) {
+  evaluation_df_single %>% 
+    filter(group == "lichen") %>% 
+    ggplot(aes(x = dataset, y = .data[[metric_name]], colour = dataset, shape = variant)) +
+    geom_hline(yintercept = moderate_thresholds[[metric_name]], 
+               linetype = "dashed", color = "gray50", linewidth = 0.5) +
+    geom_hline(yintercept = high_thresholds[[metric_name]], 
+               linetype = "dotted", color = "gray30", linewidth = 0.5) +
+    geom_point(position = position_dodge(width = 0.6), size = 3) +
+    facet_wrap(~ validation_dataset, ncol = 3) +
+    scale_color_manual(values = c("Structured surveys" = "black", 
+                                  "Occurrence database" = "orange", 
+                                  "Satellite-derived detections" = "purple")) +
+    scale_shape_manual(values = c("Ensemble" = 16, "ppm" = 17)) +
+    theme_bw(base_size = 13) +
+    labs(x = NULL, y = metric_label, colour = "Data type", shape = "Model variant") +
+    theme(
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      legend.box = "vertical",
+      strip.text.x = element_text(size = 13.5),
+      strip.background = element_rect(fill = ifelse(levels(evaluation_df_single$validation_dataset) == "Training data", 
+                                                    "gray90", "white"))
+      
+    ) +
+    guides(colour = guide_legend(order = 1),
+           shape = guide_legend(order = 2))
+}
+
+# Create individual plots
+p1 <- base_plot("ROC", "AUC-ROC")
+p2 <- base_plot("boyce", "Boyce index")
+p3 <- base_plot("brier", "Brier score") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+# Combine plots with shared legend and x-axis
+p <- ggarrange(p1, p2, p3,
+               ncol = 1,
+               nrow = 3,
+               common.legend = TRUE,
+               legend = "bottom",
+               align = "v",
+               heights = c(1, 1, 1))
+
+ggsave(filename = paste0(outpath, "/FIGURE_X_lichen_", scenario_all, ".png"), p,
+       width = 20, height = 20, unit = "cm", dpi = 600, bg = "white")
+
+
+
+## MOSS
+
+
+base_plot <- function(metric_name, metric_label) {
+  evaluation_df_single %>% 
+    filter(group == "moss") %>% 
+    ggplot(aes(x = dataset, y = .data[[metric_name]], colour = dataset, shape = variant)) +
+    geom_hline(yintercept = moderate_thresholds[[metric_name]], 
+               linetype = "dashed", color = "gray50", linewidth = 0.5) +
+    geom_hline(yintercept = high_thresholds[[metric_name]], 
+               linetype = "dotted", color = "gray30", linewidth = 0.5) +
+    geom_point(position = position_dodge(width = 0.6), size = 3) +
+    facet_wrap(~ validation_dataset, ncol = 3) +
+    scale_color_manual(values = c("Structured surveys" = "black", 
+                                  "Occurrence database" = "orange", 
+                                  "Satellite-derived detections" = "purple")) +
+    scale_shape_manual(values = c("Ensemble" = 16, "ppm" = 17)) +
+    theme_bw(base_size = 13) +
+    labs(x = NULL, y = metric_label, colour = "Data type", shape = "Model variant") +
+    theme(
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      legend.box = "vertical",
+      strip.text.x = element_text(size = 13.5),
+      strip.background = element_rect(fill = ifelse(levels(evaluation_df_single$validation_dataset) == "Training data", 
+                                                    "gray90", "white"))
+      
+    ) +
+    guides(colour = guide_legend(order = 1),
+           shape = guide_legend(order = 2))
+}
+
+# Create individual plots
+p1 <- base_plot("ROC", "AUC-ROC")
+p2 <- base_plot("boyce", "Boyce index")
+p3 <- base_plot("brier", "Brier score") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+# Combine plots with shared legend and x-axis
+p <- ggarrange(p1, p2, p3,
+               ncol = 1,
+               nrow = 3,
+               common.legend = TRUE,
+               legend = "bottom",
+               align = "v",
+               heights = c(1, 1, 1))
+
+ggsave(filename = paste0(outpath, "/FIGURE_X_moss_", scenario_all, ".png"), p,
+       width = 20, height = 20, unit = "cm", dpi = 600, bg = "white")
+
+
+
+# Now integrated: ---------------------------------------------------------
+
+# Remove training from evaluation 
+evaluation_df_single <- evaluation_df_single %>% 
+  filter(validation_dataset != "Training data") %>%
+  mutate(dataset = "Single-dataset")
+
+integrated_moss_df <- read.csv(file = here(outpath, paste0("Integrated_moss_eval_df_", scenario_all, ".csv"))) %>% 
+  mutate(group = "moss")
+integrated_lichen_df <- read.csv(file = here(outpath, paste0("Integrated_lichen_eval_df_", scenario_all, ".csv"))) %>% 
+  mutate(group = "lichen")
+
+evaluation_df_integrated <- rbind(integrated_moss_df, integrated_lichen_df) %>% 
+  filter(!is.na(validation_dataset)) %>% 
+  filter(model != "PO bias + PA") %>% 
+  mutate(model = ifelse(model == "PO bias + PA", "PO + PA", model))
+
+# Remove training from evaluation 
+evaluation_df_integrated <- evaluation_df_integrated %>% 
+  filter(validation_dataset != "Training data (BH)") %>% 
+  filter(validation_dataset != "Training data (VH)")
+
+# Prepare data with renamed factors
+evaluation_df_integrated <- evaluation_df_integrated %>%
+  mutate(
+    validation_dataset = factor(validation_dataset,
+                                levels = c("Vestfold", "Bunger23"),
+                                labels = c("Vestfold Hills", "Bunger Hills")),
+    dataset = factor(model,
+                     levels = c("PO + PA", "Satellite + PA", "PO + Satellite + PA"),
+                     labels = c("PA + PO", "PA + Satellite", "PA + PO + Satellite"))
+  )
+
+
+# Update validation_dataset for single to match
+evaluation_df_single <- evaluation_df_single %>%
+  mutate(
+    validation_dataset = factor(validation_dataset,
+                                levels = c("Prediction - Vestfold Hills", "Prediction - Bunger Hills"),
+                                labels = c("Vestfold Hills", "Bunger Hills"))
+  )
+
+# Combine datasets
+evaluation_df_combined <- bind_rows(
+  evaluation_df_single %>% select(validation_dataset, ROC, boyce, brier, group, dataset),
+  evaluation_df_integrated %>% select(validation_dataset, ROC, boyce, brier, group, dataset)
+) %>%
+  mutate(
+    dataset = factor(dataset, 
+                     levels = c("Single-dataset", "PA + PO", "PA + Satellite", "PA + PO + Satellite"))
+  )
+
+
+
+
+## LICHEN
+base_plot_lichen <- function(metric_name, metric_label) {
+  evaluation_df_combined %>% 
+    filter(group == "lichen") %>% 
+    ggplot(aes(x = dataset, y = .data[[metric_name]], 
+               colour = dataset)) +
+    geom_hline(yintercept = moderate_thresholds[[metric_name]], 
+               linetype = "dashed", color = "gray50", linewidth = 0.5) +
+    geom_hline(yintercept = high_thresholds[[metric_name]], 
+               linetype = "dotted", color = "gray30", linewidth = 0.5) +
+    geom_point(position = position_dodge(width = 0.6), size = 3) +
+    facet_wrap(~ validation_dataset, ncol = 2) +
+    scale_color_manual(
+      values = c(
+        "Single-dataset" = "grey60",
+        "PA + PO" = "darkorange3",
+        "PA + Satellite" = "purple4",
+        "PA + PO + Satellite" = "darkred"
+      )
+    ) +
+    theme_bw(base_size = 13) +
+    labs(x = NULL, y = metric_label, colour = "Model type") +
+    theme(
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      legend.box = "vertical",
+      strip.text.x = element_text(size = 13.5)
+    ) +
+    guides(colour = guide_legend(order = 1))
+}
+
+
+## MOSS
+base_plot_moss <- function(metric_name, metric_label) {
+  evaluation_df_combined %>% 
+    filter(group == "moss") %>% 
+    ggplot(aes(x = dataset, y = .data[[metric_name]], 
+               colour = dataset)) +
+    geom_hline(yintercept = moderate_thresholds[[metric_name]], 
+               linetype = "dashed", color = "gray50", linewidth = 0.5) +
+    geom_hline(yintercept = high_thresholds[[metric_name]], 
+               linetype = "dotted", color = "gray30", linewidth = 0.5) +
+    geom_point(position = position_dodge(width = 0.6), size = 3) +
+    facet_wrap(~ validation_dataset, ncol = 2) +
+    scale_color_manual(
+      values = c(
+        "Single-dataset" = "grey60",
+        "PA + PO" = "darkorange3",
+        "PA + Satellite" = "purple4",
+        "PA + PO + Satellite" = "darkred"
+      )
+    ) +
+    theme_bw(base_size = 13) +
+    labs(x = NULL, y = metric_label, colour = "Model type") +
+    theme(
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      legend.box = "vertical",
+      strip.text.x = element_text(size = 13.5)
+    ) +
+    guides(colour = guide_legend(order = 1))
+}
+
+library(gridExtra)
+
+# All plots without legends
+p1 <- base_plot_lichen("ROC", "AUC-ROC") + theme(legend.position = "none")
+p2 <- base_plot_lichen("boyce", "Boyce index") + theme(legend.position = "none")
+p3 <- base_plot_lichen("brier", "Brier score") + theme(legend.position = "none")
+p1b <- base_plot_moss("ROC", "AUC-ROC") + rremove("ylab") + theme(legend.position = "none")
+p2b <- base_plot_moss("boyce", "Boyce index") + rremove("ylab") + theme(legend.position = "none")
+p3b <- base_plot_moss("brier", "Brier score") + rremove("ylab") + theme(legend.position = "none")
+
+lichen <- ggarrange(p1, p2, p3, ncol = 1, nrow = 3, align = "v")
+moss <- ggarrange(p1b, p2b, p3b, ncol = 1, nrow = 3, align = "v")
+
+# Create a dummy plot just to extract the legend
+dummy <- base_plot_lichen("ROC", "AUC-ROC") + 
+  theme(legend.position = "bottom", 
+        legend.direction = "horizontal")
+legend <- as_ggplot(get_legend(dummy))
+
+# Combine with legend
+combined_plot <- ggarrange(
+  ggarrange(lichen, moss, ncol = 2, labels = c("(a)", "(b)"), hjust = -0.5, vjust = 1.5),
+  legend,
+  ncol = 1, nrow = 2,
+  heights = c(1, 0.1)
+)
+
+ggsave(filename = paste0(outpath, "/FIGURE_X_combined", scenario_all, ".png"), 
+       combined_plot,
+       width = 20, height = 22.5, unit = "cm", dpi = 600, bg = "white")
+
+
+
+
+
+
 # ARCHIVE COLOUR FOR PRESENCE - ABSENCE VIRIDIS ---------------------------
 
 # c("Presence" = viridis(2)[2], "Absence" = viridis(2)[1])
