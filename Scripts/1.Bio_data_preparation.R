@@ -569,6 +569,18 @@ veg.east.ant <- vect(rbind(GBIF_east_ant.sf, ICEFREE_east_ant.sf))
 st_write(veg.east.ant.sf, here("Data/Biological_records", "PO_Veg_East_Ant.shp"), append = F)
 
 
+# Save version without Bunger or Vestfold ---------------------------------
+bunger_boundary <- st_read(here("Data/Environmental_predictors/bunger_boundary.shp")) 
+vestfold_boundary <- st_read(here("Data/Environmental_predictors/vestfold_boundary.shp")) 
+
+# Keep points OUTSIDE the polygons using st_disjoint
+veg.east.ant.sf_no_bunger <- veg.east.ant.sf[lengths(st_disjoint(veg.east.ant.sf, bunger_boundary)) > 0, ]
+veg.east.ant.sf_no_vestfold <- veg.east.ant.sf[lengths(st_disjoint(veg.east.ant.sf, vestfold_boundary)) > 0, ]
+
+st_write(veg.east.ant.sf_no_bunger, here("Data/Biological_records", "PO_Veg_East_Ant_No_Bunger.shp"), append = F)
+st_write(veg.east.ant.sf_no_vestfold, here("Data/Biological_records", "PO_Veg_East_Ant_No_Vestfold.shp"), append = F)
+
+
 #####################################################################
 ############ Presence-absence survey - Vestfold Hills #############
 ####################################################################
@@ -839,6 +851,22 @@ veg_map <- terra::crop(veg_map, ext(ACBRS_SPVE))
 veg_map <- centroids(veg_map)
 
 writeVector(veg_map, here("Data/Biological_records", "PO_Plantarctica.shp"))
+
+# Save version without Bunger or Vestfold ---------------------------------
+bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp")) 
+vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp")) 
+
+# Keep points OUTSIDE the polygons using is.related with "disjoint"
+veg_map_no_bunger <- veg_map[is.related(veg_map, bunger_boundary, "disjoint"), ]
+veg_map_no_vestfold <- veg_map[is.related(veg_map, vestfold_boundary, "disjoint"), ]
+
+writeVector(veg_map_no_bunger, 
+            here("Data/Biological_records", "PO_Plantarctica_No_Bunger.shp"), 
+            overwrite = TRUE)
+
+writeVector(veg_map_no_vestfold, 
+            here("Data/Biological_records", "PO_Plantarctica_No_Vestfold.shp"), 
+            overwrite = TRUE)
 
 
 # REFERENCES --------------------------------------------------------------
