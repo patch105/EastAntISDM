@@ -73,7 +73,7 @@ group <- "Lichen"
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "PA_Ensemble_BUNGER_Nov_11"
+scenario = "PA_Ensemble_BUNGER_Nov_5"
 
 
 # Set outpath -------------------------------------------------------------
@@ -165,20 +165,14 @@ if(group == "Lichen") {
 
 # Load the 500m covariates ------------------------------------------------
 
-TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
-names(TWI) <- "TWI"
+# TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
+# names(TWI) <- "TWI"
 
 slope <- rast(here("Data/Environmental_predictors/slope_500m_IceFree_EastAnt.tif"))
-names(slope) <- "slope"
+names(slope) <- "Slope"
 
 northness <- rast(here("Data/Environmental_predictors/northness_500m_IceFree_EastAnt.tif"))
-names(northness) <- "northness"
-
-aspect <- rast(here("Data/Environmental_predictors/aspect_500m_IceFree_EastAnt.tif"))
-names(aspect) <- "aspect"
-
-# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
-# names(dist_vertebrates) <- "dist_vertebrates"
+names(northness) <- "Northness"
 
 # dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
 # names(dist_seasonal_water) <- "dist_seasonal_water"
@@ -186,8 +180,14 @@ names(aspect) <- "aspect"
 summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"))
 names(summer_temp) <- "summer_temp"
 
-wind <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
-names(wind) <- "wind"
+wind_speed <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
+names(wind_speed) <- "wind_speed"
+
+snow_cover <- rast(here("Data/Environmental_predictors/SummerSnowCover_500m.tif"))
+names(snow_cover) <- "snow_cover"
+
+dist_coast <- rast(here("Data/Environmental_predictors/dist_to_coast_seamask_v7_10_500m.tif"))
+names(dist_coast) <- "dist_to_coast"
 
 
 # Apply some transformations
@@ -197,15 +197,21 @@ names(sqrt_slope) <- "sqrt_slope"
 # log_dist_seasonal_water <- log(dist_seasonal_water+1)
 # names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
 
+log_dist_coast <- log(dist_coast+1)
+names(log_dist_coast) <- "log_dist_coast"
+
 
 # Stack covariates & save version w/o bias cov
-covs <- c(TWI, sqrt_slope, northness, summer_temp,  wind)
+covs <- c(sqrt_slope, northness, summer_temp, wind_speed, snow_cover, log_dist_coast)
 
 # Make sure that if any predictors are NA, all become NA
 
 # Here we're just exploiting the fact that sum will by default return NA when any layer has an NA
 covs <- terra::mask(covs, sum(covs))
 
+#************
+# Now trim ice_free mask to match covs!
+ice_free.EastAnt <- terra::mask(ice_free.EastAnt, sum(covs))
 
 # Extract enviro. covs for training ---------------------------------------
 
