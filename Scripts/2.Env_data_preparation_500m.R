@@ -285,10 +285,10 @@ wind_speed <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Spe
 names(wind_speed) <- "Wind speed"
 
 snow_cover <- rast(here("Data/Environmental_predictors/SummerSnowCover_500m.tif"))
-names(snow_cover) <- "snow_cover"
+names(snow_cover) <- "Snow cover"
 
 dist_coast <- rast(here("Data/Environmental_predictors/dist_to_coast_seamask_v7_10_500m.tif"))
-names(dist_coast) <- "dist_coast"
+names(dist_coast) <- "Dist. to Coast"
 
 # Bias covariate
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_500m.tif"))
@@ -341,30 +341,16 @@ usdm::vif(covs)
 
 # PLOTTING ENVIRONMENTAL COVARIATES ---------------------------------------
 
-covs <- c(TWI, sqrt(slope), northness, summer_temp, wind_speed, log(dist_station+1))
-names(covs) <- c("TWI", "Slope", "Northness", "Summer_temp", "Wind_speed", "Dist_to_station")
+covs <- c(sqrt(slope), northness, summer_temp, wind_speed, log(dist_station+1), log(dist_coast+1), snow_cover)
+names(covs) <- c("Slope", "Northness", "Summer_temp", "Wind_speed", "Dist_to_station", "Dist_to_coast", "snow_cover")
 
 
 # Load boundaries
 vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp"))
 bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
 
-P1 <- covs %>%
-  crop(ext(bunger_boundary)) %>% 
-  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
-  ggplot() +
-  geom_tile(aes(x = x, y = y, fill = TWI)) +
-  scale_fill_viridis() +
-  coord_fixed() +
-  theme_bw() +
-  labs(title = "Topographic Wetness Index") +
-  theme(axis.title = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank(),
-        legend.ticks = element_blank(),
-        legend.title = element_blank())
 
-P2 <- covs %>%
+P1 <- covs %>%
   crop(ext(bunger_boundary)) %>% 
   as.data.frame(xy = TRUE, na.rm = TRUE) %>%
   ggplot() +
@@ -380,7 +366,7 @@ P2 <- covs %>%
         legend.title = element_blank())
 
 
-P3 <- covs %>%
+P2 <- covs %>%
   crop(ext(bunger_boundary)) %>% 
   as.data.frame(xy = TRUE, na.rm = TRUE) %>%
   ggplot() +
@@ -396,7 +382,7 @@ P3 <- covs %>%
         legend.title = element_blank())
 
 
-P4 <- covs %>%
+P3 <- covs %>%
   crop(ext(bunger_boundary)) %>% 
   as.data.frame(xy = TRUE, na.rm = TRUE) %>%
   ggplot() +
@@ -412,7 +398,7 @@ P4 <- covs %>%
         legend.title = element_blank())
 
 
-P5 <- covs %>%
+P4 <- covs %>%
   crop(ext(bunger_boundary)) %>% 
   as.data.frame(xy = TRUE, na.rm = TRUE) %>%
   ggplot() +
@@ -428,7 +414,7 @@ P5 <- covs %>%
         legend.title = element_blank())
 
 
-P6 <- covs %>%
+P5 <- covs %>%
   crop(ext(bunger_boundary)) %>% 
   as.data.frame(xy = TRUE, na.rm = TRUE) %>%
   ggplot() +
@@ -444,10 +430,42 @@ P6 <- covs %>%
         legend.title = element_blank())
 
 
+P6 <- covs %>%
+  crop(ext(bunger_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Dist_to_coast)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Distance to coast (log)") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
+P7 <- covs %>%
+  crop(ext(bunger_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = snow_cover)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Snow cover") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
 # Make the combined figure ------------------------------------------------
 
 # Arrange Lichen row
-plot <- ggarrange(P1, P2, P3, P4, P5, P6, 
+plot <- ggarrange(P1, P2, P3, P4, P6, P7,
                   ncol = 2, nrow = 3, align = "hv")
 
 # Save the combined figure ------------------------------------------------
@@ -463,21 +481,6 @@ P1 <- covs %>%
   crop(ext(vestfold_boundary)) %>% 
   as.data.frame(xy = TRUE, na.rm = TRUE) %>%
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = TWI)) +
-  scale_fill_viridis() +
-  coord_fixed() +
-  theme_bw() +
-  labs(title = "Topographic Wetness Index") +
-  theme(axis.title = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank(),
-        legend.ticks = element_blank(),
-        legend.title = element_blank())
-
-P2 <- covs %>%
-  crop(ext(vestfold_boundary)) %>% 
-  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
-  ggplot() +
   geom_tile(aes(x = x, y = y, fill = Slope)) +
   scale_fill_viridis() +
   coord_fixed() +
@@ -490,7 +493,7 @@ P2 <- covs %>%
         legend.title = element_blank())
 
 
-P3 <- covs %>%
+P2 <- covs %>%
   crop(ext(vestfold_boundary)) %>% 
   as.data.frame(xy = TRUE, na.rm = TRUE) %>%
   ggplot() +
@@ -506,7 +509,7 @@ P3 <- covs %>%
         legend.title = element_blank())
 
 
-P4 <- covs %>%
+P3 <- covs %>%
   crop(ext(vestfold_boundary)) %>% 
   as.data.frame(xy = TRUE, na.rm = TRUE) %>%
   ggplot() +
@@ -522,7 +525,7 @@ P4 <- covs %>%
         legend.title = element_blank())
 
 
-P5 <- covs %>%
+P4 <- covs %>%
   crop(ext(vestfold_boundary)) %>% 
   as.data.frame(xy = TRUE, na.rm = TRUE) %>%
   ggplot() +
@@ -538,7 +541,7 @@ P5 <- covs %>%
         legend.title = element_blank())
 
 
-P6 <- covs %>%
+P5 <- covs %>%
   crop(ext(vestfold_boundary)) %>% 
   as.data.frame(xy = TRUE, na.rm = TRUE) %>%
   ggplot() +
@@ -554,10 +557,42 @@ P6 <- covs %>%
         legend.title = element_blank())
 
 
+P6 <- covs %>%
+  crop(ext(vestfold_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = Dist_to_coast)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Distance to coast (log)") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
+P7 <- covs %>%
+  crop(ext(vestfold_boundary)) %>% 
+  as.data.frame(xy = TRUE, na.rm = TRUE) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = snow_cover)) +
+  scale_fill_viridis() +
+  coord_fixed() +
+  theme_bw() +
+  labs(title = "Snow cover") +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.ticks = element_blank(),
+        legend.title = element_blank())
+
+
 # Make the combined figure ------------------------------------------------
 
 # Arrange Lichen row
-plot <- ggarrange(P1, P2, P3, P4, P5, P6, 
+plot <- ggarrange(P1, P2, P3, P4, P6, P7,
                   ncol = 2, nrow = 3, align = "hv")
 
 # Save the combined figure ------------------------------------------------

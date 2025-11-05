@@ -68,12 +68,12 @@ model_types <- list("Maxent", "LASSO", "GAM", "RF", "BRT")
 # Set group ---------------------------------------------------------------
 
 group <- "Lichen"
-# group <- "Moss"
+#group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "PO_Ensemble_Nov_5"
+scenario = "PO_Ensemble_Nov_5_nowater_background"
 
 
 # Set outpath -------------------------------------------------------------
@@ -208,32 +208,32 @@ names(slope) <- "Slope"
 northness <- rast(here("Data/Environmental_predictors/northness_500m_IceFree_EastAnt.tif"))
 names(northness) <- "Northness"
 
-dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
-names(dist_seasonal_water) <- "Dist. to Seasonal Water"
+# dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
+# names(dist_seasonal_water) <- "dist_seasonal_water"
 
 summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"))
-names(summer_temp) <- "Summer temp."
+names(summer_temp) <- "summer_temp"
 
 wind_speed <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
-names(wind_speed) <- "Wind speed"
+names(wind_speed) <- "wind_speed"
 
 snow_cover <- rast(here("Data/Environmental_predictors/SummerSnowCover_500m.tif"))
-names(snow_cover) <- "Snow cover"
+names(snow_cover) <- "snow_cover"
 
 dist_coast <- rast(here("Data/Environmental_predictors/dist_to_coast_seamask_v7_10_500m.tif"))
-names(dist_coast) <- "Dist. to Coast"
+names(dist_coast) <- "dist_to_coast"
 
 # Bias covariate
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_500m.tif"))
-names(dist_station) <- "Dist. to Station"
+names(dist_station) <- "dist_to_station"
 
 
 # Apply some transformations
 sqrt_slope <- sqrt(slope)
 names(sqrt_slope) <- "sqrt_slope"
 
-log_dist_seasonal_water <- log(dist_seasonal_water+1)
-names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
+# log_dist_seasonal_water <- log(dist_seasonal_water+1)
+# names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
 
 log_dist_station <- log(dist_station+1)
 names(log_dist_station) <- "log_dist_station"
@@ -242,8 +242,8 @@ log_dist_coast <- log(dist_coast+1)
 names(log_dist_coast) <- "log_dist_coast"
 
 # Stack covariates & save version w/o bias cov
-covs_no_bias <- c(sqrt_slope, northness, summer_temp, wind_speed, snow_cover, log_dist_coast, log_dist_seasonal_water)
-covs <- c(sqrt_slope, northness, summer_temp, wind_speed, snow_cover, log_dist_coast, log_dist_seasonal_water, log_dist_station)
+covs_no_bias <- c(sqrt_slope, northness, summer_temp, wind_speed, snow_cover, log_dist_coast)
+covs <- c(sqrt_slope, northness, summer_temp, wind_speed, snow_cover, log_dist_coast, log_dist_station)
 
 # Make sure that if any predictors are NA, all become NA
 
@@ -280,6 +280,10 @@ map(PO_datasets, function(dataset){
   
   # Select background points ------------------------------------------------
   
+  # Load boundaries
+  vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp"))
+  bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
+  
   background_domain <- ice_free.EastAnt
   
   # Buffer 1km around record locations
@@ -301,6 +305,20 @@ map(PO_datasets, function(dataset){
   # Make domain areas 1
   background_domain <- ifel(not.na(background_domain), 1, NA)
   
+  # Finally, mask out the target region (Vestfold or Bunger):
+  if(dataset == "No_Bunger"){
+    
+    background_domain <- mask(background_domain, bunger_boundary, inverse = T)
+    
+  }
+  
+  if(dataset == "No_Vestfold"){
+    
+    background_domain <- mask(background_domain, vestfold_boundary, inverse = T)
+    
+  }
+  
+  
   
   # Background sampling -----------------------------------------------------
   
@@ -310,7 +328,7 @@ map(PO_datasets, function(dataset){
   
   # Set the location and number of background points
   
-  nbackground <- 7000
+  nbackground <- 6000
   
   background <- predicts::backgroundSample(mask = background_domain, 
                                            n = nbackground,
