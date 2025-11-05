@@ -67,13 +67,13 @@ model_types <- list("Maxent", "LASSO", "GAM", "RF", "BRT")
 
 # Set group ---------------------------------------------------------------
 
-#group <- "Lichen"
-group <- "Moss"
+group <- "Lichen"
+# group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "PO_Ensemble_Nov_11"
+scenario = "PO_Ensemble_Nov_5"
 
 
 # Set outpath -------------------------------------------------------------
@@ -199,48 +199,51 @@ if(group == "Lichen") {
 
 # Load the 500m covariates ------------------------------------------------
 
-TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
-names(TWI) <- "TWI"
+# TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
+# names(TWI) <- "TWI"
 
 slope <- rast(here("Data/Environmental_predictors/slope_500m_IceFree_EastAnt.tif"))
-names(slope) <- "slope"
+names(slope) <- "Slope"
 
 northness <- rast(here("Data/Environmental_predictors/northness_500m_IceFree_EastAnt.tif"))
-names(northness) <- "northness"
+names(northness) <- "Northness"
 
-aspect <- rast(here("Data/Environmental_predictors/aspect_500m_IceFree_EastAnt.tif"))
-names(aspect) <- "aspect"
-
-# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
-# names(dist_vertebrates) <- "dist_vertebrates"
-
-# dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
-# names(dist_seasonal_water) <- "dist_seasonal_water"
+dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
+names(dist_seasonal_water) <- "Dist. to Seasonal Water"
 
 summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"))
-names(summer_temp) <- "summer_temp"
+names(summer_temp) <- "Summer temp."
 
-wind <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
-names(wind) <- "wind"
+wind_speed <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
+names(wind_speed) <- "Wind speed"
+
+snow_cover <- rast(here("Data/Environmental_predictors/SummerSnowCover_500m.tif"))
+names(snow_cover) <- "Snow cover"
+
+dist_coast <- rast(here("Data/Environmental_predictors/dist_to_coast_seamask_v7_10_500m.tif"))
+names(dist_coast) <- "Dist. to Coast"
 
 # Bias covariate
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_500m.tif"))
-names(dist_station) <- "dist_station"
+names(dist_station) <- "Dist. to Station"
 
 
 # Apply some transformations
 sqrt_slope <- sqrt(slope)
 names(sqrt_slope) <- "sqrt_slope"
 
-# log_dist_seasonal_water <- log(dist_seasonal_water+1)
-# names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
+log_dist_seasonal_water <- log(dist_seasonal_water+1)
+names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
 
 log_dist_station <- log(dist_station+1)
 names(log_dist_station) <- "log_dist_station"
 
+log_dist_coast <- log(dist_coast+1)
+names(log_dist_coast) <- "log_dist_coast"
+
 # Stack covariates & save version w/o bias cov
-covs_no_bias <- c(TWI, sqrt_slope, northness, summer_temp, wind)
-covs <- c(TWI, sqrt_slope, northness, summer_temp, log_dist_station, wind)
+covs_no_bias <- c(sqrt_slope, northness, summer_temp, wind_speed, snow_cover, log_dist_coast, log_dist_seasonal_water)
+covs <- c(sqrt_slope, northness, summer_temp, wind_speed, snow_cover, log_dist_coast, log_dist_seasonal_water, log_dist_station)
 
 # Make sure that if any predictors are NA, all become NA
 
@@ -248,6 +251,9 @@ covs <- c(TWI, sqrt_slope, northness, summer_temp, log_dist_station, wind)
 covs_no_bias <- terra::mask(covs_no_bias, sum(covs_no_bias))
 covs <- terra::mask(covs, sum(covs))
 
+#************
+# Now trim ice_free mask to match covs!
+ice_free.EastAnt <- terra::mask(ice_free.EastAnt, sum(covs))
 
 
 # RUN THE FOLLOWING FOR BOTH DATASETS (excluding Vestfold or Bunger) --------
@@ -270,12 +276,14 @@ map(PO_datasets, function(dataset){
   }
   
   
+  dir.create(file.path(outpath, dataset), showWarnings = F, recursive = TRUE)
+  
   # Select background points ------------------------------------------------
   
   background_domain <- ice_free.EastAnt
   
   # Buffer 1km around record locations
-  dist.near <- 1000
+  dist.near <- 10
   
   # Buffer records by the maximum distance of record locations
   domain.mask <- st_buffer(PO.sf, dist.near) %>% 
@@ -302,11 +310,11 @@ map(PO_datasets, function(dataset){
   
   # Set the location and number of background points
   
-  nbackground <- 3000
+  nbackground <- 7000
   
   background <- predicts::backgroundSample(mask = background_domain, 
                                            n = nbackground,
-                                           tryf = 500)
+                                           tryf = 1000)
   
   background <- vect(background, crs = "EPSG:3031")
   
@@ -364,12 +372,16 @@ map(PO_datasets, function(dataset){
   
   for(i in seq_along(cov_names)) {
     
-    print(ggplot() +
-            geom_density(data = train_PB_covs, 
-                         aes(x = .data[[names(train_PB_covs)[i]]], fill = as.factor(Presence)), 
-                         alpha = 0.5) +
-            theme_bw() +
-            labs(title = names(train_PB_covs)[i]))
+    plot <- ggplot() +
+      geom_density(data = train_PB_covs, 
+                   aes(x = .data[[names(train_PB_covs)[i]]], fill = as.factor(Presence)), 
+                   alpha = 0.5) +
+      theme_bw() +
+      labs(title = names(train_PB_covs)[i])
+    
+    ggsave(paste0(outpath, "/", dataset, "/Covariate_Density_Plot_", names(train_PB_covs)[i], "_Scenario_", scenario, ".png"),
+           plot = plot,
+           width = 13, height = 10, dpi = 300)
     
   }
   

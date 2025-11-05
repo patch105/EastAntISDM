@@ -33,7 +33,7 @@ here::here()
 # writeRaster(ice_free_union, here("Data/Environmental_predictors/ice_free_union_reproj_100m.tif"), overwrite = T)
 
 # Load the ice-free areas of East Antarctica
-ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_union_500m.tif"))
+ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_union_EastAnt_500m.tif"))
 
 # Load the Antarctic Conservation Biogeographic Regions, filter to East Antarctica
 ACBRS <- st_read(here("Data/Environmental_predictors/ACBRs_v2_2016.shp"), crs = 3031) %>% filter(ACBR_Name == "East Antarctica")
@@ -110,6 +110,54 @@ writeRaster(dist_seasonal_water, here("Data/Environmental_predictors/distance_to
 plot(dist_seasonal_water)
 
 
+# ################################################
+# ######### Distance to coast #######
+# ################################################
+
+# Using the Antarctic Digital Database high resolution seamask polygon v. 7.10
+
+# https://data.bas.ac.uk/items/9288fd09-681b-4377-84b2-6ab9b9c6c05d/
+
+#   \*NOTE: the distance to coast function takes a while to run
+
+# Load the seamask layer
+seamask <- st_read(here("Data/Environmental_predictors/add_seamask_high_res_v7_10.shp"), crs = 3031)
+seamaskSPVE <- vect(seamask)
+
+# Set values of cells overlapping target to -1 for distance calculation (creates a raster of just -1 at coast)
+overlap <- ice_free.EastAnt
+
+overlap[cells(overlap, seamaskSPVE)[,2]] <- -1
+
+# Calculate the distance of each grid cell to the nearest coastline
+dist_coast <- distance(x = overlap, target = -1, exclude= NA)
+
+dist_coast <- mask(dist_coast, ice_free.EastAnt)
+
+writeRaster(dist_coast, here("Data/Environmental_predictors/dist_to_coast_seamask_v7_10_500m.tif"), overwrite = T)
+
+dist_coast <- rast(here("Data/Environmental_predictors/dist_to_coast_seamask_v7_10_EAST_ANTARCTICA.tif"))
+dist_coast <- crop(dist_coast, ext(ice_free.EastAnt))
+
+dist_coast <- terra::project(dist_coast, ice_free.EastAnt, method = "near")
+dist_coast <- mask(dist_coast, ice_free.EastAnt, maskvalue = NA)
+writeRaster(dist_coast, here("Data/Environmental_predictors/dist_to_coast_seamask_v7_10_500m.tif"), overwrite = T)
+
+
+# ################################################
+# ########### Seasonal Snow cover ###############
+# ################################################
+
+snow_cover <- rast(here("Data/Environmental_predictors/SummerSnowCover_MOSAIC_1km.tif"))
+
+snow_cover <- crop(snow_cover, ext(ice_free.EastAnt))
+
+snow_cover <- terra::project(snow_cover, ice_free.EastAnt, method = "near")
+snow_cover <- mask(snow_cover, ice_free.EastAnt, maskvalue = NA)
+writeRaster(snow_cover, here("Data/Environmental_predictors/SummerSnowCover_500m.tif"), overwrite = T)
+
+
+
 ###################################################
 ########### Distance to vertebrates ##################
 ####################################################
@@ -175,7 +223,7 @@ writeRaster(mean_summer_temp,
             here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_1km.tif"), 
             overwrite = T)
 
-### TEMPORARY: interpolate 1km temp to 100m
+### TEMPORARY: interpolate 1km temp to 500m
 
 summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_1km.tif"))
 summer_temp <- crop(summer_temp, ext(ice_free.EastAnt))
@@ -218,8 +266,8 @@ ice_free.EastAnt <- rast(here("Data/Environmental_predictors/ice_free_union_East
 
 # Load covariates for all of East Antarctica ------------------------------
 
-TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
-names(TWI) <- "TWI"
+# TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
+# names(TWI) <- "TWI"
 
 slope <- rast(here("Data/Environmental_predictors/slope_500m_IceFree_EastAnt.tif"))
 names(slope) <- "Slope"
@@ -227,8 +275,8 @@ names(slope) <- "Slope"
 northness <- rast(here("Data/Environmental_predictors/northness_500m_IceFree_EastAnt.tif"))
 names(northness) <- "Northness"
 
-# dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
-# names(dist_seasonal_water) <- "dist_seasonal_water"
+dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
+names(dist_seasonal_water) <- "dist_seasonal_water"
 
 summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"))
 names(summer_temp) <- "Summer temp."
@@ -236,28 +284,34 @@ names(summer_temp) <- "Summer temp."
 wind_speed <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
 names(wind_speed) <- "Wind speed"
 
+snow_cover <- rast(here("Data/Environmental_predictors/SummerSnowCover_500m.tif"))
+names(snow_cover) <- "snow_cover"
+
+dist_coast <- rast(here("Data/Environmental_predictors/dist_to_coast_seamask_v7_10_500m.tif"))
+names(dist_coast) <- "dist_coast"
+
 # Bias covariate
 dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_500m.tif"))
 names(dist_station) <- "Dist. to Station"
 
 # Stack covariates
-covs <- c(TWI, slope, northness, summer_temp, wind_speed, dist_station)
+covs <- c(slope, northness, summer_temp, wind_speed, snow_cover, dist_coast, dist_seasonal_water, dist_station)
 
-# # Plot histograms
-# hist(covs, na.rm = T, col = "lightblue")
-# hist(log(covs), na.rm = T, col = "lightblue")
-# hist(sqrt(covs), na.rm = T, col = "lightblue")
-# 
-# covs_cube <- sign(covs) * abs(covs)^(1/3)
-# hist(covs_cube, na.rm = T, col = "lightblue")
-# 
-# # Apply some transformations
-# sqrt_slope <- sqrt(slope)
-# log_dist_seasonal_water <- log(dist_seasonal_water+1)
-# log_dist_station <- log(dist_station+1)
-# log_dist_vertebrates <- log(dist_vertebrates+1)
-# 
-# 
+# Plot histograms
+hist(covs, na.rm = T, col = "lightblue")
+hist(log(covs), na.rm = T, col = "lightblue")
+hist(sqrt(covs), na.rm = T, col = "lightblue")
+
+covs_cube <- sign(covs) * abs(covs)^(1/3)
+hist(covs_cube, na.rm = T, col = "lightblue")
+
+# Apply some transformations
+sqrt_slope <- sqrt(slope)
+log_dist_seasonal_water <- log(dist_seasonal_water+1)
+log_dist_station <- log(dist_station+1)
+log_dist_coast <- log(dist_coast+1)
+
+
 
 ####################
 # Check for correlation among predictors ---------------------------------
@@ -275,7 +329,7 @@ M <- cor(covs_df, use = "pairwise.complete.obs")
 
 # Nicer corr plot
 
-png((here("Outputs/Results/Covariate_correlation_plot.png")), width = 900, height = 600)
+png((here("Outputs/Results/Covariate_correlation_plotV2.png")), width = 900, height = 600)
 
 print(corrplot.mixed(M, order = 'AOE'))
 
