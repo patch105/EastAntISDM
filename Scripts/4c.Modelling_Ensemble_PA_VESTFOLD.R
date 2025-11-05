@@ -67,13 +67,13 @@ model_types <- list("LASSO", "GAM", "RF", "BRT")
 
 # Set group ---------------------------------------------------------------
 
-# group <- "Lichen"
- group <- "Moss"
+group <- "Lichen"
+ # group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "PA_Ensemble_19_DATASET"
+scenario = "PA_Ensemble_19_DATASET_Nov_11"
 
 
 # Set outpath -------------------------------------------------------------
@@ -227,7 +227,7 @@ print(paste0("RECORDS FROM ", nrow(train_PB_covs) - sum(complete.cases(train_PB_
 
 train_PB_covs <- train_PB_covs[complete.cases(train_PB_covs), ] 
 # Reset the row IDs to adjust for removed rows
-rownames(train_PB_covs19) <- NULL
+rownames(train_PB_covs) <- NULL
 train_PB_covs <- dplyr::select(train_PB_covs, -ID)
 
 
@@ -251,12 +251,16 @@ cov_names <- names(covs)
 
 for(i in seq_along(cov_names)) {
   
-  print(ggplot() +
-          geom_density(data = train_PB_covs, 
-                       aes(x = .data[[names(train_PB_covs)[i]]], fill = as.factor(Presence)), 
-                       alpha = 0.5) +
-          theme_bw() +
-          labs(title = names(train_PB_covs)[i]))
+  plot <- ggplot() +
+    geom_density(data = train_PB_covs, 
+                 aes(x = .data[[names(train_PB_covs)[i]]], fill = as.factor(Presence)), 
+                 alpha = 0.5) +
+    theme_bw() +
+    labs(title = names(train_PB_covs)[i])
+  
+  ggsave(file.path(outpath, paste0("Covariate_Density_Plot_", names(train_PB_covs)[i], "_Scenario_", scenario, ".png")),
+         plot = plot,
+         width = 13, height = 10, dpi = 300)
   
 }
 
