@@ -73,7 +73,7 @@ group <- "Lichen"
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "PO_Ensemble_Nov_5_nowater_background"
+scenario = "PO_Ensemble_Nov_5_nowater_background_simple"
 
 
 # Set outpath -------------------------------------------------------------
@@ -110,7 +110,6 @@ PO_East_Ant_Veg_No_Vestfold_sf <- st_read(here("Data/Biological_records", "PO_Ve
 
 PO_East_Ant_Veg_No_Bunger_df <- PO_East_Ant_Veg_No_Bunger_sf %>% 
   st_coordinates() %>%
-  as.data.frame() %>% 
   bind_cols(st_drop_geometry(PO_East_Ant_Veg_No_Bunger_sf)) %>% 
   rename(x = X, y = Y) 
 
@@ -378,9 +377,9 @@ map(PO_datasets, function(dataset){
   rownames(pred_cur_covs) <- NULL
   
   
-  # SET BIAS FOR PREDICTION TO ZERO
-  pred_cur_covs$log_dist_station <- 0
-  
+  # SET BIAS FOR PREDICTION TO MEDIAN DISTANCE TO STATION
+  pred_cur_covs$log_dist_station <- median(pred_cur_covs$log_dist_station)
+  # pred_cur_covs$log_dist_station <- 0
   
   # Plot environmental conditions  ----------------------------------------------
   
@@ -439,9 +438,9 @@ map(PO_datasets, function(dataset){
   
   
   # Re-set bias cov
-  pred_cur_covs_norm$log_dist_station <- 0
+  pred_cur_covs_norm$log_dist_station <- median(pred_cur_covs_norm$log_dist_station)
   # pred_cur_covs_norm2$log_dist_station <- 0
-  
+
   
   ############################################
   # ALL - Calculating the case weights (down-weighting)  --------------------------
@@ -476,8 +475,8 @@ map(PO_datasets, function(dataset){
                               p = train_PB_covs[["Presence"]],
                               removeDuplicates = FALSE,
                               path = file.path(outpath, "Maxent_outputs", dataset),
-                              args = c("nothreshold", "responsecurves=true"))
-  
+                              args = c("noautofeature", "nothreshold", "nohinge", "noproduct", "responsecurves=true"))
+
   
   # Current prediction
   pred_cur.mxt <- dismo::predict(maxent.mod, pred_cur_covs, args = "doclamp=false")
@@ -613,6 +612,7 @@ map(PO_datasets, function(dataset){
     paste(paste0("s(", cov_names, ", k = 10)"), collapse = " + ")
   )
   
+
   gam <- mgcv::gam(formula = as.formula(myform), 
                    data = train_PB_covs_norm,
                    family = binomial(link = "logit"),
