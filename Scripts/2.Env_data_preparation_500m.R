@@ -12,7 +12,7 @@
 
 library(purrr)
 
-packages <- c("here", "sf", "terra", "dplyr", "tidyr", "viridis", "ggplot2", "tidyterra")
+packages <- c("here", "sf", "terra", "dplyr", "tidyr", "viridis", "ggplot2", "tidyterra", "ggpubr")
 
 walk(packages, require, character.only = T)
 
@@ -454,7 +454,7 @@ P7 <- covs %>%
   scale_fill_viridis() +
   coord_fixed() +
   theme_bw() +
-  labs(title = "Snow cover") +
+  labs(title = "Summer snow persistence") +
   theme(axis.title = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank(),
@@ -541,7 +541,7 @@ P4 <- covs %>%
         legend.title = element_blank())
 
 
-P5 <- covs %>%
+P5b <- covs %>%
   crop(ext(vestfold_boundary)) %>% 
   as.data.frame(xy = TRUE, na.rm = TRUE) %>%
   ggplot() +
@@ -581,7 +581,7 @@ P7 <- covs %>%
   scale_fill_viridis() +
   coord_fixed() +
   theme_bw() +
-  labs(title = "Snow cover") +
+  labs(title = "Summer snow persistence") +
   theme(axis.title = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank(),
@@ -604,5 +604,14 @@ ggsave(here("Outputs/Figures", "Covariates_VESTFOLD.png"),
 
 
 
+# PLOT THE BIAS COVARIATE -------------------------------------------------
+
+# Arrange Lichen row
+plot <- ggarrange(P5, P5b,
+                  ncol = 1, nrow = 2)
+
+ggsave(here("Outputs/Figures", "Distance_to_station_PLOT.png"),
+       plot = plot,
+       width = 10, height = 10, units = "cm", dpi = 600)
 
 
