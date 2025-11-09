@@ -67,13 +67,13 @@ model_types <- list("LASSO", "GAM", "RF", "BRT")
 
 # Set group ---------------------------------------------------------------
 
-group <- "Lichen"
- # group <- "Moss"
+# group <- "Lichen"
+ group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "PA_Ensemble_19_DATASET_Nov_11"
+scenario = "PA_Ensemble_VESTFOLD_Nov_5"
 
 
 # Set outpath -------------------------------------------------------------
@@ -174,20 +174,14 @@ if(group == "Lichen") {
 
 # Load the 500m covariates ------------------------------------------------
 
-TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
-names(TWI) <- "TWI"
+# TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
+# names(TWI) <- "TWI"
 
 slope <- rast(here("Data/Environmental_predictors/slope_500m_IceFree_EastAnt.tif"))
-names(slope) <- "slope"
+names(slope) <- "Slope"
 
 northness <- rast(here("Data/Environmental_predictors/northness_500m_IceFree_EastAnt.tif"))
-names(northness) <- "northness"
-
-aspect <- rast(here("Data/Environmental_predictors/aspect_500m_IceFree_EastAnt.tif"))
-names(aspect) <- "aspect"
-
-# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
-# names(dist_vertebrates) <- "dist_vertebrates"
+names(northness) <- "Northness"
 
 # dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
 # names(dist_seasonal_water) <- "dist_seasonal_water"
@@ -195,8 +189,14 @@ names(aspect) <- "aspect"
 summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"))
 names(summer_temp) <- "summer_temp"
 
-wind <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
-names(wind) <- "wind"
+wind_speed <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
+names(wind_speed) <- "wind_speed"
+
+snow_cover <- rast(here("Data/Environmental_predictors/SummerSnowCover_500m.tif"))
+names(snow_cover) <- "snow_cover"
+
+dist_coast <- rast(here("Data/Environmental_predictors/dist_to_coast_seamask_v7_10_500m.tif"))
+names(dist_coast) <- "dist_to_coast"
 
 
 # Apply some transformations
@@ -206,15 +206,21 @@ names(sqrt_slope) <- "sqrt_slope"
 # log_dist_seasonal_water <- log(dist_seasonal_water+1)
 # names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
 
+log_dist_coast <- log(dist_coast+1)
+names(log_dist_coast) <- "log_dist_coast"
+
 
 # Stack covariates & save version w/o bias cov
-covs <- c(TWI, sqrt_slope, northness, summer_temp,  wind)
+covs <- c(sqrt_slope, northness, summer_temp, wind_speed, snow_cover, log_dist_coast)
 
 # Make sure that if any predictors are NA, all become NA
 
 # Here we're just exploiting the fact that sum will by default return NA when any layer has an NA
 covs <- terra::mask(covs, sum(covs))
 
+#************
+# Now trim ice_free mask to match covs!
+ice_free.EastAnt <- terra::mask(ice_free.EastAnt, sum(covs))
 
 # Extract enviro. covs for training ---------------------------------------
 
@@ -265,7 +271,7 @@ for(i in seq_along(cov_names)) {
 }
 
 ############################################
-# FITTING MODELS TO PO DATASET -----------------------------------------------
+# FITTING MODELS TO PA DATASET -----------------------------------------------
 ############################################
 
 
@@ -307,7 +313,7 @@ for (v in cov_names) {
 
 prNum <- as.numeric(table(train_PB_covs$Presence)["1"]) # number of presences
 bgNum <- as.numeric(table(train_PB_covs$Presence)["0"]) # number of backgrounds
-wt <- ifelse(train_PB_covs$Presence == 1, 1, prNum / bgNum) # down-weighting
+# wt <- ifelse(train_PB_covs$Presence == 1, 1, prNum / bgNum) # down-weighting
 
 
 ############################################
@@ -345,7 +351,7 @@ pred_cur_quad <- predict(quad_obj, newdata = pred_cur_covs)
 # convert the data.frames to sparse matrices
 # select all quadratic (and non-quadratic) columns, except the y (occ)
 
-new_vars <- names(train_quad)[names(train_quad) != c("Presence")]
+new_vars <- names(train_quad)[!names(train_quad) %in% c("Presence", "x", "y")]
 train_sparse <- sparse.model.matrix(~. -1, train_quad[, new_vars])
 pred_cur_sparse <- sparse.model.matrix(~. -1, pred_cur_quad[, new_vars])
 # pred_fut_sparse <- sparse.model.matrix(~. -1, pred_fut_quad[, new_vars])
@@ -355,8 +361,8 @@ pred_cur_sparse <- sparse.model.matrix(~. -1, pred_cur_quad[, new_vars])
 lasso <- glmnet(x = train_sparse,
                 y = train_quad$Presence,
                 family = "binomial",
-                alpha = 1, # here 1 means fitting lasso
-                weights = wt)
+                standardize = T, # DEFAULT
+                alpha = 1)
 
 
 png(paste0(outpath,  "/LASSO_outputs/lasso_lambda_plot.png"), width = 800, height = 600)
@@ -367,7 +373,7 @@ lasso_cv <- cv.glmnet(x = train_sparse,
                       y = train_quad$Presence,
                       family = "binomial",
                       alpha = 1, # here 1 means fitting lasso
-                      weights = wt,
+                      standardize = T, # DEFAULT
                       nfolds = 5) # number of folds for cross-validation
 
 png(paste0(outpath,  "/LASSO_outputs/lasso_CV_plot.png"), width = 800, height = 600)
@@ -399,13 +405,13 @@ dev.off()
 
 
 # Partial dependence plots (all other covs at their mean)
-
-png(paste0(outpath,  "/LASSO_outputs/lasso_pdps_plot.png"), width = 800, height = 400)
-pdps_for_lasso(cov_names = cov_names, 
-               quad_obj = quad_obj,
-               lasso_cv = lasso_cv,
-               training_data = train_PB_covs) # set to all data or a fold
-dev.off()
+# 
+# png(paste0(outpath,  "/LASSO_outputs/lasso_pdps_plot.png"), width = 800, height = 400)
+# pdps_for_lasso(cov_names = cov_names, 
+#                quad_obj = quad_obj,
+#                lasso_cv = lasso_cv,
+#                training_data = train_PB_covs) # set to all data or a fold
+# dev.off()
 
 
 # Current prediction
@@ -433,13 +439,12 @@ dir.create(file.path(outpath, "GAM_outputs"), showWarnings = F)
 # Building GAM formula (adjust k for smooth complexity per covariate)
 myform <- paste(
   "Presence ~",
-  paste(paste0("s(", cov_names, ", k = 5)"), collapse = " + ")
+  paste(paste0("s(", cov_names, ", k = 10)"), collapse = " + ")
 )
 
 gam <- mgcv::gam(formula = as.formula(myform), 
                  data = train_PB_covs_norm,
                  family = binomial(link = "logit"),
-                 weights = wt,
                  method = "REML")
 
 # Save some model check outputs
@@ -506,15 +511,11 @@ dir.create(file.path(outpath, "RF_outputs"), showWarnings = F)
 train_PB_covs_norm_rf <- train_PB_covs_norm
 train_PB_covs_norm_rf$Presence <- as.factor(train_PB_covs_norm_rf$Presence)
 
-# For down-sampling, the number of background (0s) in each bootstrap sample should be the same as presences
-# (1s). For this, we use sampsize argument to do this.
-smpsize <- c("0" = prNum, "1" = prNum)
 
 # Using the default for mtry (sqrt(ncovs))
 rf <- randomForest::randomForest(formula = Presence ~.,
                                  data = train_PB_covs_norm_rf[, !names(train_PB_covs_norm_rf) %in% c("x", "y")],
                                  ntree = 1000,
-                                 sampsize = smpsize,
                                  replace = T,
                                  importance = T)
 
@@ -606,7 +607,6 @@ while(is.null(brt)){
                          max.trees = 10000,
                          n.trees = ntrees,
                          n.folds = 5, # 5-fold cross-validation
-                         site.weights = wt,
                          silent = FALSE) # Avoid printing cv results
   dev.off()
   

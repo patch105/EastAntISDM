@@ -67,8 +67,8 @@ model_types <- list("LASSO", "GAM", "RF", "BRT")
 
 # Set group ---------------------------------------------------------------
 
-group <- "Lichen"
-#group <- "Moss"
+# group <- "Lichen"
+group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
@@ -263,7 +263,7 @@ for(i in seq_along(cov_names)) {
 
 
 ############################################
-# FITTING MODELS TO PO DATASET -----------------------------------------------
+# FITTING MODELS TO PA DATASET -----------------------------------------------
 ############################################
 
 
@@ -343,7 +343,7 @@ pred_cur_quad <- predict(quad_obj, newdata = pred_cur_covs)
 # convert the data.frames to sparse matrices
 # select all quadratic (and non-quadratic) columns, except the y (occ)
 
-new_vars <- names(train_quad)[names(train_quad) != c("Presence")]
+new_vars <- names(train_quad)[!names(train_quad) %in% c("Presence", "x", "y")]
 train_sparse <- sparse.model.matrix(~. -1, train_quad[, new_vars])
 pred_cur_sparse <- sparse.model.matrix(~. -1, pred_cur_quad[, new_vars])
 # pred_fut_sparse <- sparse.model.matrix(~. -1, pred_fut_quad[, new_vars])
@@ -353,6 +353,7 @@ pred_cur_sparse <- sparse.model.matrix(~. -1, pred_cur_quad[, new_vars])
 lasso <- glmnet(x = train_sparse,
                 y = train_quad$Presence,
                 family = "binomial",
+                standardize = T,
                 alpha = 1) # here 1 means fitting lasso)
 
 
@@ -363,8 +364,9 @@ dev.off()
 lasso_cv <- cv.glmnet(x = train_sparse,
                       y = train_quad$Presence,
                       family = "binomial",
+                      standardize = T, # AUTOMATICALLY ON
                       alpha = 1, # here 1 means fitting lasso
-                      nfolds = 5) # number of folds for cross-validation
+                      nfolds = 3) # number of folds for cross-validation
 
 png(paste0(outpath,  "/LASSO_outputs/lasso_CV_plot.png"), width = 800, height = 600)
 plot(lasso_cv)
@@ -375,7 +377,7 @@ dev.off()
 
 
 # Take the coefficients for the chosen regularisation parameter value
-coef_df <- round(coef(lasso_cv, s = "lambda.1se"), 4) %>% 
+coef_df <- round(coef(lasso_cv, s = "lambda.min"), 4) %>% 
   as.matrix(.) %>% 
   as.data.frame()
 
@@ -395,19 +397,19 @@ dev.off()
 
 
 # Partial dependence plots (all other covs at their mean)
-
-png(paste0(outpath,  "/LASSO_outputs/lasso_pdps_plot.png"), width = 800, height = 400)
-pdps_for_lasso(cov_names = cov_names, 
-               quad_obj = quad_obj,
-               lasso_cv = lasso_cv,
-               training_data = train_PB_covs) # set to all data or a fold
-dev.off()
+# 
+# png(paste0(outpath,  "/LASSO_outputs/lasso_pdps_plot.png"), width = 800, height = 400)
+# pdps_for_lasso(cov_names = cov_names, 
+#                quad_obj = quad_obj,
+#                lasso_cv = lasso_cv,
+#                training_data = train_PB_covs) # set to all data or a fold
+# dev.off()
 
 
 # Current prediction
-pred_cur.lasso <- predict(lasso_cv, pred_cur_sparse, s = "lambda.1se", type = "response")
+pred_cur.lasso <- predict(lasso_cv, pred_cur_sparse, s = "lambda.min", type = "response")
 pred_cur.lasso <- cbind(pred_cur_covs, pred_cur.lasso)
-colnames(pred_cur.lasso)[grepl("lambda.1se", colnames(pred_cur.lasso))] <- "pred"
+colnames(pred_cur.lasso)[grepl("lambda.min", colnames(pred_cur.lasso))] <- "pred"
 pred_cur.lasso.rast <- rast(pred_cur.lasso[, c("x", "y", "pred")], type = "xyz", crs = "EPSG:3031")
 
 writeRaster(pred_cur.lasso.rast, here(outpath, "LASSO_outputs", paste0("Prediction_East_Antarctica.tif")), overwrite = T)
@@ -429,7 +431,7 @@ dir.create(file.path(outpath, "GAM_outputs"), showWarnings = F)
 # Building GAM formula (adjust k for smooth complexity per covariate)
 myform <- paste(
   "Presence ~",
-  paste(paste0("s(", cov_names, ", k = 5)"), collapse = " + ")
+  paste(paste0("s(", cov_names, ", k = 3)"), collapse = " + ")
 )
 
 gam <- mgcv::gam(formula = as.formula(myform), 
@@ -501,9 +503,6 @@ dir.create(file.path(outpath, "RF_outputs"), showWarnings = F)
 train_PB_covs_norm_rf <- train_PB_covs_norm
 train_PB_covs_norm_rf$Presence <- as.factor(train_PB_covs_norm_rf$Presence)
 
-# For down-sampling, the number of background (0s) in each bootstrap sample should be the same as presences
-# (1s). For this, we use sampsize argument to do this.
-smpsize <- c("0" = prNum, "1" = prNum)
 
 # Using the default for mtry (sqrt(ncovs))
 rf <- randomForest::randomForest(formula = Presence ~.,
