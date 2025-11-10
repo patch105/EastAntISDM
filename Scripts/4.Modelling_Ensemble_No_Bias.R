@@ -73,7 +73,7 @@ group <- "Moss"
 
 # Set scenario ---------------------------------------------------------------
 
-scenario = "PO_Ensemble_Nov_6_median_bias_cov"
+scenario = "PO_Ensemble_Nov_6_NO_BIAS"
 
 
 # Set outpath -------------------------------------------------------------
@@ -222,10 +222,6 @@ names(snow_cover) <- "snow_cover"
 dist_coast <- rast(here("Data/Environmental_predictors/dist_to_coast_seamask_v7_10_500m.tif"))
 names(dist_coast) <- "dist_to_coast"
 
-# Bias covariate
-dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_ICEFREE_500m.tif"))
-names(dist_station) <- "dist_to_station"
-
 
 # Apply some transformations
 sqrt_slope <- sqrt(slope)
@@ -234,15 +230,13 @@ names(sqrt_slope) <- "sqrt_slope"
 # log_dist_seasonal_water <- log(dist_seasonal_water+1)
 # names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
 
-log_dist_station <- log(dist_station+1)
-names(log_dist_station) <- "log_dist_station"
 
 log_dist_coast <- log(dist_coast+1)
 names(log_dist_coast) <- "log_dist_coast"
 
 # Stack covariates & save version w/o bias cov
 covs_no_bias <- c(sqrt_slope, northness, summer_temp, wind_speed, snow_cover, log_dist_coast)
-covs <- c(sqrt_slope, northness, summer_temp, wind_speed, snow_cover, log_dist_coast, log_dist_station)
+covs <- c(sqrt_slope, northness, summer_temp, wind_speed, snow_cover, log_dist_coast)
 
 # Make sure that if any predictors are NA, all become NA
 
@@ -377,10 +371,7 @@ map(PO_datasets, function(dataset){
   rownames(pred_cur_covs) <- NULL
   
   
-  # SET BIAS FOR PREDICTION TO MEDIAN DISTANCE TO STATION
-  pred_cur_covs$log_dist_station <- median(pred_cur_covs$log_dist_station)
-  # pred_cur_covs$log_dist_station <- 0
-  
+
   # Plot environmental conditions  ----------------------------------------------
   
   cov_names <- names(covs)
@@ -437,10 +428,7 @@ map(PO_datasets, function(dataset){
   }
   
   
-  # Re-set bias cov
-  pred_cur_covs_norm$log_dist_station <- median(pred_cur_covs_norm$log_dist_station)
-  # pred_cur_covs_norm2$log_dist_station <- 0
-
+  
   
   ############################################
   # ALL - Calculating the case weights (down-weighting)  --------------------------
@@ -476,7 +464,7 @@ map(PO_datasets, function(dataset){
                               removeDuplicates = FALSE,
                               path = file.path(outpath, "Maxent_outputs", dataset),
                               args = c("noautofeature", "nothreshold", "noproduct", "responsecurves=true"))
-
+  
   
   # Current prediction
   pred_cur.mxt <- dismo::predict(maxent.mod, pred_cur_covs, args = "doclamp=false")
@@ -575,7 +563,7 @@ map(PO_datasets, function(dataset){
   
   
   # Partial dependence plots (all other covs at their mean)
-  # 
+  
   # png(paste0(outpath,  "/LASSO_outputs/", dataset, "/lasso_pdps_plot.png"), width = 800, height = 400)
   # pdps_for_lasso(cov_names = cov_names, 
   #                quad_obj = quad_obj,
@@ -612,7 +600,7 @@ map(PO_datasets, function(dataset){
     paste(paste0("s(", cov_names, ", k = 10)"), collapse = " + ")
   )
   
-
+  
   gam <- mgcv::gam(formula = as.formula(myform), 
                    data = train_PB_covs_norm,
                    family = binomial(link = "logit"),
