@@ -67,8 +67,8 @@ model_types <- list("Maxent", "LASSO", "GAM", "RF", "BRT")
 
 # Set group ---------------------------------------------------------------
 
-group <- "Lichen"
-# group <- "Moss"
+#group <- "Lichen"
+group <- "Moss"
 
 
 # Set scenario ---------------------------------------------------------------
@@ -170,27 +170,19 @@ if(group == "Lichen") {
 # wind <- rast(here("Data/Environmental_predictors/Mean_Annual_Wind_Speed_ALL_YEARS_EAST_ANTARCTICA.tif"))
 # names(wind) <- "wind"
 # 
-# # Bias covariate
-# dist_station <- rast(here("Data/Environmental_predictors/distance_to_station_EAST_ANTARCTICA.tif"))
-# names(dist_station) <- "dist_station"
+
 
 
 # Load the 500m covariates ------------------------------------------------
 
-TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
-names(TWI) <- "TWI"
+# TWI <- rast(here("Data/Environmental_predictors/TWI_500m_IceFree_EastAnt.tif"))
+# names(TWI) <- "TWI"
 
 slope <- rast(here("Data/Environmental_predictors/slope_500m_IceFree_EastAnt.tif"))
-names(slope) <- "slope"
+names(slope) <- "Slope"
 
 northness <- rast(here("Data/Environmental_predictors/northness_500m_IceFree_EastAnt.tif"))
-names(northness) <- "northness"
-
-aspect <- rast(here("Data/Environmental_predictors/aspect_500m_IceFree_EastAnt.tif"))
-names(aspect) <- "aspect"
-
-# dist_vertebrates <- rast(here("Data/Environmental_predictors/distance_to_vertebrates_EAST_ANTARCTICA.tif"))
-# names(dist_vertebrates) <- "dist_vertebrates"
+names(northness) <- "Northness"
 
 # dist_seasonal_water <- rast(here("Data/Environmental_predictors/distance_to_seasonal_water_ICEFREE_500m.tif"))
 # names(dist_seasonal_water) <- "dist_seasonal_water"
@@ -198,8 +190,14 @@ names(aspect) <- "aspect"
 summer_temp <- rast(here("Data/Environmental_predictors/mean_summer_temp_AntAirIce_500m.tif"))
 names(summer_temp) <- "summer_temp"
 
-wind <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
-names(wind) <- "wind"
+wind_speed <- rast(here("Data/Environmental_predictors/AMPS_Mean_Annual_Wind_Speed_500m.tif"))
+names(wind_speed) <- "wind_speed"
+
+snow_cover <- rast(here("Data/Environmental_predictors/SummerSnowCover_500m.tif"))
+names(snow_cover) <- "snow_cover"
+
+dist_coast <- rast(here("Data/Environmental_predictors/dist_to_coast_seamask_v7_10_500m.tif"))
+names(dist_coast) <- "dist_to_coast"
 
 
 # Apply some transformations
@@ -210,22 +208,36 @@ names(sqrt_slope) <- "sqrt_slope"
 # names(log_dist_seasonal_water) <- "log_dist_seasonal_water"
 
 
-# Stack covariates & save version w/o bias cov
-covs <- c(TWI, sqrt_slope, northness, summer_temp, wind)
+log_dist_coast <- log(dist_coast+1)
+names(log_dist_coast) <- "log_dist_coast"
+
+# Stack covariates 
+covs <- c(sqrt_slope, northness, summer_temp, wind_speed, snow_cover, log_dist_coast)
 
 # Make sure that if any predictors are NA, all become NA
 
 # Here we're just exploiting the fact that sum will by default return NA when any layer has an NA
 covs <- terra::mask(covs, sum(covs))
 
+#************
+# Now trim ice_free mask to match covs!
+ice_free.EastAnt <- terra::mask(ice_free.EastAnt, sum(covs))
+
+###########################################
 # Select background points ------------------------------------------------
+##########################################
+
+# # Load boundaries
+# vestfold_boundary <- vect(here("Data/Environmental_predictors/vestfold_boundary.shp"))
+# bunger_boundary <- vect(here("Data/Environmental_predictors/bunger_boundary.shp"))
+
 
 background_domain <- ice_free.EastAnt
 
-# Buffer 1km around record locations
-dist.near <- 1000
+# Buffer 10m around record locations
+dist.near <- 10
 
-# Buffer records by the maximum distance of record locations
+# Buffer records by 10m
 domain.mask <- st_buffer(PO.sf, dist.near) %>% 
   st_union() %>% 
   st_cast("POLYGON") 
@@ -241,6 +253,19 @@ background_domain <- terra::mask(ice_free.EastAnt, bio_buffer_mask, maskvalue = 
 # Make domain areas 1
 background_domain <- ifel(not.na(background_domain), 1, NA)
 
+# # Finally, mask out the target region (Vestfold or Bunger):
+# if(dataset == "No_Bunger"){
+#   
+#   background_domain <- mask(background_domain, bunger_boundary, inverse = T)
+#   
+# }
+# 
+# if(dataset == "No_Vestfold"){
+#   
+#   background_domain <- mask(background_domain, vestfold_boundary, inverse = T)
+#   
+# }
+
 
 # Background sampling -----------------------------------------------------
 
@@ -250,11 +275,11 @@ global(background_domain, fun = "notNA")
 
 # Set the location and number of background points
 
-nbackground <- 3000
+nbackground <- 6000
 
 background <- predicts::backgroundSample(mask = background_domain, 
                                          n = nbackground,
-                                         tryf = 500)
+                                         tryf = 1000)
 
 background <- vect(background, crs = "EPSG:3031")
 
@@ -300,9 +325,6 @@ pred_cur_covs <- pred_cur_covs[complete.cases(pred_cur_covs), ]
 rownames(pred_cur_covs) <- NULL
 
 
-# SET BIAS FOR PREDICTION TO ZERO
-pred_cur_covs$log_dist_station <- 0
-
 
 # Plot environmental conditions  ----------------------------------------------
 
@@ -312,14 +334,19 @@ cov_names <- names(covs)
 
 for(i in seq_along(cov_names)) {
   
-  print(ggplot() +
-          geom_density(data = train_PB_covs, 
-                       aes(x = .data[[names(train_PB_covs)[i]]], fill = as.factor(Presence)), 
-                       alpha = 0.5) +
-          theme_bw() +
-          labs(title = names(train_PB_covs)[i]))
+  plot <- ggplot() +
+    geom_density(data = train_PB_covs, 
+                 aes(x = .data[[names(train_PB_covs)[i]]], fill = as.factor(Presence)), 
+                 alpha = 0.5) +
+    theme_bw() +
+    labs(title = names(train_PB_covs)[i])
+  
+  ggsave(paste0(outpath, "/Covariate_Density_Plot_", names(train_PB_covs)[i], "_Scenario_", scenario, ".png"),
+         plot = plot,
+         width = 13, height = 10, dpi = 300)
   
 }
+
 
 
 ############################################
@@ -356,10 +383,6 @@ for (v in cov_names) {
 }
 
 
-# Re-set bias cov
-pred_cur_covs_norm$log_dist_station <- 0
-# pred_cur_covs_norm2$log_dist_station <- 0
-
 
 ############################################
 # ALL - Calculating the case weights (down-weighting)  --------------------------
@@ -378,7 +401,8 @@ if(group == "Lichen") {
 
 if(group == "Moss") {
   
-  wt <- ifelse(train_PB_covs$Presence == 1, bgNum / prNum, 1) # down-weighting presences
+  # wt <- ifelse(train_PB_covs$Presence == 1, bgNum / prNum, 1) # down-weighting presences
+  wt <- ifelse(train_PB_covs$Presence == 1, 1, 1) # down-weighting presences
   
 }
 
@@ -406,7 +430,7 @@ maxent.mod <- dismo::maxent(x = train_PB_covs[, cov_names],
                             p = train_PB_covs[["Presence"]],
                             removeDuplicates = FALSE,
                             path = file.path(outpath, "Maxent_outputs"),
-                            args = c("nothreshold", "responsecurves=true"))
+                            args = c("noautofeature", "nothreshold", "noproduct", "responsecurves=true"))
 
 
 # Current prediction

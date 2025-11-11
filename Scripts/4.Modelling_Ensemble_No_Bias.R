@@ -279,10 +279,10 @@ map(PO_datasets, function(dataset){
   
   background_domain <- ice_free.EastAnt
   
-  # Buffer 1km around record locations
+  # Buffer 10m around record locations
   dist.near <- 10
   
-  # Buffer records by the maximum distance of record locations
+  # Buffer records by 10m
   domain.mask <- st_buffer(PO.sf, dist.near) %>% 
     st_union() %>% 
     st_cast("POLYGON") 

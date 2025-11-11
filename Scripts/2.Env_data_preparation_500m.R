@@ -603,7 +603,6 @@ ggsave(here("Outputs/Figures", "Covariates_VESTFOLD.png"),
 
 
 
-
 # PLOT THE BIAS COVARIATE -------------------------------------------------
 
 # Arrange Lichen row
